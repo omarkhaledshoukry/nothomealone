@@ -1,0 +1,1577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Room Word Hunt</title>
+  <style>
+    :root {
+      --tarantino-yellow: #f6d20a;
+      --letter-beige: rgba(241, 239, 229, 0.80);
+      --ink: #090909;
+    }
+
+    @font-face {
+      font-family: "Dudu Calligraphy";
+      src: local("Dudu Calligraphy"), local("DuduCalligraphy");
+      font-display: swap;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+      touch-action: none;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body { cursor: grab; }
+    body.grabbing { cursor: grabbing; }
+
+    #game {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+    }
+
+    #portraitViewport {
+      position: relative;
+      height: 100vh;
+      aspect-ratio: 9 / 16;
+      max-width: 100vw;
+      overflow: hidden;
+      background: #000;
+      box-shadow: 0 0 40px rgba(0, 0, 0, .8);
+      isolation: isolate;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    #roomVideo {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      transform: translateX(0);
+      transform-origin: left top;
+      will-change: transform;
+    }
+
+    #letterWorld {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      transform: translateX(0);
+      transform-origin: left top;
+      will-change: transform;
+    }
+
+    #roomVideo {
+      z-index: 1;
+      user-select: none;
+      pointer-events: none;
+      filter: blur(0px);
+      transition: filter 420ms ease;
+    }
+
+    #roomVideo.snapping,
+    #letterWorld.snapping,
+    #anomalyWorld.snapping,
+    #jumpscareVideo.snapping {
+      transition: transform 420ms cubic-bezier(.22,.72,.22,1), filter 420ms ease;
+    }
+
+    #portraitViewport.hand-active #roomVideo {
+      filter: blur(3px);
+    }
+
+    #letterWorld {
+      z-index: 2;
+      pointer-events: none;
+      filter: blur(0.7px);
+      transition: filter 420ms ease;
+    }
+
+    #portraitViewport.hand-active #letterWorld {
+      filter: blur(3px);
+    }
+
+    .letter-anchor {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .letter-tile {
+      appearance: none;
+      border: 0;
+      margin: 0;
+      width: auto;
+      aspect-ratio: auto;
+      padding: 8px;
+      display: inline-grid;
+      place-items: center;
+      color: var(--letter-beige);
+      background: transparent;
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      line-height: 1;
+      user-select: none;
+      cursor: pointer;
+      pointer-events: auto;
+      transform: scale(1);
+      transition: transform 150ms ease, opacity 170ms ease;
+    }
+
+    .letter-glyph {
+      display: block;
+      color: var(--letter-beige);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: calc(clamp(35px, 5.4vh, 53px) * var(--letter-scale, 1));
+      font-weight: 400;
+      line-height: 1;
+      text-transform: uppercase;
+      letter-spacing: .015em;
+      transform-origin: center center;
+      pointer-events: none;
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+      animation:
+        letterSketchIn 280ms cubic-bezier(.22,.75,.25,1) var(--intro-delay, 0ms) forwards,
+        letterOffsetLoop 0.4s steps(1, end) calc(var(--intro-delay, 0ms) + 280ms) infinite;
+    }
+
+    .letter-tile:hover,
+    .letter-tile:focus-visible {
+      transform: scale(1.05);
+      outline: none;
+    }
+
+    .letter-tile.selected {
+      pointer-events: none;
+    }
+
+    .letter-anchor.collected {
+      pointer-events: none;
+      animation: collectLetter 240ms cubic-bezier(.55, 0, 1, .45) forwards;
+    }
+
+    .letter-tile.wrong { animation: wrongTap 220ms ease; }
+    .letter-tile.clearing { animation: tileOut 230ms ease forwards; }
+
+    #hud {
+      position: absolute;
+      z-index: 10;
+      left: max(8%, calc(env(safe-area-inset-left) + 10px));
+      bottom: max(13%, calc(env(safe-area-inset-bottom) + 14px));
+      width: min(82%, 430px);
+      padding: 0;
+      color: #d9f3ce;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
+      text-align: left;
+      pointer-events: none;
+      text-shadow: 0 0 2px rgba(204, 255, 190, .65);
+      backdrop-filter: none;
+    }
+
+    #wordDisplay {
+      min-height: 30px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 4px;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
+    .hud-letter {
+      min-width: 16px;
+      color: rgba(216, 247, 209, .48);
+      font-size: clamp(26px, 3.7vh, 34px);
+      font-weight: 400;
+      text-transform: uppercase;
+      border: 0;
+      line-height: 1.1;
+    }
+
+    .hud-letter.found {
+      color: #d8f7d1;
+      border: 0;
+      animation: hudPop 160ms ease both;
+    }
+
+    #status {
+      margin-top: 7px;
+      color: rgba(216, 247, 209, .64);
+      font-size: clamp(18px, 2.5vh, 22px);
+      font-weight: 400;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      text-shadow: none;
+      line-height: 1.2;
+    }
+
+
+    #loadingScreen {
+      position: absolute;
+      z-index: 100;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      pointer-events: auto;
+    }
+
+    #loadingScreen {
+      z-index: 200;
+      transition: opacity 220ms ease;
+    }
+
+    #loadingScreen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #loadingWord {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.02em;
+      color: var(--letter-beige);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: clamp(38px, 6vh, 62px);
+      font-weight: 400;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+
+    .loading-letter {
+      display: inline-block;
+      animation: loadingJitter 0.4s steps(1, end) infinite;
+    }
+
+    @keyframes loadingJitter {
+      0%   { transform: translate(0, 0); }
+      25%  { transform: translate(var(--lx1), var(--ly1)); }
+      50%  { transform: translate(var(--lx2), var(--ly2)); }
+      75%  { transform: translate(var(--lx3), var(--ly3)); }
+      100% { transform: translate(0, 0); }
+    }
+
+    /* Post-loading clue-note interstitial. */
+    #clueIntro {
+      position: absolute;
+      z-index: 120;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    #clueIntro.show {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #clueIntro.dismiss {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #clueCard {
+      position: relative;
+      width: min(78%, 420px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transform: translateY(-1.5vh);
+    }
+
+    #cluePaperWrap {
+      position: relative;
+      width: 100%;
+    }
+
+    #cluePaper {
+      display: block;
+      width: 100%;
+      height: auto;
+      user-select: none;
+      -webkit-user-drag: none;
+      filter: drop-shadow(0 10px 18px rgba(0,0,0,.34));
+    }
+
+    #cluePaperText {
+      position: absolute;
+      inset: 13% 12% 12% 17%;
+      color: rgba(31, 26, 21, .90);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      text-align: left;
+      transform: rotate(-0.4deg);
+      pointer-events: none;
+    }
+
+    #clueTitle {
+      margin: 0 0 10% 0;
+      text-align: center;
+      font-size: clamp(31px, 5.2vh, 48px);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      text-decoration: underline;
+      text-underline-offset: .12em;
+    }
+
+    #clueList {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: clamp(13px, 2.3vh, 24px);
+      font-size: clamp(22px, 3.5vh, 34px);
+      line-height: 1.05;
+      text-transform: uppercase;
+    }
+
+    #clueList li::before { content: "- "; }
+
+    #readyButton {
+      appearance: none;
+      border: 0;
+      padding: 10px 12px;
+      margin-top: 8px;
+      align-self: flex-end;
+      background: transparent;
+      color: var(--letter-beige);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: clamp(26px, 4.2vh, 40px);
+      font-weight: 400;
+      line-height: 1;
+      text-transform: uppercase;
+      cursor: pointer;
+      animation: readyJitter 0.4s steps(1, end) infinite;
+    }
+
+    @keyframes readyJitter {
+      0%   { transform: translate(0,0); }
+      25%  { transform: translate(2px,-1px); }
+      50%  { transform: translate(-2px,1px); }
+      75%  { transform: translate(1px,2px); }
+      100% { transform: translate(0,0); }
+    }
+
+    /* During the clue card, keep the prepared room soft and hide gameplay UI. */
+    #portraitViewport.clue-intro-active #roomVideo {
+      filter: blur(5px);
+    }
+
+    #letterWorld,
+    #hud {
+      transition: filter 420ms ease, opacity 320ms ease;
+    }
+
+    #portraitViewport.clue-intro-active #letterWorld,
+    #portraitViewport.clue-intro-active #hud {
+      opacity: 0;
+    }
+
+    #anomalyWorld {
+      position: absolute;
+      z-index: 3;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      transform: translateX(0);
+      transform-origin: left top;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    #anomalyImage {
+      position: absolute;
+      display: none;
+      height: 100%;
+      width: auto;
+      max-width: none;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+    }
+
+    #blackFlash { display: none; }
+
+    #jumpscareVideo {
+      position: absolute;
+      z-index: 150;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      max-width: none;
+      display: none;
+      opacity: 1;
+      background: transparent;
+      pointer-events: none;
+      transform: translateX(0);
+      transform-origin: left top;
+      will-change: transform;
+    }
+
+    #jumpscareVideo.playing {
+      display: block;
+      opacity: 1;
+    }
+
+    #gameOverScreen {
+      position: absolute;
+      z-index: 160;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+      background: #000;
+      color: var(--letter-beige);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    #gameOverScreen.show { display: flex; }
+    #gameOverTitle { font-size: clamp(42px, 7vh, 72px); line-height: 1; }
+    #retryText { font-size: clamp(20px, 3vh, 30px); opacity: .78; }
+
+
+    #handBlocker {
+      position: absolute;
+      z-index: 30;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      touch-action: none;
+    }
+
+    #handBlocker.active {
+      pointer-events: auto;
+      cursor: grab;
+    }
+
+    #handBlocker.dragging {
+      cursor: grabbing;
+    }
+
+    #handImage {
+      position: absolute;
+      left: 50%;
+      bottom: -10%;
+      width: 100%;
+      height: auto;
+      max-width: none;
+      object-fit: contain;
+      transform: translate(-50%, 120%);
+      transform-origin: 50% 100%;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    #handBlocker.entering #handImage {
+      animation: handEnter 520ms cubic-bezier(.18,.82,.28,1) forwards;
+    }
+
+    #handBlocker.resting #handImage {
+      transform: translate(-50%, 0);
+    }
+
+    #handBlocker.exiting #handImage {
+      animation: handExit 300ms cubic-bezier(.55,.05,.82,.34) forwards;
+    }
+
+    @keyframes handEnter {
+      from { transform: translate(-50%, 120%); }
+      to { transform: translate(-50%, 0); }
+    }
+
+    @keyframes handExit {
+      from { transform: translate(-50%, 0); }
+      to { transform: translate(-50%, 125%); }
+    }
+
+    #message {
+      position: absolute;
+      z-index: 12;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--tarantino-yellow);
+      font-size: clamp(34px, 6vh, 62px);
+      font-weight: 1000;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      text-shadow: 0 5px 0 #000, 0 10px 24px rgba(0,0,0,.65);
+      opacity: 0;
+      transform: scale(.82);
+      pointer-events: none;
+    }
+
+    #message.show { animation: messageFlash 620ms ease both; }
+
+    @keyframes letterSketchIn {
+      0% {
+        opacity: 0;
+        clip-path: inset(0 100% 0 0);
+        transform: translate(-7px, 4px) scale(.94);
+        filter: blur(1.4px);
+      }
+      58% {
+        opacity: .92;
+        clip-path: inset(0 14% 0 0);
+        transform: translate(1px, -1px) scale(1.015);
+        filter: blur(.35px);
+      }
+      100% {
+        opacity: 1;
+        clip-path: inset(0 0 0 0);
+        transform: translate(0, 0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes letterOffsetLoop {
+      0%   { translate: 0 0; }
+      25%  { translate: var(--jitter-x1, 2px) var(--jitter-y1, -1px); }
+      50%  { translate: var(--jitter-x2, -2px) var(--jitter-y2, 1px); }
+      75%  { translate: var(--jitter-x3, 1px) var(--jitter-y3, 2px); }
+      100% { translate: 0 0; }
+    }
+
+    @keyframes collectLetter {
+      0% { opacity: 1; transform: translate(-50%, -50%); }
+      100% { opacity: 0; transform: translate(-50%, calc(-50% - 90px)); }
+    }
+
+    @keyframes tileOut {
+      to { opacity: 0; transform: scale(1.35); }
+    }
+
+    @keyframes wrongTap {
+      0%, 100% { transform: scale(1); }
+      45% { transform: scale(.94); }
+      72% { transform: scale(1.04); }
+    }
+
+    @keyframes hudPop {
+      from { transform: scale(.68); }
+      to { transform: scale(1); }
+    }
+
+    @keyframes messageFlash {
+      0% { opacity: 0; transform: scale(.82); }
+      25%, 68% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.08); }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="portraitViewport">
+      <div id="loadingScreen" aria-live="polite">
+        <div id="loadingWord" aria-label="Loading">
+          <span class="loading-letter">L</span>
+          <span class="loading-letter">O</span>
+          <span class="loading-letter">A</span>
+          <span class="loading-letter">D</span>
+          <span class="loading-letter">I</span>
+          <span class="loading-letter">N</span>
+          <span class="loading-letter">G</span>
+        </div>
+      </div>
+
+      <div id="clueIntro" aria-hidden="true">
+        <div id="clueCard">
+          <div id="cluePaperWrap">
+            <img id="cluePaper" src="note.png" alt="" draggable="false" />
+            <div id="cluePaperText">
+              <div id="clueTitle">CLUES</div>
+              <ul id="clueList"></ul>
+            </div>
+          </div>
+          <button id="readyButton" type="button">READY</button>
+        </div>
+      </div>
+
+      <video id="roomVideo" src="room.mp4" autoplay muted loop playsinline></video>
+      <div id="letterWorld" aria-label="Scattered word letters"></div>
+
+      <div id="anomalyWorld" aria-hidden="true">
+        <img id="anomalyImage" alt="" draggable="false" />
+      </div>
+
+      <div id="hud">
+        <div id="wordDisplay" aria-live="polite"></div>
+        <div id="status">Loading words…</div>
+      </div>
+
+      <div id="message">Found!</div>
+
+      <div id="handBlocker" aria-hidden="true">
+        <img id="handImage" src="hand.png" alt="" draggable="false" />
+      </div>
+
+      <div id="blackFlash" aria-hidden="true"></div>
+      <video id="jumpscareVideo" src="jumpscare.mp4" preload="auto" playsinline></video>
+      <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
+        <div id="gameOverTitle">GAME OVER</div>
+        <div id="retryText">TAP TO RETRY</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const WORDS_FILE = "words.txt";
+    const POSITIONS_FILE = "room3.txt";
+    const COORDINATE_REFERENCE_SIZE = { width: 1280, height: 720 };
+    const FALLBACK_WORDS = ["cinema", "camera", "yellow", "revenge", "dialogue"];
+    const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
+    const ANOMALY_CHECK_MS = 15000;
+    const ANOMALY_SPAWN_CHANCE = 0.50;
+
+    const viewport = document.getElementById("portraitViewport");
+    const video = document.getElementById("roomVideo");
+    const letterWorld = document.getElementById("letterWorld");
+    const wordDisplay = document.getElementById("wordDisplay");
+    const status = document.getElementById("status");
+    const message = document.getElementById("message");
+    const handBlocker = document.getElementById("handBlocker");
+    const handImage = document.getElementById("handImage");
+    const loadingScreen = document.getElementById("loadingScreen");
+    const clueIntro = document.getElementById("clueIntro");
+    const clueList = document.getElementById("clueList");
+    const readyButton = document.getElementById("readyButton");
+    const anomalyWorld = document.getElementById("anomalyWorld");
+    const anomalyImage = document.getElementById("anomalyImage");
+    const blackFlash = document.getElementById("blackFlash");
+    const jumpscareVideo = document.getElementById("jumpscareVideo");
+    const gameOverScreen = document.getElementById("gameOverScreen");
+    const body = document.body;
+
+    let words = [];
+    let wordIndex = 0;
+    let currentWord = "";
+    let selectedCount = 0;
+    let tiles = [];
+    let anchors = [];
+    let selectionHistory = [];
+    let letterPositions = [];
+
+    let isDragging = false;
+    let movedDuringDrag = false;
+    let lastPanClientX = 0;
+    let offsetX = 0;
+    let minOffset = 0;
+    let renderedVideoWidth = 0;
+    let snapPoints = [0];
+    let dragStartClientX = 0;
+    let dragStartClientY = 0;
+    let panTapTile = null;
+    let suppressNextLetterClick = false;
+    let panPointerId = null;
+    let letterClickResetTimer = null;
+
+    let handVisible = false;
+    let handTimer = null;
+    let handPointerId = null;
+    let handStartY = 0;
+    let handCurrentY = 0;
+    let handDragStarted = false;
+
+    let completedWordCount = 0;
+    let anomalyEnabled = false;
+    let anomalyTimer = null;
+    let anomalyActive = false;
+    let anomalyHasBeenSeen = false;
+    let anomalyMeta = null;
+    let anomalyWorldBox = null;
+    let gameOver = false;
+    let wordsReadyForClue = false;
+    let videosReadyForClue = false;
+    let clueIntroShown = false;
+    let gameplayStarted = false;
+
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    async function loadWords() {
+      try {
+        const response = await fetch(WORDS_FILE, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const text = await response.text();
+        words = text
+          .split(/\r?\n/)
+          .map(line => line.trim().toLowerCase())
+          .filter(line => line && !line.startsWith("#"))
+          .map(line => line.replace(/[^a-z0-9]/g, ""))
+          .filter(Boolean);
+
+        if (!words.length) throw new Error("No valid words found");
+      } catch (error) {
+        console.warn("Could not load words.txt; using built-in sample words.", error);
+        words = [...FALLBACK_WORDS];
+        status.textContent = "Using built-in words (serve locally to load words.txt)";
+      }
+
+      await loadLetterPositions();
+      shuffleArray(words);
+      // This run uses exactly three randomly selected clues from words.txt.
+      words = words.slice(0, Math.min(3, words.length));
+      startWord(0);
+      populateClueList();
+      wordsReadyForClue = true;
+      maybeShowClueIntro();
+    }
+
+    function populateClueList() {
+      clueList.replaceChildren();
+      words.forEach(word => {
+        const item = document.createElement("li");
+        item.textContent = word;
+        clueList.appendChild(item);
+      });
+    }
+
+    function maybeShowClueIntro() {
+      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue) return;
+      clueIntroShown = true;
+      viewport.classList.add("clue-intro-active");
+      clueIntro.classList.add("show");
+      clueIntro.setAttribute("aria-hidden", "false");
+
+      // Fade the black loader away only once the blurred clue scene is ready beneath it.
+      requestAnimationFrame(() => {
+        loadingScreen.classList.add("hidden");
+      });
+    }
+
+    function beginGameplayFromClues() {
+      if (gameplayStarted) return;
+      gameplayStarted = true;
+      clueIntro.classList.add("dismiss");
+      viewport.classList.remove("clue-intro-active");
+      window.setTimeout(() => {
+        clueIntro.classList.remove("show", "dismiss");
+        clueIntro.setAttribute("aria-hidden", "true");
+      }, 190);
+      scheduleNextHandCheck();
+    }
+
+    readyButton.addEventListener("click", beginGameplayFromClues);
+
+    async function loadLetterPositions() {
+      try {
+        const response = await fetch(POSITIONS_FILE, { cache: "no-store" });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const text = await response.text();
+        letterPositions = text
+          .split(/\r?\n/)
+          .map(line => line.trim())
+          .filter(line => line && !line.startsWith("#"))
+          .map(line => line.split(/[\s,;]+/).map(Number))
+          .filter(values => values.length >= 2 && Number.isFinite(values[0]) && Number.isFinite(values[1]))
+          .map(([x, y]) => ({ x, y }));
+
+        if (!letterPositions.length) throw new Error("No valid x,y positions found");
+      } catch (error) {
+        console.warn("Could not load room3.txt; falling back to generated positions.", error);
+        letterPositions = [];
+      }
+    }
+
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function updateLimits() {
+      if (!video.videoWidth || !video.videoHeight) return;
+
+      // Use the actual CSS-pixel dimensions, including fractional desktop
+      // widths, so the scene, authored text positions and snap edges agree.
+      const { width, height } = viewport.getBoundingClientRect();
+      renderedVideoWidth = video.videoWidth * (height / video.videoHeight);
+      minOffset = Math.min(0, width - renderedVideoWidth);
+
+      letterWorld.style.width = `${renderedVideoWidth}px`;
+      letterWorld.style.height = `${height}px`;
+      anomalyWorld.style.width = `${renderedVideoWidth}px`;
+      anomalyWorld.style.height = `${height}px`;
+      if (anomalyActive && anomalyMeta) {
+        anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
+        anomalyImage.style.height = `${height}px`;
+      }
+
+      // Preserve the freely dragged camera position when the frame resizes.
+      offsetX = clamp(offsetX, minOffset, 0);
+      applyWorldOffset(false);
+    }
+
+    function buildSnapPoints() {
+      // These points retain the original opening view only; manual camera
+      // movement uses continuous dragging instead of snapping between them.
+      const step = Math.max(1, viewport.getBoundingClientRect().width);
+      const totalTravel = Math.abs(minOffset);
+      const points = [0];
+      for (let x = step; x < totalTravel; x += step) points.push(-x);
+      if (minOffset < 0 && Math.abs(points[points.length - 1] - minOffset) > 1) points.push(minOffset);
+      snapPoints = points;
+    }
+
+    function nearestSnapIndex(value) {
+      let best = 0;
+      let distance = Infinity;
+      snapPoints.forEach((point, index) => {
+        const d = Math.abs(point - value);
+        if (d < distance) { distance = d; best = index; }
+      });
+      return best;
+    }
+
+    function applyWorldOffset(animate = false) {
+      video.classList.toggle("snapping", animate);
+      letterWorld.classList.toggle("snapping", animate);
+      anomalyWorld.classList.toggle("snapping", animate);
+      jumpscareVideo.classList.toggle("snapping", animate);
+      const transform = `translateX(${offsetX}px)`;
+      video.style.transform = transform;
+      letterWorld.style.transform = transform;
+      anomalyWorld.style.transform = transform;
+      jumpscareVideo.style.transform = transform;
+    }
+
+    function startWord(index) {
+      wordIndex = index % words.length;
+      currentWord = words[wordIndex];
+      selectedCount = 0;
+      selectionHistory = [];
+      createHudWord();
+      createScatteredLetters();
+      status.textContent = `CLUE ${wordIndex + 1} OF ${words.length}`;
+    }
+
+    function createHudWord() {
+      wordDisplay.replaceChildren();
+      [...currentWord].forEach((letter, index) => {
+        const slot = document.createElement("span");
+        slot.className = "hud-letter";
+        slot.dataset.index = index;
+        slot.textContent = "·";
+        wordDisplay.appendChild(slot);
+      });
+    }
+
+    function createScatteredLetters() {
+      letterWorld.replaceChildren();
+      tiles = [];
+      anchors = [];
+
+      const positions = getLetterPositions(currentWord.length);
+      const { width, height } = viewport.getBoundingClientRect();
+      const worldWidth = renderedVideoWidth || (width + Math.abs(minOffset));
+      [...currentWord].forEach((letter, index) => {
+        const anchor = document.createElement("div");
+        anchor.className = "letter-anchor";
+        anchor.style.left = `${positions[index].x}px`;
+        anchor.style.top = `${positions[index].y}px`;
+        anchor.dataset.worldX = positions[index].x / worldWidth;
+        anchor.dataset.worldY = positions[index].y / height;
+
+        const tile = document.createElement("button");
+        tile.type = "button";
+        tile.className = "letter-tile";
+        tile.dataset.index = index;
+        tile.dataset.letter = letter;
+        tile.style.setProperty("--letter-scale", (0.8 + Math.random() * 0.4).toFixed(3));
+        tile.style.setProperty("--intro-delay", `${index * 35 + Math.random() * 60}ms`);
+        const jitter = () => (Math.random() * 4 - 2).toFixed(2) + "px";
+        tile.style.setProperty("--jitter-x1", jitter());
+        tile.style.setProperty("--jitter-y1", jitter());
+        tile.style.setProperty("--jitter-x2", jitter());
+        tile.style.setProperty("--jitter-y2", jitter());
+        tile.style.setProperty("--jitter-x3", jitter());
+        tile.style.setProperty("--jitter-y3", jitter());
+        tile.setAttribute("aria-label", `Letter ${letter}`);
+
+        const glyph = document.createElement("span");
+        glyph.className = "letter-glyph";
+        glyph.textContent = letter;
+        tile.appendChild(glyph);
+
+        tile.addEventListener("click", event => {
+          event.stopPropagation();
+          // Pointer taps are handled on release below. Keep native click
+          // activation for keyboard/assistive input without collecting twice.
+          if (event.detail > 0 || event.pointerType) return;
+          selectLetter(letter, index, tile);
+        });
+
+        anchor.appendChild(tile);
+        letterWorld.appendChild(anchor);
+        tiles.push(tile);
+        anchors.push(anchor);
+      });
+    }
+
+    function relayoutScatteredLetters() {
+      const { height } = viewport.getBoundingClientRect();
+      anchors.forEach(anchor => {
+        anchor.style.left = `${Number(anchor.dataset.worldX) * renderedVideoWidth}px`;
+        anchor.style.top = `${Number(anchor.dataset.worldY) * height}px`;
+      });
+    }
+
+
+    function getLetterPositions(count) {
+      if (!letterPositions.length || !renderedVideoWidth) return generatePositions(count);
+
+      // room3.txt coordinates are authored against a 1280x720 screenshot.
+      // (0,0) is the top-left and each coordinate marks the letter centre.
+      const scaleX = renderedVideoWidth / COORDINATE_REFERENCE_SIZE.width;
+      const scaleY = viewport.getBoundingClientRect().height / COORDINATE_REFERENCE_SIZE.height;
+      const scaled = letterPositions.map(point => ({
+        x: point.x * scaleX,
+        y: point.y * scaleY
+      }));
+
+      const pool = shuffleArray([...scaled]);
+      const positions = [];
+      for (let i = 0; i < count; i++) {
+        if (pool[i]) positions.push(pool[i]);
+        else {
+          positions.push(...generatePositions(count - positions.length));
+          break;
+        }
+      }
+      return positions;
+    }
+
+    function generatePositions(count) {
+      const { width: viewportWidth, height } = viewport.getBoundingClientRect();
+
+      // With no parallax, the reachable letter area is the full rendered room.
+      const reachableWidth = renderedVideoWidth || (viewportWidth + Math.abs(minOffset));
+      const marginX = Math.max(44, viewportWidth * .08);
+      const minX = marginX;
+      const maxX = Math.max(minX, reachableWidth - marginX);
+
+      // Use the full vertical play area independently of the HUD position.
+      // This prevents moving the HUD to the top from collapsing all fallback
+      // letter Y positions onto a single horizontal line.
+      const minY = Math.max(24, height * .035);
+      const maxY = Math.max(minY, height - Math.max(44, height * .07));
+
+      const positions = Array.from({ length: count }, (_, index) => {
+        const laneStart = minX + (maxX - minX) * (index / count);
+        const laneEnd = minX + (maxX - minX) * ((index + 1) / count);
+        const lanePadding = Math.min(24, Math.max(5, (laneEnd - laneStart) * .12));
+        const x = count === 1
+          ? (minX + maxX) / 2
+          : laneStart + lanePadding + Math.random() * Math.max(1, laneEnd - laneStart - lanePadding * 2);
+
+        return {
+          x: clamp(x, minX, maxX),
+          y: minY + Math.random() * Math.max(1, maxY - minY)
+        };
+      });
+
+      shuffleArray(positions);
+      return positions;
+    }
+
+    function selectLetter(letter, tileIndex, tile) {
+      if (!gameplayStarted || handVisible || gameOver) return;
+      if (anomalyActive) {
+        triggerJumpscare();
+        return;
+      }
+      const expectedLetter = currentWord[selectedCount];
+      if (letter !== expectedLetter || tile.classList.contains("selected")) {
+        tile.classList.remove("wrong");
+        void tile.offsetWidth;
+        tile.classList.add("wrong");
+        return;
+      }
+
+      tile.classList.add("selected");
+      const anchor = anchors[tileIndex];
+      anchor.classList.remove("collected");
+      void anchor.offsetWidth;
+      anchor.classList.add("collected");
+
+      selectionHistory.push(tileIndex);
+      const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
+      hudSlot.textContent = expectedLetter;
+      hudSlot.classList.add("found");
+      selectedCount++;
+
+      if (selectedCount === currentWord.length) completeWord();
+    }
+
+    function undoLastLetter() {
+      if (handVisible || gameOver) return;
+      if (selectedCount <= 0 || !selectionHistory.length) return;
+      selectedCount--;
+
+      const tileIndex = selectionHistory.pop();
+      const tile = tiles[tileIndex];
+      const anchor = anchors[tileIndex];
+      anchor.classList.remove("collected");
+      tile.classList.remove("selected");
+
+      const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
+      hudSlot.textContent = "·";
+      hudSlot.classList.remove("found");
+    }
+
+    function completeWord() {
+      completedWordCount++;
+      if (!anomalyEnabled && completedWordCount >= 1) {
+        anomalyEnabled = true;
+        scheduleAnomalyCheck();
+      }
+      status.textContent = `CLUE ${wordIndex + 1} OF ${words.length}`;
+      message.classList.remove("show");
+      void message.offsetWidth;
+      message.classList.add("show");
+      tiles.forEach((tile, index) => {
+        if (!anchors[index].classList.contains("collected")) {
+          tile.style.animationDelay = `${index * 18}ms`;
+          tile.classList.add("clearing");
+        }
+      });
+
+      window.setTimeout(() => {
+        const nextIndex = wordIndex + 1;
+        if (nextIndex >= words.length) shuffleArray(words);
+        startWord(nextIndex >= words.length ? 0 : nextIndex);
+      }, 650);
+    }
+
+    function finishPanGesture({ suppressClick = false } = {}) {
+      const pointerId = panPointerId;
+      const wasPanning = isDragging;
+      // Clear ownership before releasing capture, since that release can
+      // itself fire lostpointercapture.
+      isDragging = false;
+      panPointerId = null;
+      panTapTile = null;
+      movedDuringDrag = false;
+      window.clearTimeout(letterClickResetTimer);
+      letterClickResetTimer = null;
+      suppressNextLetterClick = suppressClick;
+      body.classList.remove("grabbing");
+      if (pointerId !== null) {
+        try {
+          if (viewport.hasPointerCapture(pointerId)) viewport.releasePointerCapture(pointerId);
+        } catch {}
+      }
+      if (suppressClick) {
+        letterClickResetTimer = window.setTimeout(() => {
+          suppressNextLetterClick = false;
+          letterClickResetTimer = null;
+        }, 140);
+      }
+      if (wasPanning) {
+        offsetX = clamp(offsetX, minOffset, 0);
+        applyWorldOffset(false);
+        updateAnomalyVisibilityState();
+      }
+    }
+
+    function pointerDown(event) {
+      // The clue card and its READY button own their own pointer events.
+      if (!gameplayStarted || handVisible || gameOver) return;
+      if (event.isPrimary === false) return;
+      if (event.button !== undefined && event.button !== 0) return;
+
+      // A fresh press always starts a fresh gesture, even if an earlier
+      // release happened outside the browser and was never delivered.
+      finishPanGesture();
+      isDragging = true;
+      panPointerId = event.pointerId;
+      dragStartClientX = event.clientX;
+      dragStartClientY = event.clientY;
+      panTapTile = event.target.closest?.(".letter-tile") || null;
+      lastPanClientX = event.clientX;
+      body.classList.add("grabbing");
+      applyWorldOffset(false);
+      // Background grabs can capture immediately. Letter buttons retain
+      // their native tap target until movement becomes a real drag.
+      if (!event.target.closest?.("button, [role='button']")) {
+        try { viewport.setPointerCapture(event.pointerId); } catch {}
+      }
+    }
+
+    function pointerMove(event) {
+      if (!isDragging || event.pointerId !== panPointerId) return;
+      // Recover immediately when the mouse returns after an outside release.
+      if (event.pointerType !== "touch" && (event.buttons & 1) === 0) {
+        finishPanGesture({ suppressClick: movedDuringDrag });
+        return;
+      }
+
+      const dragDistance = event.clientX - dragStartClientX;
+      if (!movedDuringDrag) {
+        if (Math.abs(dragDistance) <= 6) return;
+        try { viewport.setPointerCapture(event.pointerId); } catch {}
+        movedDuringDrag = true;
+        suppressNextLetterClick = true;
+      }
+
+      // Consume each movement even at the room's edge. Reversing direction
+      // then moves immediately instead of having to undo an overshoot first.
+      const deltaX = event.clientX - lastPanClientX;
+      lastPanClientX = event.clientX;
+      offsetX = clamp(offsetX + deltaX, minOffset, 0);
+      applyWorldOffset(false);
+      updateAnomalyVisibilityState();
+    }
+
+    function pointerUp(event) {
+      if (!isDragging || event.pointerId !== panPointerId) return;
+
+      const tapTile = !movedDuringDrag &&
+        Math.hypot(event.clientX - dragStartClientX, event.clientY - dragStartClientY) <= 6
+        ? panTapTile : null;
+      if (movedDuringDrag) {
+        offsetX = clamp(offsetX + event.clientX - lastPanClientX, minOffset, 0);
+      }
+      // Keep the release position and suppress only the click after a drag.
+      finishPanGesture({ suppressClick: movedDuringDrag });
+      // Some browsers omit a compatibility click after an interrupted touch
+      // gesture. A genuine tap still collects immediately on this release.
+      if (tapTile && tapTile.isConnected) {
+        const rect = tapTile.getBoundingClientRect();
+        if (event.clientX >= rect.left && event.clientX <= rect.right &&
+            event.clientY >= rect.top && event.clientY <= rect.bottom) {
+          selectLetter(tapTile.dataset.letter, Number(tapTile.dataset.index), tapTile);
+        }
+      }
+    }
+
+    function pointerCancel(event) {
+      if (!isDragging || event.pointerId !== panPointerId) return;
+      finishPanGesture({ suppressClick: movedDuringDrag });
+    }
+
+    function scheduleAnomalyCheck() {
+      window.clearTimeout(anomalyTimer);
+      if (!anomalyEnabled || anomalyActive || gameOver) return;
+      anomalyTimer = window.setTimeout(async () => {
+        if (!anomalyEnabled || anomalyActive || gameOver) return;
+        if (Math.random() < ANOMALY_SPAWN_CHANCE) {
+          const placed = await spawnAnomalyOffscreen();
+          if (!placed) scheduleAnomalyCheck();
+        } else {
+          scheduleAnomalyCheck();
+        }
+      }, ANOMALY_CHECK_MS);
+    }
+
+    async function readAlphaBounds(src) {
+      return new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => {
+          try {
+            const canvas = document.createElement("canvas");
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            const ctx = canvas.getContext("2d", { willReadFrequently: true });
+            ctx.drawImage(img, 0, 0);
+            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+            let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
+            for (let y = 0; y < canvas.height; y++) {
+              for (let x = 0; x < canvas.width; x++) {
+                if (data[(y * canvas.width + x) * 4 + 3] > 8) {
+                  if (x < minX) minX = x;
+                  if (x > maxX) maxX = x;
+                  if (y < minY) minY = y;
+                  if (y > maxY) maxY = y;
+                }
+              }
+            }
+            resolve({
+              src, width: img.naturalWidth, height: img.naturalHeight,
+              bbox: maxX >= minX ? { left: minX, top: minY, right: maxX + 1, bottom: maxY + 1 } : null
+            });
+          } catch (error) {
+            console.warn("Could not inspect anomaly alpha bounds; using full image bounds.", error);
+            resolve({ src, width: img.naturalWidth, height: img.naturalHeight, bbox: { left: 0, top: 0, right: img.naturalWidth, bottom: img.naturalHeight } });
+          }
+        };
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function currentVisibleWorldRange() {
+      const left = -offsetX;
+      return { left, right: left + viewport.getBoundingClientRect().width };
+    }
+
+    function getScaledAnomalyBox(meta) {
+      const scale = viewport.getBoundingClientRect().height / meta.height;
+      return {
+        left: meta.bbox.left * scale,
+        right: meta.bbox.right * scale,
+        top: meta.bbox.top * scale,
+        bottom: meta.bbox.bottom * scale
+      };
+    }
+
+    function horizontalBoxesIntersect(a, b) {
+      return a.left < b.right && a.right > b.left;
+    }
+
+    async function spawnAnomalyOffscreen() {
+      if (anomalyActive || gameOver || !renderedVideoWidth) return false;
+      const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
+      const meta = await readAlphaBounds(src);
+      if (!meta || !meta.bbox) return false;
+
+      // The anomaly PNG is authored against the same full 1280x720 scene as
+      // the video. Keep the PNG fixed at the scene origin so its opaque pixels
+      // always land at their authored location; only the panorama itself pans.
+      const bbox = getScaledAnomalyBox(meta);
+
+      // Spawn only while the anomaly's ACTUAL non-transparent pixels are fully
+      // outside the current viewport. If its authored location is visible now,
+      // skip this checkpoint and try again on the next anomaly check.
+      const visible = currentVisibleWorldRange();
+      const edgePad = 8;
+      if (horizontalBoxesIntersect(
+        { left: bbox.left, right: bbox.right },
+        { left: visible.left - edgePad, right: visible.right + edgePad }
+      )) return false;
+
+      anomalyMeta = meta;
+      anomalyWorldBox = bbox;
+      anomalyHasBeenSeen = false;
+      anomalyActive = true;
+      anomalyImage.src = src;
+      anomalyImage.style.left = "0px";
+      anomalyImage.style.top = "0px";
+      anomalyImage.style.height = `${viewport.getBoundingClientRect().height}px`;
+      anomalyImage.style.width = "auto";
+      anomalyImage.style.display = "block";
+      anomalyWorld.style.width = `${renderedVideoWidth}px`;
+      anomalyWorld.style.height = `${viewport.getBoundingClientRect().height}px`;
+      updateAnomalyVisibilityState();
+      return true;
+    }
+
+    function updateAnomalyVisibilityState() {
+      if (!anomalyActive || !anomalyWorldBox || gameOver) return;
+      const visible = currentVisibleWorldRange();
+      const intersects = horizontalBoxesIntersect(anomalyWorldBox, visible);
+      if (intersects) {
+        anomalyHasBeenSeen = true;
+      } else if (anomalyHasBeenSeen) {
+        removeAnomalyAndRestartTimer();
+      }
+    }
+
+    function removeAnomalyAndRestartTimer() {
+      anomalyActive = false;
+      anomalyHasBeenSeen = false;
+      anomalyMeta = null;
+      anomalyWorldBox = null;
+      anomalyImage.style.display = "none";
+      anomalyImage.removeAttribute("src");
+      if (!gameOver) scheduleAnomalyCheck();
+    }
+
+    function triggerJumpscare() {
+      if (gameOver) return;
+      gameOver = true;
+      window.clearTimeout(anomalyTimer);
+      window.clearTimeout(handTimer);
+      finishPanGesture();
+
+      // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
+      // Put it into that exact panorama coordinate space at the CURRENT camera
+      // position first, so the first visible frame perfectly overlays the room.
+      const previousOffset = offsetX;
+      video.classList.remove("snapping");
+      letterWorld.classList.remove("snapping");
+      anomalyWorld.classList.remove("snapping");
+      jumpscareVideo.classList.remove("snapping");
+      jumpscareVideo.style.transform = `translateX(${previousOffset}px)`;
+      jumpscareVideo.currentTime = 0;
+      jumpscareVideo.style.display = "block";
+      jumpscareVideo.classList.add("playing");
+
+      const playPromise = jumpscareVideo.play();
+      if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
+
+      // Force the current aligned frame to be committed before starting movement.
+      // Then move EVERY panorama-space layer together only on X, using the exact
+      // original 420ms jumpscare camera transition. Y never changes.
+      void jumpscareVideo.offsetWidth;
+      requestAnimationFrame(() => {
+        const centreOffset = minOffset / 2;
+        offsetX = centreOffset;
+        applyWorldOffset(true);
+      });
+    }
+
+    function showGameOver() {
+      jumpscareVideo.classList.remove("playing");
+      jumpscareVideo.style.display = "none";
+      gameOverScreen.classList.add("show");
+    }
+
+    jumpscareVideo.addEventListener("ended", showGameOver);
+    jumpscareVideo.addEventListener("error", showGameOver);
+    gameOverScreen.addEventListener("pointerup", () => location.reload());
+    gameOverScreen.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") location.reload();
+    });
+
+    function scheduleNextHandCheck() {
+      window.clearTimeout(handTimer);
+      const delay = 8000 + Math.random() * 4000; // 10 seconds ±2 seconds
+      handTimer = window.setTimeout(() => {
+        if (!handVisible && Math.random() < 0.25) {
+          showHand();
+        } else {
+          scheduleNextHandCheck();
+        }
+      }, delay);
+    }
+
+    function showHand() {
+      if (handVisible) return;
+      handVisible = true;
+      finishPanGesture();
+      viewport.classList.add("hand-active");
+      handBlocker.className = "active entering";
+      handBlocker.setAttribute("aria-hidden", "false");
+
+      // Ensure the animation restarts cleanly every time.
+      void handImage.offsetWidth;
+      window.setTimeout(() => {
+        if (!handVisible) return;
+        handBlocker.className = "active resting";
+      }, 520);
+    }
+
+    function hideHand({ continueFromDrag = false } = {}) {
+      if (!handVisible) return;
+      viewport.classList.remove("hand-active");
+      handPointerId = null;
+      handDragStarted = false;
+
+      if (continueFromDrag) {
+        // Continue smoothly from the exact dragged position. Do NOT reset the
+        // transform to the resting position first, which caused a visible flicker.
+        handBlocker.className = "active";
+        handImage.style.transition = "transform 280ms cubic-bezier(.55,.05,.82,.34)";
+        const exitY = Math.max(viewport.clientHeight * 1.15, handImage.getBoundingClientRect().height * 1.10);
+
+        requestAnimationFrame(() => {
+          handImage.style.transform = `translate(-50%, ${exitY}px)`;
+        });
+      } else {
+        handBlocker.className = "active exiting";
+      }
+
+      window.setTimeout(() => {
+        handVisible = false;
+        handBlocker.className = "";
+        handBlocker.setAttribute("aria-hidden", "true");
+        handImage.style.transition = "";
+        handImage.style.transform = "";
+        scheduleNextHandCheck();
+      }, 300);
+    }
+
+    function handPointerDown(event) {
+      if (!handVisible || (event.button !== undefined && event.button !== 0)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handPointerId = event.pointerId;
+      handStartY = event.clientY;
+      handCurrentY = event.clientY;
+      handDragStarted = false;
+      handBlocker.classList.add("dragging");
+      try { handBlocker.setPointerCapture(event.pointerId); } catch {}
+    }
+
+    function handPointerMove(event) {
+      if (!handVisible || handPointerId !== event.pointerId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handCurrentY = event.clientY;
+      const dy = Math.max(0, handCurrentY - handStartY);
+      if (dy > 4) handDragStarted = true;
+
+      // Follow only downward gestures; upward movement does not dismiss it.
+      if (dy > 0) {
+        const maxDrag = viewport.clientHeight * 0.55;
+        const visualDy = Math.min(dy, maxDrag);
+        handImage.style.transform = `translate(-50%, ${visualDy}px)`;
+      }
+    }
+
+    function handPointerUp(event) {
+      if (!handVisible || handPointerId !== event.pointerId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const dy = event.clientY - handStartY;
+      const threshold = Math.max(70, viewport.clientHeight * 0.10);
+      handBlocker.classList.remove("dragging");
+      try { handBlocker.releasePointerCapture(event.pointerId); } catch {}
+      handPointerId = null;
+
+      if (dy >= threshold) {
+        // A committed downward swipe continues from the current drag position
+        // directly off-screen without jumping back up first.
+        hideHand({ continueFromDrag: true });
+      } else {
+        handImage.style.transition = "transform 180ms ease-out";
+        handImage.style.transform = "translate(-50%, 0)";
+        window.setTimeout(() => {
+          handImage.style.transition = "";
+          handImage.style.transform = "";
+        }, 190);
+      }
+    }
+
+    handBlocker.addEventListener("pointerdown", handPointerDown);
+    handBlocker.addEventListener("pointermove", handPointerMove);
+    handBlocker.addEventListener("pointerup", handPointerUp);
+    handBlocker.addEventListener("pointercancel", handPointerUp);
+
+    video.addEventListener("loadedmetadata", () => {
+      updateLimits();
+      buildSnapPoints();
+      offsetX = snapPoints[nearestSnapIndex(minOffset / 2)];
+      applyWorldOffset(false);
+      anomalyWorld.style.width = `${renderedVideoWidth}px`;
+      if (currentWord) createScatteredLetters();
+      updateAnomalyVisibilityState();
+    });
+
+    window.addEventListener("resize", () => {
+      updateLimits();
+      // Keep the same letters and collected state when a desktop window is
+      // resized; only rescale their existing positions with the room.
+      if (currentWord) relayoutScatteredLetters();
+      updateAnomalyVisibilityState();
+    });
+
+    window.addEventListener("keydown", event => {
+      if (event.key === "Backspace" || event.key === "Back") {
+        event.preventDefault();
+        undoLastLetter();
+      }
+    });
+
+    viewport.addEventListener("pointerdown", pointerDown);
+    // Observe releases before an overlay can stop their propagation, and
+    // clean up interruptions so the very next press can drag normally.
+    window.addEventListener("pointermove", pointerMove, true);
+    window.addEventListener("pointerup", pointerUp, true);
+    window.addEventListener("pointercancel", pointerCancel, true);
+    viewport.addEventListener("lostpointercapture", event => {
+      // A touch drag transfers implicit capture from a letter to the room.
+      // That letter's bubbling loss is not a loss of the room's new capture.
+      if (event.target === viewport && !viewport.hasPointerCapture(event.pointerId)) pointerCancel(event);
+    });
+    window.addEventListener("blur", () => finishPanGesture());
+    window.addEventListener("pagehide", () => finishPanGesture());
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) finishPanGesture();
+    });
+    viewport.addEventListener("dragstart", event => event.preventDefault());
+
+    // Loading screen: wait only for the video to be ready, then reveal the scene.
+    document.querySelectorAll(".loading-letter").forEach((letter, index) => {
+      const jitter = () => (Math.random() * 4 - 2).toFixed(2) + "px";
+      letter.style.setProperty("--lx1", jitter());
+      letter.style.setProperty("--ly1", jitter());
+      letter.style.setProperty("--lx2", jitter());
+      letter.style.setProperty("--ly2", jitter());
+      letter.style.setProperty("--lx3", jitter());
+      letter.style.setProperty("--ly3", jitter());
+      letter.style.animationDelay = `${index * 37}ms`;
+    });
+
+    function hideLoadingScreen() {
+      // Kept for compatibility; the clue intro now controls the reveal.
+      maybeShowClueIntro();
+    }
+
+    // Warm both videos while the loading screen is visible. This keeps the
+    // jumpscare decoded/ready so a later trigger can begin with minimal delay.
+    let roomVideoReady = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+    let jumpscareReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+
+    function revealWhenVideosReady() {
+      if (roomVideoReady && jumpscareReady) {
+        videosReadyForClue = true;
+        maybeShowClueIntro();
+      }
+    }
+
+    if (!roomVideoReady) {
+      const markRoomReady = () => { roomVideoReady = true; revealWhenVideosReady(); };
+      video.addEventListener("loadeddata", markRoomReady, { once: true });
+      video.addEventListener("canplay", markRoomReady, { once: true });
+      video.addEventListener("error", markRoomReady, { once: true });
+    }
+
+    if (!jumpscareReady) {
+      const markJumpscareReady = () => { jumpscareReady = true; revealWhenVideosReady(); };
+      jumpscareVideo.addEventListener("loadeddata", markJumpscareReady, { once: true });
+      jumpscareVideo.addEventListener("canplaythrough", markJumpscareReady, { once: true });
+      jumpscareVideo.addEventListener("error", markJumpscareReady, { once: true });
+      jumpscareVideo.load();
+    }
+
+    revealWhenVideosReady();
+
+    loadWords();
+  </script>
+</body>
+</html>
