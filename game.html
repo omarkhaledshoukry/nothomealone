@@ -54,6 +54,7 @@
       -webkit-user-select: none;
     }
 
+    #roomImage,
     #roomVideo {
       position: absolute;
       top: 0;
@@ -76,6 +77,7 @@
       will-change: transform;
     }
 
+    #roomImage,
     #roomVideo {
       z-index: 1;
       user-select: none;
@@ -84,6 +86,13 @@
       transition: filter 420ms ease;
     }
 
+    #roomImage {
+      display: none;
+      max-width: none;
+      -webkit-user-drag: none;
+    }
+
+    #roomImage.snapping,
     #roomVideo.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
@@ -91,6 +100,7 @@
       transition: transform 420ms cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
 
+    #portraitViewport.hand-active #roomImage,
     #portraitViewport.hand-active #roomVideo {
       filter: blur(3px);
     }
@@ -385,6 +395,7 @@
     }
 
     /* During the clue card, keep the prepared room soft and hide gameplay UI. */
+    #portraitViewport.clue-intro-active #roomImage,
     #portraitViewport.clue-intro-active #roomVideo {
       filter: blur(5px);
     }
@@ -433,6 +444,7 @@
       height: 100%;
       width: auto;
       max-width: none;
+      object-fit: fill;
       display: none;
       opacity: 1;
       background: transparent;
@@ -627,7 +639,8 @@
         </div>
       </div>
 
-      <video id="roomVideo" src="room.mp4" autoplay muted loop playsinline></video>
+      <img id="roomImage" alt="" draggable="false" />
+      <video id="roomVideo" autoplay muted loop playsinline></video>
       <div id="letterWorld" aria-label="Scattered word letters"></div>
 
       <div id="anomalyWorld" aria-hidden="true">
@@ -657,6 +670,8 @@
   <script>
     const WORDS_FILE = "words.txt";
     const POSITIONS_FILE = "room3.txt";
+    const ROOM_IMAGE_FILE = "room.png";
+    const ROOM_VIDEO_FILE = "room.mp4";
     const COORDINATE_REFERENCE_SIZE = { width: 1280, height: 720 };
     const FALLBACK_WORDS = ["cinema", "camera", "yellow", "revenge", "dialogue"];
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
@@ -669,6 +684,8 @@
 
     const viewport = document.getElementById("portraitViewport");
     const video = document.getElementById("roomVideo");
+    const roomImage = document.getElementById("roomImage");
+    let roomMedia = video;
     const letterWorld = document.getElementById("letterWorld");
     const wordDisplay = document.getElementById("wordDisplay");
     const status = document.getElementById("status");
@@ -830,23 +847,35 @@
       return array;
     }
 
+    function getRoomDimensions() {
+      return roomMedia === roomImage
+        ? { width: roomImage.naturalWidth, height: roomImage.naturalHeight }
+        : { width: video.videoWidth, height: video.videoHeight };
+    }
+
     function updateLimits() {
-      if (!video.videoWidth || !video.videoHeight) return;
+      const dimensions = getRoomDimensions();
+      if (!dimensions.width || !dimensions.height) return;
       stopCameraMomentum();
 
       // Use the actual CSS-pixel dimensions, including fractional desktop
       // widths, so the scene, authored text positions and snap edges agree.
       const { width, height } = viewport.getBoundingClientRect();
-      renderedVideoWidth = video.videoWidth * (height / video.videoHeight);
+      renderedVideoWidth = dimensions.width * (height / dimensions.height);
       minOffset = Math.min(0, width - renderedVideoWidth);
 
       letterWorld.style.width = `${renderedVideoWidth}px`;
       letterWorld.style.height = `${height}px`;
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       anomalyWorld.style.height = `${height}px`;
+      // Keep full-canvas overlays registered even if a PNG uses a different
+      // aspect ratio from the original room video.
+      jumpscareVideo.style.width = `${renderedVideoWidth}px`;
+      jumpscareVideo.style.height = `${height}px`;
       if (anomalyActive && anomalyMeta) {
         anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
         anomalyImage.style.height = `${height}px`;
+        anomalyImage.style.width = `${renderedVideoWidth}px`;
       }
 
       // Preserve the freely dragged camera position when the frame resizes.
@@ -876,11 +905,13 @@
     }
 
     function applyWorldOffset(animate = false) {
+      roomImage.classList.toggle("snapping", animate);
       video.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
       jumpscareVideo.classList.toggle("snapping", animate);
       const transform = `translateX(${offsetX}px)`;
+      roomImage.style.transform = transform;
       video.style.transform = transform;
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
@@ -1341,12 +1372,13 @@
     }
 
     function getScaledAnomalyBox(meta) {
-      const scale = viewport.getBoundingClientRect().height / meta.height;
+      const scaleX = renderedVideoWidth / meta.width;
+      const scaleY = viewport.getBoundingClientRect().height / meta.height;
       return {
-        left: meta.bbox.left * scale,
-        right: meta.bbox.right * scale,
-        top: meta.bbox.top * scale,
-        bottom: meta.bbox.bottom * scale
+        left: meta.bbox.left * scaleX,
+        right: meta.bbox.right * scaleX,
+        top: meta.bbox.top * scaleY,
+        bottom: meta.bbox.bottom * scaleY
       };
     }
 
@@ -1383,7 +1415,7 @@
       anomalyImage.style.left = "0px";
       anomalyImage.style.top = "0px";
       anomalyImage.style.height = `${viewport.getBoundingClientRect().height}px`;
-      anomalyImage.style.width = "auto";
+      anomalyImage.style.width = `${renderedVideoWidth}px`;
       anomalyImage.style.display = "block";
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       anomalyWorld.style.height = `${viewport.getBoundingClientRect().height}px`;
@@ -1423,6 +1455,7 @@
       // Put it into that exact panorama coordinate space at the CURRENT camera
       // position first, so the first visible frame perfectly overlays the room.
       const previousOffset = offsetX;
+      roomImage.classList.remove("snapping");
       video.classList.remove("snapping");
       letterWorld.classList.remove("snapping");
       anomalyWorld.classList.remove("snapping");
@@ -1574,7 +1607,7 @@
     handBlocker.addEventListener("pointerup", handPointerUp);
     handBlocker.addEventListener("pointercancel", handPointerUp);
 
-    video.addEventListener("loadedmetadata", () => {
+    function prepareRoomScene() {
       updateLimits();
       buildSnapPoints();
       offsetX = snapPoints[nearestSnapIndex(minOffset / 2)];
@@ -1582,6 +1615,10 @@
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       if (currentWord) createScatteredLetters();
       updateAnomalyVisibilityState();
+    }
+
+    video.addEventListener("loadedmetadata", () => {
+      if (roomMedia === video) prepareRoomScene();
     });
 
     window.addEventListener("resize", () => {
@@ -1617,7 +1654,7 @@
     });
     viewport.addEventListener("dragstart", event => event.preventDefault());
 
-    // Loading screen: wait only for the video to be ready, then reveal the scene.
+    // Loading screen: prepare the selected room background before revealing it.
     document.querySelectorAll(".loading-letter").forEach((letter, index) => {
       const jitter = () => (Math.random() * 4 - 2).toFixed(2) + "px";
       letter.style.setProperty("--lx1", jitter());
@@ -1634,34 +1671,63 @@
       maybeShowClueIntro();
     }
 
-    // Warm both videos while the loading screen is visible. This keeps the
-    // jumpscare decoded/ready so a later trigger can begin with minimal delay.
-    let roomVideoReady = video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
+    // Try the image first. Only request the room video if the PNG is missing
+    // or cannot be decoded; this also works when opening the game locally.
+    let roomMediaReady = false;
     let jumpscareReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 
-    function revealWhenVideosReady() {
-      if (roomVideoReady && jumpscareReady) {
+    function revealWhenMediaReady() {
+      if (roomMediaReady && jumpscareReady) {
         videosReadyForClue = true;
         maybeShowClueIntro();
       }
     }
 
-    if (!roomVideoReady) {
-      const markRoomReady = () => { roomVideoReady = true; revealWhenVideosReady(); };
-      video.addEventListener("loadeddata", markRoomReady, { once: true });
-      video.addEventListener("canplay", markRoomReady, { once: true });
-      video.addEventListener("error", markRoomReady, { once: true });
+    const markRoomVideoReady = () => {
+      if (roomMedia !== video) return;
+      roomMediaReady = true;
+      revealWhenMediaReady();
+    };
+    video.addEventListener("loadeddata", markRoomVideoReady, { once: true });
+    video.addEventListener("canplay", markRoomVideoReady, { once: true });
+    video.addEventListener("error", markRoomVideoReady, { once: true });
+
+    function useRoomVideo() {
+      roomMedia = video;
+      roomImage.style.display = "none";
+      video.style.display = "block";
+      video.preload = "auto";
+      video.src = ROOM_VIDEO_FILE;
+      video.load();
+      const playPromise = video.play();
+      if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
     }
 
+    roomImage.addEventListener("load", () => {
+      if (!roomImage.naturalWidth || !roomImage.naturalHeight) {
+        useRoomVideo();
+        return;
+      }
+      roomMedia = roomImage;
+      video.pause();
+      video.style.display = "none";
+      roomImage.style.display = "block";
+      prepareRoomScene();
+      roomMediaReady = true;
+      revealWhenMediaReady();
+    }, { once: true });
+    roomImage.addEventListener("error", useRoomVideo, { once: true });
+
     if (!jumpscareReady) {
-      const markJumpscareReady = () => { jumpscareReady = true; revealWhenVideosReady(); };
+      const markJumpscareReady = () => { jumpscareReady = true; revealWhenMediaReady(); };
       jumpscareVideo.addEventListener("loadeddata", markJumpscareReady, { once: true });
       jumpscareVideo.addEventListener("canplaythrough", markJumpscareReady, { once: true });
       jumpscareVideo.addEventListener("error", markJumpscareReady, { once: true });
       jumpscareVideo.load();
     }
 
-    revealWhenVideosReady();
+    roomImage.src = ROOM_IMAGE_FILE;
+    revealWhenMediaReady();
 
     loadWords();
   </script>
