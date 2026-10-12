@@ -662,6 +662,10 @@
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
     const ANOMALY_CHECK_MS = 15000;
     const ANOMALY_SPAWN_CHANCE = 0.50;
+    const CAMERA_DRAG_GAIN = 1.2;
+    const CAMERA_MOMENTUM_MIN_SPEED = 0.25;
+    const CAMERA_FLICK_SPEED = 0.75;
+    const CAMERA_VELOCITY_WINDOW_MS = 100;
 
     const viewport = document.getElementById("portraitViewport");
     const video = document.getElementById("roomVideo");
@@ -701,6 +705,10 @@
     let dragStartClientX = 0;
     let dragStartClientY = 0;
     let panTapTile = null;
+    let panMotionSamples = [];
+    let panMotionDirection = 0;
+    let panDirectionTravel = 0;
+    let cameraMomentumFrame = 0;
     let suppressNextLetterClick = false;
     let panPointerId = null;
     let letterClickResetTimer = null;
@@ -824,6 +832,7 @@
 
     function updateLimits() {
       if (!video.videoWidth || !video.videoHeight) return;
+      stopCameraMomentum();
 
       // Use the actual CSS-pixel dimensions, including fractional desktop
       // widths, so the scene, authored text positions and snap edges agree.
@@ -1086,7 +1095,78 @@
       }, 650);
     }
 
+    function stopCameraMomentum() {
+      if (cameraMomentumFrame) cancelAnimationFrame(cameraMomentumFrame);
+      cameraMomentumFrame = 0;
+    }
+
+    function recordPanMotion(clientX, time) {
+      const previous = panMotionSamples[panMotionSamples.length - 1];
+      if (!previous || clientX === previous.x) return;
+      const delta = clientX - previous.x;
+      const direction = Math.sign(delta);
+      if (direction !== panMotionDirection) {
+        // A reversal starts a new velocity estimate, including at an edge.
+        panMotionSamples = [previous];
+        panMotionDirection = direction;
+        panDirectionTravel = 0;
+      }
+      panDirectionTravel += Math.abs(delta);
+      panMotionSamples.push({ x: clientX, time });
+      while (panMotionSamples.length > 2 &&
+             panMotionSamples[0].time < time - CAMERA_VELOCITY_WINDOW_MS) {
+        panMotionSamples.shift();
+      }
+    }
+
+    function getPanReleaseVelocity(time) {
+      if (panMotionSamples.length < 2) return 0;
+      const first = panMotionSamples[0];
+      const last = panMotionSamples[panMotionSamples.length - 1];
+      const freshness = clamp(1 - (time - last.time) / CAMERA_VELOCITY_WINDOW_MS, 0, 1);
+      return (last.x - first.x) * CAMERA_DRAG_GAIN /
+        Math.max(16, last.time - first.time) * freshness;
+    }
+
+    function startCameraMomentum(velocity, travel) {
+      stopCameraMomentum();
+      if (!gameplayStarted || isDragging || handVisible || gameOver || document.hidden) return;
+      if (Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
+
+      const width = viewport.getBoundingClientRect().width;
+      const strongFlick = Math.abs(velocity) >= CAMERA_FLICK_SPEED &&
+        travel >= Math.max(48, width * 0.12);
+      const direction = Math.sign(velocity);
+      // A deliberate, fast flick reaches the corresponding edge. Smaller
+      // gestures coast a limited distance with the same slowing-down feel.
+      const coastDistance = Math.min(Math.abs(velocity) * 180,
+        travel * CAMERA_DRAG_GAIN * 1.75, width * 0.75);
+      const target = strongFlick ? (direction < 0 ? minOffset : 0) :
+        clamp(offsetX + direction * coastDistance, minOffset, 0);
+      const origin = offsetX;
+      const distance = Math.abs(target - origin);
+      if (distance < 0.5) return;
+
+      const duration = clamp(3 * distance / Math.abs(velocity), 240, 850);
+      const started = performance.now();
+      const step = time => {
+        if (isDragging || handVisible || gameOver || document.hidden) {
+          stopCameraMomentum();
+          return;
+        }
+        const progress = clamp((time - started) / duration, 0, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        offsetX = clamp(origin + (target - origin) * eased, minOffset, 0);
+        if (progress === 1) offsetX = target;
+        applyWorldOffset(false);
+        updateAnomalyVisibilityState();
+        cameraMomentumFrame = progress < 1 ? requestAnimationFrame(step) : 0;
+      };
+      cameraMomentumFrame = requestAnimationFrame(step);
+    }
+
     function finishPanGesture({ suppressClick = false } = {}) {
+      stopCameraMomentum();
       const pointerId = panPointerId;
       const wasPanning = isDragging;
       // Clear ownership before releasing capture, since that release can
@@ -1094,6 +1174,9 @@
       isDragging = false;
       panPointerId = null;
       panTapTile = null;
+      panMotionSamples = [];
+      panMotionDirection = 0;
+      panDirectionTravel = 0;
       movedDuringDrag = false;
       window.clearTimeout(letterClickResetTimer);
       letterClickResetTimer = null;
@@ -1132,6 +1215,8 @@
       dragStartClientY = event.clientY;
       panTapTile = event.target.closest?.(".letter-tile") || null;
       lastPanClientX = event.clientX;
+      // Input timestamps keep touch velocity independent of render delays.
+      panMotionSamples = [{ x: event.clientX, time: event.timeStamp }];
       body.classList.add("grabbing");
       applyWorldOffset(false);
       // Background grabs can capture immediately. Letter buttons retain
@@ -1149,6 +1234,7 @@
         return;
       }
 
+      recordPanMotion(event.clientX, event.timeStamp);
       const dragDistance = event.clientX - dragStartClientX;
       if (!movedDuringDrag) {
         if (Math.abs(dragDistance) <= 6) return;
@@ -1161,7 +1247,7 @@
       // then moves immediately instead of having to undo an overshoot first.
       const deltaX = event.clientX - lastPanClientX;
       lastPanClientX = event.clientX;
-      offsetX = clamp(offsetX + deltaX, minOffset, 0);
+      offsetX = clamp(offsetX + deltaX * CAMERA_DRAG_GAIN, minOffset, 0);
       applyWorldOffset(false);
       updateAnomalyVisibilityState();
     }
@@ -1169,14 +1255,20 @@
     function pointerUp(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
 
+      const released = event.timeStamp;
+      recordPanMotion(event.clientX, released);
+      const velocity = movedDuringDrag ? getPanReleaseVelocity(released) : 0;
+      const travel = panDirectionTravel;
       const tapTile = !movedDuringDrag &&
         Math.hypot(event.clientX - dragStartClientX, event.clientY - dragStartClientY) <= 6
         ? panTapTile : null;
       if (movedDuringDrag) {
-        offsetX = clamp(offsetX + event.clientX - lastPanClientX, minOffset, 0);
+        offsetX = clamp(offsetX + (event.clientX - lastPanClientX) * CAMERA_DRAG_GAIN, minOffset, 0);
       }
-      // Keep the release position and suppress only the click after a drag.
+      // Release pointer ownership before starting the independent glide, so
+      // the next press can immediately stop it and start a fresh drag.
       finishPanGesture({ suppressClick: movedDuringDrag });
+      startCameraMomentum(velocity, travel);
       // Some browsers omit a compatibility click after an interrupted touch
       // gesture. A genuine tap still collects immediately on this release.
       if (tapTile && tapTile.isConnected) {
