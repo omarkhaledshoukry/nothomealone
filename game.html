@@ -123,11 +123,6 @@
     }
 
     .letter-tile {
-      appearance: none;
-      border: 0;
-      margin: 0;
-      width: auto;
-      aspect-ratio: auto;
       padding: 8px;
       display: inline-grid;
       place-items: center;
@@ -136,10 +131,7 @@
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       line-height: 1;
       user-select: none;
-      cursor: pointer;
-      pointer-events: auto;
-      transform: scale(1);
-      transition: transform 150ms ease, opacity 170ms ease;
+      pointer-events: none;
     }
 
     .letter-glyph {
@@ -151,69 +143,73 @@
       line-height: 1;
       text-transform: uppercase;
       letter-spacing: .015em;
-      transform-origin: center center;
-      pointer-events: none;
-      opacity: 0;
-      clip-path: inset(0 100% 0 0);
-      animation:
-        letterSketchIn 280ms cubic-bezier(.22,.75,.25,1) var(--intro-delay, 0ms) forwards,
-        letterOffsetLoop 0.4s steps(1, end) calc(var(--intro-delay, 0ms) + 280ms) infinite;
-    }
-
-    .letter-tile:hover,
-    .letter-tile:focus-visible {
-      transform: scale(1.05);
-      outline: none;
-    }
-
-    .letter-tile.selected {
       pointer-events: none;
     }
 
-    .letter-anchor.collected {
-      pointer-events: none;
-      animation: collectLetter 240ms cubic-bezier(.55, 0, 1, .45) forwards;
+    .letter-anchor[hidden] {
+      display: none;
     }
 
-    .letter-tile.wrong { animation: wrongTap 220ms ease; }
-    .letter-tile.clearing { animation: tileOut 230ms ease forwards; }
+    #cameraOverlay {
+      position: absolute;
+      z-index: 10;
+      inset: 0;
+      color: #fff;
+      font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
+      font-variant-numeric: tabular-nums;
+      pointer-events: none;
+      text-shadow: -1px -1px 0 rgba(0, 0, 0, .75), 1px 1px 0 rgba(0, 0, 0, .75), 0 0 3px #000;
+      transition: opacity 180ms ease;
+    }
+
+    #cameraBattery,
+    #cameraTimer {
+      position: absolute;
+      top: max(5%, calc(env(safe-area-inset-top) + 12px));
+      font-size: clamp(10px, 1.8vh, 17px);
+      line-height: 1;
+    }
+
+    #cameraBattery {
+      left: max(4.5%, calc(env(safe-area-inset-left) + 10px));
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    #cameraBattery svg {
+      width: clamp(22px, 4.6vh, 40px);
+      height: auto;
+      filter: drop-shadow(0 0 1px #000);
+    }
+
+    #cameraTimer {
+      right: max(4.5%, calc(env(safe-area-inset-right) + 10px));
+    }
 
     #hud {
       position: absolute;
-      z-index: 10;
-      left: max(8%, calc(env(safe-area-inset-left) + 10px));
-      bottom: max(13%, calc(env(safe-area-inset-bottom) + 14px));
-      width: min(82%, 430px);
+      top: max(4%, calc(env(safe-area-inset-top) + 8px));
+      left: 27%;
+      width: 46%;
       padding: 0;
-      color: #d9f3ce;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
-      text-align: left;
+      text-align: center;
       pointer-events: none;
-      text-shadow: 0 0 2px rgba(204, 255, 190, .65);
-      backdrop-filter: none;
     }
 
     #wordDisplay {
-      min-height: 30px;
+      min-height: clamp(20px, 3.7vh, 36px);
       padding: 0;
       display: flex;
       align-items: center;
-      justify-content: flex-start;
-      gap: 4px;
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      box-shadow: none;
-      backdrop-filter: none;
+      justify-content: center;
+      gap: 3px;
     }
 
     .hud-letter {
-      min-width: 16px;
-      color: rgba(216, 247, 209, .48);
-      font-size: clamp(26px, 3.7vh, 34px);
+      min-width: 0;
+      color: rgba(255, 255, 255, .58);
+      font-size: var(--hud-letter-size, 28px);
       font-weight: 400;
       text-transform: uppercase;
       border: 0;
@@ -221,20 +217,83 @@
     }
 
     .hud-letter.found {
-      color: #d8f7d1;
+      color: #fff;
       border: 0;
       animation: hudPop 160ms ease both;
     }
 
     #status {
-      margin-top: 7px;
-      color: rgba(216, 247, 209, .64);
-      font-size: clamp(18px, 2.5vh, 22px);
+      margin-top: 3px;
+      color: rgba(255, 255, 255, .75);
+      font-size: clamp(8px, 1.2vh, 11px);
       font-weight: 400;
       letter-spacing: .03em;
       text-transform: uppercase;
-      text-shadow: none;
       line-height: 1.2;
+    }
+
+    #cameraFocus {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 8.4%;
+      aspect-ratio: 1;
+      border: 1.5px solid rgba(255, 255, 255, .9);
+      outline: 1px solid rgba(0, 0, 0, .65);
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .55), 0 0 0 3px rgba(255, 255, 255, .22);
+      transform: translate(-50%, -50%);
+    }
+
+    #cameraDate,
+    #cameraRoom {
+      position: absolute;
+      bottom: max(4.5%, calc(env(safe-area-inset-bottom) + 12px));
+      max-width: 34%;
+      font-size: clamp(10px, 1.8vh, 17px);
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    #cameraDate { left: max(4.5%, calc(env(safe-area-inset-left) + 10px)); }
+    #cameraRoom { right: max(4.5%, calc(env(safe-area-inset-right) + 10px)); }
+
+    #snapButton {
+      position: absolute;
+      left: 50%;
+      bottom: max(5%, calc(env(safe-area-inset-bottom) + 12px));
+      width: clamp(56px, 10vh, 88px);
+      aspect-ratio: 1;
+      transform: translateX(-50%);
+      padding: 4px;
+      border: 2px solid #fff;
+      border-radius: 50%;
+      background: transparent;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, .75);
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .shutter-core {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: #ed0017;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25);
+      transition: transform 90ms ease;
+    }
+
+    #snapButton:active:not(:disabled) .shutter-core,
+    #snapButton.held .shutter-core { transform: scale(.9); }
+    #snapButton.snapping .shutter-core { animation: shutterPress 180ms ease-in-out; }
+    #snapButton:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
+    #snapButton:disabled { cursor: default; }
+
+    @keyframes shutterPress {
+      0%, 100% { transform: scale(1); }
+      45% { transform: scale(.9); }
     }
 
 
@@ -406,7 +465,7 @@
     }
 
     #portraitViewport.clue-intro-active #letterWorld,
-    #portraitViewport.clue-intro-active #hud {
+    #portraitViewport.clue-intro-active #cameraOverlay {
       opacity: 0;
     }
 
@@ -555,50 +614,6 @@
 
     #message.show { animation: messageFlash 620ms ease both; }
 
-    @keyframes letterSketchIn {
-      0% {
-        opacity: 0;
-        clip-path: inset(0 100% 0 0);
-        transform: translate(-7px, 4px) scale(.94);
-        filter: blur(1.4px);
-      }
-      58% {
-        opacity: .92;
-        clip-path: inset(0 14% 0 0);
-        transform: translate(1px, -1px) scale(1.015);
-        filter: blur(.35px);
-      }
-      100% {
-        opacity: 1;
-        clip-path: inset(0 0 0 0);
-        transform: translate(0, 0) scale(1);
-        filter: blur(0);
-      }
-    }
-
-    @keyframes letterOffsetLoop {
-      0%   { translate: 0 0; }
-      25%  { translate: var(--jitter-x1, 2px) var(--jitter-y1, -1px); }
-      50%  { translate: var(--jitter-x2, -2px) var(--jitter-y2, 1px); }
-      75%  { translate: var(--jitter-x3, 1px) var(--jitter-y3, 2px); }
-      100% { translate: 0 0; }
-    }
-
-    @keyframes collectLetter {
-      0% { opacity: 1; transform: translate(-50%, -50%); }
-      100% { opacity: 0; transform: translate(-50%, calc(-50% - 90px)); }
-    }
-
-    @keyframes tileOut {
-      to { opacity: 0; transform: scale(1.35); }
-    }
-
-    @keyframes wrongTap {
-      0%, 100% { transform: scale(1); }
-      45% { transform: scale(.94); }
-      72% { transform: scale(1.04); }
-    }
-
     @keyframes hudPop {
       from { transform: scale(.68); }
       to { transform: scale(1); }
@@ -641,15 +656,35 @@
 
       <img id="roomImage" alt="" draggable="false" />
       <video id="roomVideo" autoplay muted loop playsinline></video>
-      <div id="letterWorld" aria-label="Scattered word letters"></div>
+      <div id="letterWorld" aria-label="Current letter to photograph"></div>
 
       <div id="anomalyWorld" aria-hidden="true">
         <img id="anomalyImage" alt="" draggable="false" />
       </div>
 
-      <div id="hud">
-        <div id="wordDisplay" aria-live="polite"></div>
-        <div id="status">Loading words…</div>
+      <div id="cameraOverlay" aria-hidden="true">
+        <div id="cameraBattery" aria-label="Camera battery 97 percent">
+          <svg viewBox="0 0 44 20" aria-hidden="true">
+            <rect x="1" y="2" width="38" height="16" rx="1" fill="rgba(0,0,0,.28)" stroke="white" stroke-width="1.5" />
+            <path d="M40 7h3v6h-3z" fill="white" />
+            <rect x="4" y="5" width="6" height="10" fill="#e0bd38" />
+            <rect x="12" y="5" width="6" height="10" fill="#a6d33c" />
+            <rect x="20" y="5" width="6" height="10" fill="#78d936" />
+            <rect x="28" y="5" width="8" height="10" fill="#52d52f" />
+          </svg>
+          <span>97%</span>
+        </div>
+        <div id="hud">
+          <div id="wordDisplay" aria-live="polite"></div>
+          <div id="status">Loading words…</div>
+        </div>
+        <time id="cameraTimer" aria-label="Camera elapsed time">00:00</time>
+        <div id="cameraFocus" aria-hidden="true"></div>
+        <time id="cameraDate"></time>
+        <div id="cameraRoom">ROOM 01</div>
+        <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
+          <span class="shutter-core" aria-hidden="true"></span>
+        </button>
       </div>
 
       <div id="message">Found!</div>
@@ -672,6 +707,7 @@
     const POSITIONS_FILE = "room3.txt";
     const ROOM_IMAGE_FILE = "room.png";
     const ROOM_VIDEO_FILE = "room.mp4";
+    const ROOM_NAME = "ROOM 01";
     const COORDINATE_REFERENCE_SIZE = { width: 1280, height: 720 };
     const FALLBACK_WORDS = ["cinema", "camera", "yellow", "revenge", "dialogue"];
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
@@ -689,6 +725,11 @@
     const letterWorld = document.getElementById("letterWorld");
     const wordDisplay = document.getElementById("wordDisplay");
     const status = document.getElementById("status");
+    const cameraOverlay = document.getElementById("cameraOverlay");
+    const cameraTimer = document.getElementById("cameraTimer");
+    const cameraDate = document.getElementById("cameraDate");
+    const cameraRoom = document.getElementById("cameraRoom");
+    const snapButton = document.getElementById("snapButton");
     const message = document.getElementById("message");
     const handBlocker = document.getElementById("handBlocker");
     const handImage = document.getElementById("handImage");
@@ -711,6 +752,16 @@
     let anchors = [];
     let selectionHistory = [];
     let letterPositions = [];
+    let wordTransitionPending = false;
+    let wordAdvanceTimer = null;
+    let cameraStartedAt = null;
+    let cameraElapsedSeconds = 0;
+    let cameraTimerInterval = null;
+    let shutterAnimationTimer = null;
+    let shutterPointerId = null;
+    let shutterStartX = 0;
+    let shutterStartY = 0;
+    let shutterMoved = false;
 
     let isDragging = false;
     let movedDuringDrag = false;
@@ -720,15 +771,11 @@
     let renderedVideoWidth = 0;
     let snapPoints = [0];
     let dragStartClientX = 0;
-    let dragStartClientY = 0;
-    let panTapTile = null;
     let panMotionSamples = [];
     let panMotionDirection = 0;
     let panDirectionTravel = 0;
     let cameraMomentumFrame = 0;
-    let suppressNextLetterClick = false;
     let panPointerId = null;
-    let letterClickResetTimer = null;
 
     let handVisible = false;
     let handTimer = null;
@@ -807,6 +854,9 @@
     function beginGameplayFromClues() {
       if (gameplayStarted) return;
       gameplayStarted = true;
+      cameraOverlay.setAttribute("aria-hidden", "false");
+      updateCameraControls();
+      startCameraTimer();
       clueIntro.classList.add("dismiss");
       viewport.classList.remove("clue-intro-active");
       window.setTimeout(() => {
@@ -919,6 +969,9 @@
     }
 
     function startWord(index) {
+      window.clearTimeout(wordAdvanceTimer);
+      wordAdvanceTimer = null;
+      wordTransitionPending = false;
       wordIndex = index % words.length;
       currentWord = words[wordIndex];
       selectedCount = 0;
@@ -926,6 +979,7 @@
       createHudWord();
       createScatteredLetters();
       status.textContent = `CLUE ${wordIndex + 1} OF ${words.length}`;
+      updateCameraControls();
     }
 
     function createHudWord() {
@@ -936,6 +990,133 @@
         slot.dataset.index = index;
         slot.textContent = "·";
         wordDisplay.appendChild(slot);
+      });
+      fitHudWord();
+    }
+
+    function fitHudWord() {
+      const width = wordDisplay.getBoundingClientRect().width;
+      const size = Math.min(34, (width - Math.max(0, currentWord.length - 1) * 3) /
+        Math.max(1, currentWord.length * .7));
+      wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(9, size)}px`);
+    }
+
+    function updateCameraControls() {
+      snapButton.disabled = !gameplayStarted || handVisible || gameOver || wordTransitionPending;
+    }
+
+    function updateCameraTimer() {
+      if (cameraStartedAt !== null) {
+        cameraElapsedSeconds = Math.floor((performance.now() - cameraStartedAt) / 1000);
+      }
+      const minutes = String(Math.floor(cameraElapsedSeconds / 60)).padStart(2, "0");
+      const seconds = String(cameraElapsedSeconds % 60).padStart(2, "0");
+      cameraTimer.textContent = `${minutes}:${seconds}`;
+      const now = new Date();
+      cameraDate.textContent = new Intl.DateTimeFormat("en-GB").format(now);
+      cameraDate.dateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    }
+
+    function startCameraTimer() {
+      window.clearInterval(cameraTimerInterval);
+      cameraStartedAt = performance.now();
+      cameraElapsedSeconds = 0;
+      updateCameraTimer();
+      cameraTimerInterval = window.setInterval(updateCameraTimer, 250);
+    }
+
+    function stopCameraTimer() {
+      updateCameraTimer();
+      cameraStartedAt = null;
+      window.clearInterval(cameraTimerInterval);
+      cameraTimerInterval = null;
+    }
+
+    function isCurrentLetterInFrame() {
+      const anchor = anchors[selectedCount];
+      if (!anchor || anchor.hidden) return false;
+      const glyph = anchor.querySelector(".letter-glyph");
+      const letterRect = glyph.getBoundingClientRect();
+      const frame = viewport.getBoundingClientRect();
+      // The whole viewport is the camera frame; the centre marker is visual.
+      // Use visible glyph bounds rather than the letter's invisible padding.
+      const tolerance = .5;
+      return letterRect.width > 0 && letterRect.height > 0 &&
+        letterRect.left >= frame.left - tolerance && letterRect.right <= frame.right + tolerance &&
+        letterRect.top >= frame.top - tolerance && letterRect.bottom <= frame.bottom + tolerance;
+    }
+
+    function snapCamera() {
+      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending) return;
+      finishPanGesture();
+      snapButton.classList.remove("snapping");
+      void snapButton.offsetWidth;
+      snapButton.classList.add("snapping");
+      window.clearTimeout(shutterAnimationTimer);
+      shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), 200);
+
+      if (!isCurrentLetterInFrame()) return;
+      const tile = tiles[selectedCount];
+      selectLetter(tile.dataset.letter, selectedCount, tile);
+    }
+
+    function finishShutterGesture() {
+      const pointerId = shutterPointerId;
+      shutterPointerId = null;
+      shutterMoved = false;
+      snapButton.classList.remove("held");
+      if (pointerId !== null) {
+        try {
+          if (snapButton.hasPointerCapture(pointerId)) snapButton.releasePointerCapture(pointerId);
+        } catch {}
+      }
+    }
+
+    snapButton.addEventListener("pointerdown", event => {
+      if (snapButton.disabled || event.isPrimary === false || event.button !== 0) return;
+      event.stopPropagation();
+      finishPanGesture();
+      finishShutterGesture();
+      shutterPointerId = event.pointerId;
+      shutterStartX = event.clientX;
+      shutterStartY = event.clientY;
+      snapButton.classList.add("held");
+      try { snapButton.setPointerCapture(event.pointerId); } catch {}
+    });
+    snapButton.addEventListener("pointermove", event => {
+      if (event.pointerId !== shutterPointerId) return;
+      if (event.pointerType !== "touch" && (event.buttons & 1) === 0) {
+        finishShutterGesture();
+        return;
+      }
+      if (Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) > 8) shutterMoved = true;
+    });
+    snapButton.addEventListener("pointerup", event => {
+      if (event.pointerId !== shutterPointerId) return;
+      const rect = snapButton.getBoundingClientRect();
+      const isTap = !shutterMoved &&
+        Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) <= 8 &&
+        event.clientX >= rect.left && event.clientX <= rect.right &&
+        event.clientY >= rect.top && event.clientY <= rect.bottom;
+      finishShutterGesture();
+      // Mobile browsers may omit the compatibility click after a drag.
+      // Capture on release, then ignore that optional click to avoid duplicates.
+      if (isTap) snapCamera();
+    });
+    snapButton.addEventListener("pointercancel", event => {
+      if (event.pointerId === shutterPointerId) finishShutterGesture();
+    });
+    snapButton.addEventListener("lostpointercapture", event => {
+      if (event.pointerId === shutterPointerId && !snapButton.hasPointerCapture(event.pointerId)) finishShutterGesture();
+    });
+    snapButton.addEventListener("click", event => {
+      if (event.detail > 0 || event.pointerType) return;
+      snapCamera(); // Keyboard and assistive activation still use native click.
+    });
+
+    function showCurrentLetter() {
+      anchors.forEach((anchor, index) => {
+        anchor.hidden = wordTransitionPending || index !== selectedCount;
       });
     }
 
@@ -955,20 +1136,11 @@
         anchor.dataset.worldX = positions[index].x / worldWidth;
         anchor.dataset.worldY = positions[index].y / height;
 
-        const tile = document.createElement("button");
-        tile.type = "button";
+        const tile = document.createElement("span");
         tile.className = "letter-tile";
         tile.dataset.index = index;
         tile.dataset.letter = letter;
         tile.style.setProperty("--letter-scale", (0.8 + Math.random() * 0.4).toFixed(3));
-        tile.style.setProperty("--intro-delay", `${index * 35 + Math.random() * 60}ms`);
-        const jitter = () => (Math.random() * 4 - 2).toFixed(2) + "px";
-        tile.style.setProperty("--jitter-x1", jitter());
-        tile.style.setProperty("--jitter-y1", jitter());
-        tile.style.setProperty("--jitter-x2", jitter());
-        tile.style.setProperty("--jitter-y2", jitter());
-        tile.style.setProperty("--jitter-x3", jitter());
-        tile.style.setProperty("--jitter-y3", jitter());
         tile.setAttribute("aria-label", `Letter ${letter}`);
 
         const glyph = document.createElement("span");
@@ -976,19 +1148,12 @@
         glyph.textContent = letter;
         tile.appendChild(glyph);
 
-        tile.addEventListener("click", event => {
-          event.stopPropagation();
-          // Pointer taps are handled on release below. Keep native click
-          // activation for keyboard/assistive input without collecting twice.
-          if (event.detail > 0 || event.pointerType) return;
-          selectLetter(letter, index, tile);
-        });
-
         anchor.appendChild(tile);
         letterWorld.appendChild(anchor);
         tiles.push(tile);
         anchors.push(anchor);
       });
+      showCurrentLetter();
     }
 
     function relayoutScatteredLetters() {
@@ -1058,23 +1223,17 @@
     }
 
     function selectLetter(letter, tileIndex, tile) {
-      if (!gameplayStarted || handVisible || gameOver) return;
+      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending) return;
+      if (tileIndex !== selectedCount || tile !== tiles[tileIndex] || anchors[tileIndex].hidden) return;
       if (anomalyActive) {
         triggerJumpscare();
         return;
       }
       const expectedLetter = currentWord[selectedCount];
-      if (letter !== expectedLetter || tile.classList.contains("selected")) {
-        tile.classList.remove("wrong");
-        void tile.offsetWidth;
-        tile.classList.add("wrong");
-        return;
-      }
+      if (letter !== expectedLetter || tile.classList.contains("selected")) return;
 
       tile.classList.add("selected");
       const anchor = anchors[tileIndex];
-      anchor.classList.remove("collected");
-      void anchor.offsetWidth;
       anchor.classList.add("collected");
 
       selectionHistory.push(tileIndex);
@@ -1084,10 +1243,11 @@
       selectedCount++;
 
       if (selectedCount === currentWord.length) completeWord();
+      showCurrentLetter();
     }
 
     function undoLastLetter() {
-      if (handVisible || gameOver) return;
+      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending) return;
       if (selectedCount <= 0 || !selectionHistory.length) return;
       selectedCount--;
 
@@ -1100,9 +1260,12 @@
       const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
       hudSlot.textContent = "·";
       hudSlot.classList.remove("found");
+      showCurrentLetter();
     }
 
     function completeWord() {
+      wordTransitionPending = true;
+      updateCameraControls();
       completedWordCount++;
       if (!anomalyEnabled && completedWordCount >= 1) {
         anomalyEnabled = true;
@@ -1112,14 +1275,8 @@
       message.classList.remove("show");
       void message.offsetWidth;
       message.classList.add("show");
-      tiles.forEach((tile, index) => {
-        if (!anchors[index].classList.contains("collected")) {
-          tile.style.animationDelay = `${index * 18}ms`;
-          tile.classList.add("clearing");
-        }
-      });
-
-      window.setTimeout(() => {
+      wordAdvanceTimer = window.setTimeout(() => {
+        if (gameOver) return;
         const nextIndex = wordIndex + 1;
         if (nextIndex >= words.length) shuffleArray(words);
         startWord(nextIndex >= words.length ? 0 : nextIndex);
@@ -1196,7 +1353,7 @@
       cameraMomentumFrame = requestAnimationFrame(step);
     }
 
-    function finishPanGesture({ suppressClick = false } = {}) {
+    function finishPanGesture() {
       stopCameraMomentum();
       const pointerId = panPointerId;
       const wasPanning = isDragging;
@@ -1204,25 +1361,15 @@
       // itself fire lostpointercapture.
       isDragging = false;
       panPointerId = null;
-      panTapTile = null;
       panMotionSamples = [];
       panMotionDirection = 0;
       panDirectionTravel = 0;
       movedDuringDrag = false;
-      window.clearTimeout(letterClickResetTimer);
-      letterClickResetTimer = null;
-      suppressNextLetterClick = suppressClick;
       body.classList.remove("grabbing");
       if (pointerId !== null) {
         try {
           if (viewport.hasPointerCapture(pointerId)) viewport.releasePointerCapture(pointerId);
         } catch {}
-      }
-      if (suppressClick) {
-        letterClickResetTimer = window.setTimeout(() => {
-          suppressNextLetterClick = false;
-          letterClickResetTimer = null;
-        }, 140);
       }
       if (wasPanning) {
         offsetX = clamp(offsetX, minOffset, 0);
@@ -1236,6 +1383,12 @@
       if (!gameplayStarted || handVisible || gameOver) return;
       if (event.isPrimary === false) return;
       if (event.button !== undefined && event.button !== 0) return;
+      // The shutter keeps its native click/tap. Never capture its press as
+      // a camera drag, including when a previous flick is still coasting.
+      if (event.target.closest?.("button, [role='button']")) {
+        finishPanGesture();
+        return;
+      }
 
       // A fresh press always starts a fresh gesture, even if an earlier
       // release happened outside the browser and was never delivered.
@@ -1243,25 +1396,19 @@
       isDragging = true;
       panPointerId = event.pointerId;
       dragStartClientX = event.clientX;
-      dragStartClientY = event.clientY;
-      panTapTile = event.target.closest?.(".letter-tile") || null;
       lastPanClientX = event.clientX;
       // Input timestamps keep touch velocity independent of render delays.
       panMotionSamples = [{ x: event.clientX, time: event.timeStamp }];
       body.classList.add("grabbing");
       applyWorldOffset(false);
-      // Background grabs can capture immediately. Letter buttons retain
-      // their native tap target until movement becomes a real drag.
-      if (!event.target.closest?.("button, [role='button']")) {
-        try { viewport.setPointerCapture(event.pointerId); } catch {}
-      }
+      try { viewport.setPointerCapture(event.pointerId); } catch {}
     }
 
     function pointerMove(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
       // Recover immediately when the mouse returns after an outside release.
       if (event.pointerType !== "touch" && (event.buttons & 1) === 0) {
-        finishPanGesture({ suppressClick: movedDuringDrag });
+        finishPanGesture();
         return;
       }
 
@@ -1271,7 +1418,6 @@
         if (Math.abs(dragDistance) <= 6) return;
         try { viewport.setPointerCapture(event.pointerId); } catch {}
         movedDuringDrag = true;
-        suppressNextLetterClick = true;
       }
 
       // Consume each movement even at the room's edge. Reversing direction
@@ -1290,30 +1436,18 @@
       recordPanMotion(event.clientX, released);
       const velocity = movedDuringDrag ? getPanReleaseVelocity(released) : 0;
       const travel = panDirectionTravel;
-      const tapTile = !movedDuringDrag &&
-        Math.hypot(event.clientX - dragStartClientX, event.clientY - dragStartClientY) <= 6
-        ? panTapTile : null;
       if (movedDuringDrag) {
         offsetX = clamp(offsetX + (event.clientX - lastPanClientX) * CAMERA_DRAG_GAIN, minOffset, 0);
       }
       // Release pointer ownership before starting the independent glide, so
       // the next press can immediately stop it and start a fresh drag.
-      finishPanGesture({ suppressClick: movedDuringDrag });
+      finishPanGesture();
       startCameraMomentum(velocity, travel);
-      // Some browsers omit a compatibility click after an interrupted touch
-      // gesture. A genuine tap still collects immediately on this release.
-      if (tapTile && tapTile.isConnected) {
-        const rect = tapTile.getBoundingClientRect();
-        if (event.clientX >= rect.left && event.clientX <= rect.right &&
-            event.clientY >= rect.top && event.clientY <= rect.bottom) {
-          selectLetter(tapTile.dataset.letter, Number(tapTile.dataset.index), tapTile);
-        }
-      }
     }
 
     function pointerCancel(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
-      finishPanGesture({ suppressClick: movedDuringDrag });
+      finishPanGesture();
     }
 
     function scheduleAnomalyCheck() {
@@ -1447,9 +1581,13 @@
     function triggerJumpscare() {
       if (gameOver) return;
       gameOver = true;
+      updateCameraControls();
+      stopCameraTimer();
+      window.clearTimeout(wordAdvanceTimer);
       window.clearTimeout(anomalyTimer);
       window.clearTimeout(handTimer);
       finishPanGesture();
+      finishShutterGesture();
 
       // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
       // Put it into that exact panorama coordinate space at the CURRENT camera
@@ -1480,6 +1618,8 @@
     }
 
     function showGameOver() {
+      stopCameraTimer();
+      snapButton.disabled = true;
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
       gameOverScreen.classList.add("show");
@@ -1507,7 +1647,9 @@
     function showHand() {
       if (handVisible) return;
       handVisible = true;
+      updateCameraControls();
       finishPanGesture();
+      finishShutterGesture();
       viewport.classList.add("hand-active");
       handBlocker.className = "active entering";
       handBlocker.setAttribute("aria-hidden", "false");
@@ -1542,6 +1684,7 @@
 
       window.setTimeout(() => {
         handVisible = false;
+        updateCameraControls();
         handBlocker.className = "";
         handBlocker.setAttribute("aria-hidden", "true");
         handImage.style.transition = "";
@@ -1622,10 +1765,12 @@
     });
 
     window.addEventListener("resize", () => {
+      finishShutterGesture();
       updateLimits();
       // Keep the same letters and collected state when a desktop window is
       // resized; only rescale their existing positions with the room.
       if (currentWord) relayoutScatteredLetters();
+      fitHudWord();
       updateAnomalyVisibilityState();
     });
 
@@ -1643,14 +1788,13 @@
     window.addEventListener("pointerup", pointerUp, true);
     window.addEventListener("pointercancel", pointerCancel, true);
     viewport.addEventListener("lostpointercapture", event => {
-      // A touch drag transfers implicit capture from a letter to the room.
-      // That letter's bubbling loss is not a loss of the room's new capture.
+      // Ignore capture loss from an overlay when the room still owns capture.
       if (event.target === viewport && !viewport.hasPointerCapture(event.pointerId)) pointerCancel(event);
     });
-    window.addEventListener("blur", () => finishPanGesture());
-    window.addEventListener("pagehide", () => finishPanGesture());
+    window.addEventListener("blur", () => { finishPanGesture(); finishShutterGesture(); });
+    window.addEventListener("pagehide", () => { finishPanGesture(); finishShutterGesture(); });
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) finishPanGesture();
+      if (document.hidden) { finishPanGesture(); finishShutterGesture(); }
     });
     viewport.addEventListener("dragstart", event => event.preventDefault());
 
@@ -1728,6 +1872,8 @@
 
     roomImage.src = ROOM_IMAGE_FILE;
     revealWhenMediaReady();
+    cameraRoom.textContent = ROOM_NAME;
+    updateCameraTimer();
 
     loadWords();
   </script>
