@@ -158,7 +158,7 @@
       font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
       font-variant-numeric: tabular-nums;
       pointer-events: none;
-      text-shadow: -1px -1px 0 rgba(0, 0, 0, .75), 1px 1px 0 rgba(0, 0, 0, .75), 0 0 3px #000;
+      text-shadow: none;
       transition: opacity 180ms ease;
     }
 
@@ -180,7 +180,6 @@
     #cameraBattery svg {
       width: clamp(22px, 4.6vh, 40px);
       height: auto;
-      filter: drop-shadow(0 0 1px #000);
     }
 
     #cameraTimer {
@@ -232,18 +231,6 @@
       line-height: 1.2;
     }
 
-    #cameraFocus {
-      position: absolute;
-      left: 50%;
-      top: 50%;
-      width: 8.4%;
-      aspect-ratio: 1;
-      border: 1.5px solid rgba(255, 255, 255, .9);
-      outline: 1px solid rgba(0, 0, 0, .65);
-      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .55), 0 0 0 3px rgba(255, 255, 255, .22);
-      transform: translate(-50%, -50%);
-    }
-
     #cameraDate,
     #cameraRoom {
       position: absolute;
@@ -258,17 +245,23 @@
     #cameraRoom { right: max(4.5%, calc(env(safe-area-inset-right) + 10px)); }
 
     #snapButton {
+      appearance: none;
+      -webkit-appearance: none;
       position: absolute;
       left: 50%;
-      bottom: max(5%, calc(env(safe-area-inset-bottom) + 12px));
+      bottom: max(8%, calc(env(safe-area-inset-bottom) + 12px));
       width: clamp(56px, 10vh, 88px);
+      height: clamp(56px, 10vh, 88px);
       aspect-ratio: 1;
+      display: grid;
+      place-items: center;
       transform: translateX(-50%);
       padding: 4px;
       border: 2px solid #fff;
       border-radius: 50%;
+      outline: none;
       background: transparent;
-      box-shadow: 0 0 0 1px rgba(0, 0, 0, .75);
+      box-shadow: none;
       cursor: pointer;
       pointer-events: auto;
       touch-action: none;
@@ -281,7 +274,6 @@
       height: 100%;
       border-radius: 50%;
       background: #ed0017;
-      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .25);
       transition: transform 90ms ease;
     }
 
@@ -606,7 +598,7 @@
       font-weight: 1000;
       letter-spacing: .04em;
       text-transform: uppercase;
-      text-shadow: 0 5px 0 #000, 0 10px 24px rgba(0,0,0,.65);
+      text-shadow: none;
       opacity: 0;
       transform: scale(.82);
       pointer-events: none;
@@ -679,7 +671,6 @@
           <div id="status">Loading words…</div>
         </div>
         <time id="cameraTimer" aria-label="Camera elapsed time">00:00</time>
-        <div id="cameraFocus" aria-hidden="true"></div>
         <time id="cameraDate"></time>
         <div id="cameraRoom">ROOM 01</div>
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
@@ -1038,7 +1029,7 @@
       const glyph = anchor.querySelector(".letter-glyph");
       const letterRect = glyph.getBoundingClientRect();
       const frame = viewport.getBoundingClientRect();
-      // The whole viewport is the camera frame; the centre marker is visual.
+      // The whole viewport is the camera frame.
       // Use visible glyph bounds rather than the letter's invisible padding.
       const tolerance = .5;
       return letterRect.width > 0 && letterRect.height > 0 &&
