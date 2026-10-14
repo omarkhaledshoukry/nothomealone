@@ -55,7 +55,7 @@
       --safe-right: max(0px, calc(env(safe-area-inset-right) - var(--frame-right-gap, 0px)));
       position: relative;
       height: 100%;
-      aspect-ratio: 9 / 16;
+      aspect-ratio: 10 / 16;
       max-width: 100%;
       overflow: hidden;
       background: #000;
@@ -63,6 +63,10 @@
       isolation: isolate;
       user-select: none;
       -webkit-user-select: none;
+    }
+
+    @media (max-width: 600px) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
+      #portraitViewport { width: 100%; }
     }
 
     #sceneEffects {
@@ -236,6 +240,9 @@
       height: auto;
     }
 
+    #batteryPercent { font-size: .9em; }
+    .battery-slot.drained { fill: transparent; }
+
     #cameraTimer {
       right: max(4.5%, calc(var(--safe-right) + 10px));
     }
@@ -275,17 +282,7 @@
       animation: hudPop 160ms ease both;
     }
 
-    #status {
-      margin-top: 3px;
-      color: rgba(255, 255, 255, .75);
-      font-size: var(--status-font-size, 12px);
-      font-weight: 400;
-      letter-spacing: .03em;
-      text-transform: uppercase;
-      line-height: 1.2;
-    }
-
-    #cameraDate,
+    #status,
     #cameraRoom {
       position: absolute;
       bottom: max(4.5%, calc(env(safe-area-inset-bottom) + 12px));
@@ -293,9 +290,10 @@
       font-size: var(--ui-font-size, 18px);
       line-height: 1;
       white-space: nowrap;
+      font-weight: 400;
     }
 
-    #cameraDate { left: max(4.5%, calc(var(--safe-left) + 10px)); }
+    #status { left: max(4.5%, calc(var(--safe-left) + 10px)); }
     #cameraRoom { right: max(4.5%, calc(var(--safe-right) + 10px)); }
 
     #snapButton {
@@ -564,6 +562,11 @@
       opacity: 1;
     }
 
+    #jumpscareVideo.priming {
+      display: block;
+      opacity: .001;
+    }
+
     #gameOverScreen {
       position: absolute;
       z-index: 160;
@@ -710,23 +713,22 @@
       </div>
 
       <div id="cameraOverlay" aria-hidden="true">
-        <div id="cameraBattery" aria-label="Camera battery 97 percent">
+        <div id="cameraBattery" aria-label="Camera battery: 4 of 4 slots">
           <svg viewBox="0 0 44 20" aria-hidden="true">
             <rect x="1" y="2" width="38" height="16" rx="1" fill="rgba(0,0,0,.28)" stroke="white" stroke-width="1.5" />
             <path d="M40 7h3v6h-3z" fill="white" />
-            <rect x="4" y="5" width="6" height="10" fill="#e0bd38" />
-            <rect x="12" y="5" width="6" height="10" fill="#a6d33c" />
-            <rect x="20" y="5" width="6" height="10" fill="#78d936" />
-            <rect x="28" y="5" width="8" height="10" fill="#52d52f" />
+            <rect class="battery-slot" x="4" y="5" width="6" height="10" fill="#e0bd38" />
+            <rect class="battery-slot" x="12" y="5" width="6" height="10" fill="#a6d33c" />
+            <rect class="battery-slot" x="20" y="5" width="6" height="10" fill="#78d936" />
+            <rect class="battery-slot" x="28" y="5" width="8" height="10" fill="#52d52f" />
           </svg>
-          <span>97%</span>
+          <span id="batteryPercent">100%</span>
         </div>
         <div id="hud">
           <div id="wordDisplay" aria-live="polite"></div>
-          <div id="status">Loading words…</div>
         </div>
         <time id="cameraTimer" aria-label="Camera elapsed time">00:00</time>
-        <time id="cameraDate"></time>
+        <div id="status">clue 1/3</div>
         <div id="cameraRoom">ROOM 01</div>
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
           <span class="shutter-core" aria-hidden="true"></span>
@@ -741,7 +743,7 @@
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
-      <video id="jumpscareVideo" src="jumpscare.mp4" preload="auto" playsinline></video>
+      <video id="jumpscareVideo" src="jumpscare.mp4" preload="auto" muted playsinline></video>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
@@ -763,6 +765,7 @@
     const CAMERA_FLICK_SPEED = 0.75;
     const CAMERA_VELOCITY_WINDOW_MS = 100;
     const LETTER_TRANSFER_MS = 260;
+    const BATTERY_SLOT_COUNT = 4;
 
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
@@ -777,7 +780,8 @@
     const cameraBattery = document.getElementById("cameraBattery");
     const hud = document.getElementById("hud");
     const cameraTimer = document.getElementById("cameraTimer");
-    const cameraDate = document.getElementById("cameraDate");
+    const batteryPercent = document.getElementById("batteryPercent");
+    const batterySlots = [...document.querySelectorAll(".battery-slot")];
     const cameraRoom = document.getElementById("cameraRoom");
     const snapButton = document.getElementById("snapButton");
     const message = document.getElementById("message");
@@ -798,6 +802,7 @@
     let wordIndex = 0;
     let currentWord = "";
     let selectedCount = 0;
+    let batterySlotsRemaining = BATTERY_SLOT_COUNT;
     let tiles = [];
     let anchors = [];
     let selectionHistory = [];
@@ -850,6 +855,12 @@
     let videosReadyForClue = false;
     let clueIntroShown = false;
     let gameplayStarted = false;
+    let gameplayStarting = false;
+    let jumpscareReady = false;
+    let jumpscareWarmAttempted = false;
+    let jumpscarePreparing = null;
+    let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
+    let jumpscareFrameRequest = null;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -904,8 +915,21 @@
       });
     }
 
-    function beginGameplayFromClues() {
-      if (gameplayStarted) return;
+    async function beginGameplayFromClues() {
+      if (gameplayStarted || gameplayStarting || gameOver) return;
+      gameplayStarting = true;
+      readyButton.disabled = true;
+      try {
+        // Calling play here also unlocks decoding on browsers that require
+        // a user gesture. Gameplay stays on the clue card until it is ready.
+        await prepareJumpscarePlayback();
+      } catch (error) {
+        gameplayStarting = false;
+        readyButton.disabled = false;
+        return;
+      }
+      if (gameOver) return;
+      gameplayStarting = false;
       gameplayStarted = true;
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
@@ -956,7 +980,6 @@
       viewport.style.setProperty("--frame-left-gap", `${Math.max(0, left - visibleLeft)}px`);
       viewport.style.setProperty("--frame-right-gap", `${Math.max(0, visibleLeft + (visible?.width || window.innerWidth) - right)}px`);
       viewport.style.setProperty("--ui-font-size", `${Math.min(21, Math.max(14, height * .026), width * .052)}px`);
-      viewport.style.setProperty("--status-font-size", `${Math.min(13, Math.max(11, height * .016), width * .04)}px`);
       viewport.style.setProperty("--battery-width", `${Math.min(44, Math.max(24, height * .05), width * .1)}px`);
       fitHudWord();
       const band = getSafeLetterBand();
@@ -1040,7 +1063,7 @@
       currentWord = words[wordIndex];
       selectedCount = 0;
       selectionHistory = [];
-      status.textContent = `CLUE ${wordIndex + 1} OF ${words.length}`;
+      status.textContent = `clue ${wordIndex + 1}/${words.length}`;
       createHudWord();
       createScatteredLetters();
       updateCameraControls();
@@ -1076,9 +1099,6 @@
       const minutes = String(Math.floor(cameraElapsedSeconds / 60)).padStart(2, "0");
       const seconds = String(cameraElapsedSeconds % 60).padStart(2, "0");
       cameraTimer.textContent = `${minutes}:${seconds}`;
-      const now = new Date();
-      cameraDate.textContent = new Intl.DateTimeFormat("en-GB").format(now);
-      cameraDate.dateTime = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     }
 
     function startCameraTimer() {
@@ -1124,8 +1144,20 @@
       if (letterIsVisible) {
         const tile = tiles[selectedCount];
         selectLetter(tile.dataset.letter, selectedCount, tile);
-      }
+      } else drainBatterySlot();
       if (!gameOver) playShutterEffect();
+    }
+
+    function updateBatteryUI() {
+      batterySlots.forEach((slot, index) => slot.classList.toggle("drained", index >= batterySlotsRemaining));
+      batteryPercent.textContent = `${Math.round(batterySlotsRemaining / BATTERY_SLOT_COUNT * 100)}%`;
+      cameraBattery.setAttribute("aria-label", `Camera battery: ${batterySlotsRemaining} of ${BATTERY_SLOT_COUNT} slots`);
+    }
+
+    function drainBatterySlot() {
+      batterySlotsRemaining = Math.max(0, batterySlotsRemaining - 1);
+      updateBatteryUI();
+      if (batterySlotsRemaining === 0) triggerJumpscare();
     }
 
     function stopShutterEffect() {
@@ -1310,7 +1342,7 @@
       const top = Math.max(cameraBattery.getBoundingClientRect().bottom,
         hud.getBoundingClientRect().bottom, cameraTimer.getBoundingClientRect().bottom) - frame.top;
       const bottom = Math.min(snapButton.getBoundingClientRect().top,
-        cameraDate.getBoundingClientRect().top, cameraRoom.getBoundingClientRect().top) - frame.top;
+        status.getBoundingClientRect().top, cameraRoom.getBoundingClientRect().top) - frame.top;
       return { top, bottom };
     }
 
@@ -1388,7 +1420,7 @@
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
-      status.textContent = `CLUE ${wordIndex + 1} OF ${words.length}`;
+      status.textContent = `clue ${wordIndex + 1}/${words.length}`;
       message.classList.remove("show");
       void message.offsetWidth;
       message.classList.add("show");
@@ -1719,34 +1751,65 @@
       anomalyWorld.classList.remove("snapping");
       jumpscareVideo.classList.remove("snapping");
       jumpscareVideo.style.transform = `translateX(${previousOffset}px)`;
-      jumpscareVideo.currentTime = 0;
+      // The first frame is already decoded and parked at time zero. Avoid a
+      // redundant seek here, which can delay the first visible scare frame.
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.add("playing");
+      jumpscareVideo.muted = false;
 
-      const playPromise = jumpscareVideo.play();
-      if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
-
-      // Force the current aligned frame to be committed before starting movement.
-      // Then move EVERY panorama-space layer together only on X, using the exact
-      // original 420ms jumpscare camera transition. Y never changes.
+      let movementStarted = false;
+      const flyToCentre = () => {
+        if (movementStarted || !jumpscareVideo.classList.contains("playing")) return;
+        movementStarted = true;
+        requestAnimationFrame(() => {
+          if (!jumpscareVideo.classList.contains("playing")) return;
+          offsetX = minOffset / 2;
+          applyWorldOffset(true);
+        });
+      };
+      // Show and start playback at the player's current view. Begin the
+      // camera flight only after the video presents its first playing frame.
       void jumpscareVideo.offsetWidth;
-      requestAnimationFrame(() => {
-        const centreOffset = minOffset / 2;
-        offsetX = centreOffset;
-        applyWorldOffset(true);
-      });
+      if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
+        jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(() => {
+          jumpscareFrameRequest = null;
+          flyToCentre();
+        });
+      } else jumpscareVideo.addEventListener("playing", flyToCentre, { once: true });
+      const playPromise = jumpscareVideo.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(error => {
+          if (error.name === "NotAllowedError") {
+            jumpscareVideo.muted = true;
+            const retry = jumpscareVideo.play();
+            if (retry) retry.catch(showGameOver);
+          } else showGameOver();
+        });
+      }
     }
 
     function showGameOver() {
       stopCameraTimer();
       snapButton.disabled = true;
+      if (jumpscareFrameRequest !== null) {
+        jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
+        jumpscareFrameRequest = null;
+      }
+      jumpscareVideo.pause();
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
       gameOverScreen.classList.add("show");
     }
 
-    jumpscareVideo.addEventListener("ended", showGameOver);
-    jumpscareVideo.addEventListener("error", showGameOver);
+    jumpscareVideo.addEventListener("ended", () => {
+      if (gameOver && jumpscareVideo.classList.contains("playing")) showGameOver();
+    });
+    jumpscareVideo.addEventListener("error", () => {
+      gameOver = true;
+      loadingScreen.classList.add("hidden");
+      if (!gameplayStarted) document.getElementById("gameOverTitle").textContent = "VIDEO UNAVAILABLE";
+      showGameOver();
+    });
     gameOverScreen.addEventListener("pointerup", () => location.reload());
     gameOverScreen.addEventListener("keydown", event => {
       if (event.key === "Enter" || event.key === " ") location.reload();
@@ -1936,6 +1999,10 @@
     window.addEventListener("pagehide", interruptCameraInput);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) interruptCameraInput();
+      else if (jumpscarePreparing && !jumpscareReady) {
+        const resume = jumpscareVideo.play();
+        if (resume) resume.catch(() => {});
+      }
     });
     viewport.addEventListener("dragstart", event => event.preventDefault());
 
@@ -1959,13 +2026,97 @@
     // Try the image first. Only request the room video if the PNG is missing
     // or cannot be decoded; this also works when opening the game locally.
     let roomMediaReady = false;
-    let jumpscareReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA;
 
     function revealWhenMediaReady() {
-      if (roomMediaReady && jumpscareReady) {
+      if (roomMediaReady && jumpscareMetadataReady && jumpscareWarmAttempted && !gameOver) {
         videosReadyForClue = true;
         maybeShowClueIntro();
       }
+    }
+
+    function prepareJumpscarePlayback() {
+      if (jumpscareReady) return Promise.resolve();
+      if (jumpscarePreparing) return jumpscarePreparing;
+      jumpscareVideo.classList.add("priming");
+      jumpscareVideo.muted = true;
+      let frameRequest = null;
+      let frameFallback = null;
+      let frameFallbackTimer = null;
+      let cleanupBuffer = () => {};
+      let cleanupFrameError = () => {};
+
+      const buffered = new Promise((resolve, reject) => {
+        const check = () => {
+          if (jumpscareVideo.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) resolve();
+        };
+        const failed = () => reject(new Error("Could not load jumpscare.mp4"));
+        const events = ["canplaythrough", "canplay", "loadeddata", "progress"];
+        events.forEach(type => jumpscareVideo.addEventListener(type, check));
+        jumpscareVideo.addEventListener("error", failed);
+        cleanupBuffer = () => {
+          events.forEach(type => jumpscareVideo.removeEventListener(type, check));
+          jumpscareVideo.removeEventListener("error", failed);
+        };
+        check();
+      });
+      const decoded = new Promise((resolve, reject) => {
+        const failed = () => reject(new Error("Could not decode jumpscare.mp4"));
+        jumpscareVideo.addEventListener("error", failed);
+        cleanupFrameError = () => jumpscareVideo.removeEventListener("error", failed);
+        if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
+          frameRequest = jumpscareVideo.requestVideoFrameCallback(resolve);
+          // Some mobile compositors suspend frame callbacks beneath the
+          // loader. A decoded current frame is still safe to rewind/cache;
+          // the separate buffer and play promises must also finish first.
+          const checkDecoded = () => {
+            if (jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
+            else frameFallbackTimer = window.setTimeout(checkDecoded, 100);
+          };
+          frameFallbackTimer = window.setTimeout(checkDecoded, 250);
+        } else {
+          frameFallback = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
+          jumpscareVideo.addEventListener("playing", frameFallback, { once: true });
+        }
+      });
+
+      // Call play synchronously: a READY click can supply the required user
+      // gesture on browsers that block the initial silent warm-up attempt.
+      const playPromise = jumpscareVideo.play();
+      const prepare = (async () => {
+        try {
+          await Promise.all([playPromise, buffered, decoded]);
+          jumpscareVideo.pause();
+          if (jumpscareVideo.currentTime > 0) {
+            await new Promise((resolve, reject) => {
+              const cleanup = () => {
+                jumpscareVideo.removeEventListener("seeked", done);
+                jumpscareVideo.removeEventListener("error", failed);
+              };
+              const done = () => { cleanup(); resolve(); };
+              const failed = () => { cleanup(); reject(new Error("Could not prepare jumpscare.mp4")); };
+              jumpscareVideo.addEventListener("seeked", done, { once: true });
+              jumpscareVideo.addEventListener("error", failed, { once: true });
+              jumpscareVideo.currentTime = 0;
+            });
+          }
+          jumpscareReady = true;
+        } finally {
+          cleanupBuffer();
+          cleanupFrameError();
+          window.clearTimeout(frameFallbackTimer);
+          if (frameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(frameRequest);
+          if (frameFallback) jumpscareVideo.removeEventListener("playing", frameFallback);
+          jumpscareVideo.pause();
+          jumpscareVideo.muted = false;
+          jumpscareVideo.classList.remove("priming");
+        }
+      })();
+      jumpscarePreparing = prepare.finally(() => {
+        jumpscarePreparing = null;
+        jumpscareWarmAttempted = true;
+        revealWhenMediaReady();
+      });
+      return jumpscarePreparing;
     }
 
     const markRoomVideoReady = () => {
@@ -2003,18 +2154,17 @@
     }, { once: true });
     roomImage.addEventListener("error", useRoomVideo, { once: true });
 
-    if (!jumpscareReady) {
-      const markJumpscareReady = () => { jumpscareReady = true; revealWhenMediaReady(); };
-      jumpscareVideo.addEventListener("loadeddata", markJumpscareReady, { once: true });
-      jumpscareVideo.addEventListener("canplaythrough", markJumpscareReady, { once: true });
-      jumpscareVideo.addEventListener("error", markJumpscareReady, { once: true });
-      jumpscareVideo.load();
-    }
+    jumpscareVideo.addEventListener("loadedmetadata", () => {
+      jumpscareMetadataReady = true;
+      revealWhenMediaReady();
+    });
+    prepareJumpscarePlayback().catch(() => {});
 
     resizeGameViewport();
     roomImage.src = ROOM_IMAGE_FILE;
     revealWhenMediaReady();
     cameraRoom.textContent = ROOM_NAME;
+    updateBatteryUI();
     updateCameraTimer();
 
     loadWords();
