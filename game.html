@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Room Word Hunt</title>
+  <link rel="preload" href="./Dudu_Calligraphy.ttf" as="font" type="font/ttf" crossorigin />
   <style>
     :root {
       --tarantino-yellow: #f6d20a;
@@ -19,7 +20,7 @@
 
     @font-face {
       font-family: "Dudu Calligraphy";
-      src: local("Dudu Calligraphy"), local("DuduCalligraphy");
+      src: url("./Dudu_Calligraphy.ttf") format("truetype");
       font-display: swap;
     }
 
@@ -1971,6 +1972,8 @@
     window.addEventListener("resize", requestViewportLayout);
     window.visualViewport?.addEventListener("resize", requestViewportLayout);
     window.visualViewport?.addEventListener("scroll", requestViewportLayout);
+    // Refit letter bounds after the bundled font replaces the fallback.
+    document.fonts?.ready.then(requestViewportLayout);
 
     window.addEventListener("keydown", event => {
       if (event.key === "Backspace" || event.key === "Back") {
