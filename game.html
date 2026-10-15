@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Room Word Hunt</title>
-  <link rel="preload" href="./Dudu_Calligraphy.ttf" as="font" type="font/ttf" crossorigin />
   <style>
     :root {
       --tarantino-yellow: #f6d20a;
@@ -20,7 +19,8 @@
 
     @font-face {
       font-family: "Dudu Calligraphy";
-      src: url("./Dudu_Calligraphy.ttf") format("truetype");
+      src: local("Dudu Calligraphy"), local("DuduCalligraphy"),
+        url("./Dudu_Calligraphy.ttf") format("truetype");
       font-display: swap;
     }
 
@@ -376,6 +376,31 @@
       text-transform: uppercase;
     }
 
+    #loadingWord[hidden], #wordLoadError[hidden] { display: none; }
+    #wordLoadError {
+      width: min(88%, 440px);
+      max-height: 90%;
+      overflow: auto;
+      padding: 20px;
+      color: #f1efe5;
+      font: 16px/1.45 Arial, Helvetica, sans-serif;
+      text-align: left;
+      cursor: auto;
+    }
+    #wordLoadError h2 { margin: 0 0 12px; font-size: 23px; }
+    #wordLoadError p { margin: 12px 0; }
+    #wordLoadUrl { color: inherit; overflow-wrap: anywhere; }
+    .word-error-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+    .word-error-actions button {
+      padding: 10px 14px;
+      border: 1px solid currentColor;
+      border-radius: 5px;
+      color: inherit;
+      background: transparent;
+      font: inherit;
+      cursor: pointer;
+    }
+
     .loading-letter {
       display: inline-block;
       animation: loadingJitter 0.4s steps(1, end) infinite;
@@ -689,6 +714,17 @@
           <span class="loading-letter">N</span>
           <span class="loading-letter">G</span>
         </div>
+        <div id="wordLoadError" role="alert" hidden>
+          <h2>Couldn’t load words.txt</h2>
+          <p id="wordLoadReason"></p>
+          <a id="wordLoadUrl" target="_blank" rel="noopener"></a>
+          <p>Retry, or choose your word list directly.</p>
+          <div class="word-error-actions">
+            <button id="retryWordsButton" type="button">Retry</button>
+            <button id="chooseWordsButton" type="button">Choose words.txt</button>
+          </div>
+          <input id="wordFileInput" type="file" accept=".txt,text/plain" hidden />
+        </div>
       </div>
 
       <div id="clueIntro" aria-hidden="true">
@@ -728,8 +764,8 @@
         <div id="hud">
           <div id="wordDisplay" aria-live="polite"></div>
         </div>
-        <time id="cameraTimer" aria-label="Camera elapsed time">00:00</time>
-        <div id="status">clue 1/3</div>
+        <time id="cameraTimer" aria-label="Room time remaining">01:00</time>
+        <div id="status">CLUE 1/3</div>
         <div id="cameraRoom">ROOM 01</div>
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
           <span class="shutter-core" aria-hidden="true"></span>
@@ -754,10 +790,10 @@
 
   <script>
     const WORDS_FILE = "words.txt";
+    const WORDS_TIMEOUT_MS = 15000;
     const ROOM_IMAGE_FILE = "room.png";
     const ROOM_VIDEO_FILE = "room.mp4";
     const ROOM_NAME = "ROOM 01";
-    const FALLBACK_WORDS = ["cinema", "camera", "yellow", "revenge", "dialogue"];
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
     const ANOMALY_CHECK_MS = 15000;
     const ANOMALY_SPAWN_CHANCE = 0.50;
@@ -767,6 +803,7 @@
     const CAMERA_VELOCITY_WINDOW_MS = 100;
     const LETTER_TRANSFER_MS = 260;
     const BATTERY_SLOT_COUNT = 4;
+    const ROOM_TIME_LIMIT_MS = 60000;
 
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
@@ -789,6 +826,11 @@
     const handBlocker = document.getElementById("handBlocker");
     const handImage = document.getElementById("handImage");
     const loadingScreen = document.getElementById("loadingScreen");
+    const loadingWord = document.getElementById("loadingWord");
+    const wordLoadError = document.getElementById("wordLoadError");
+    const wordLoadReason = document.getElementById("wordLoadReason");
+    const wordLoadUrl = document.getElementById("wordLoadUrl");
+    const wordFileInput = document.getElementById("wordFileInput");
     const clueIntro = document.getElementById("clueIntro");
     const clueList = document.getElementById("clueList");
     const readyButton = document.getElementById("readyButton");
@@ -800,6 +842,8 @@
     const body = document.body;
 
     let words = [];
+    let wordsLoading = false;
+    let wordLoadInfo = { status: "pending", url: new URL(WORDS_FILE, document.baseURI).href, count: 0, error: null };
     let wordIndex = 0;
     let currentWord = "";
     let selectedCount = 0;
@@ -815,7 +859,7 @@
     let wordTransitionPending = false;
     let wordAdvanceTimer = null;
     let cameraStartedAt = null;
-    let cameraElapsedSeconds = 0;
+    let cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
     let cameraTimerInterval = null;
     let shutterAnimationTimer = null;
     let shutterPointerId = null;
@@ -845,6 +889,7 @@
     let handDragStarted = false;
 
     let completedWordCount = 0;
+    let roomCompleted = false;
     let anomalyEnabled = false;
     let anomalyTimer = null;
     let anomalyActive = false;
@@ -865,40 +910,95 @@
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-    async function loadWords() {
-      try {
-        const response = await fetch(WORDS_FILE, { cache: "no-store" });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-        const text = await response.text();
-        words = text
-          .split(/\r?\n/)
-          .map(line => line.trim().toLowerCase())
-          .filter(line => line && !line.startsWith("#"))
-          .map(line => line.replace(/[^a-z0-9]/g, ""))
-          .filter(Boolean);
-
-        if (!words.length) throw new Error("No valid words found");
-      } catch (error) {
-        console.warn("Could not load words.txt; using built-in sample words.", error);
-        words = [...FALLBACK_WORDS];
-        status.textContent = "Using built-in words (serve locally to load words.txt)";
+    function acceptWordList(text, source, contentType = "") {
+      if (/text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(text)) {
+        throw new Error("The server returned a web page instead of the word list.");
       }
+      const loaded = [...new Set(text
+        .split(/\r\n?|\n/)
+        .map(line => line.trim().toLowerCase())
+        .filter(line => line && !line.startsWith("#"))
+        .map(line => line.replace(/[^a-z0-9]/g, ""))
+        .filter(Boolean))];
+      if (!loaded.length) throw new Error("The file contains no valid words.");
 
-      shuffleArray(words);
+      wordLoadInfo = { status: "loaded", url: source, count: loaded.length, error: null };
+      console.info(`Loaded ${loaded.length} words from ${source}`);
+      words = shuffleArray(loaded);
       // This run uses exactly three randomly selected clues from words.txt.
       words = words.slice(0, Math.min(3, words.length));
+      wordLoadError.hidden = true;
+      loadingWord.hidden = false;
+      readyButton.disabled = false;
       startWord(0);
       populateClueList();
       wordsReadyForClue = true;
       maybeShowClueIntro();
     }
 
+    function showWordLoadError(error) {
+      const reason = error.name === "AbortError"
+        ? "The request timed out. Check your connection and retry."
+        : error.message;
+      wordLoadInfo = { ...wordLoadInfo, status: "error", count: 0, error: reason };
+      wordsReadyForClue = false;
+      readyButton.disabled = true;
+      loadingWord.hidden = true;
+      wordLoadError.hidden = false;
+      wordLoadReason.textContent = reason;
+      wordLoadUrl.href = wordLoadInfo.url;
+      wordLoadUrl.textContent = wordLoadInfo.url;
+      console.warn("Could not load the word list.", wordLoadInfo);
+    }
+
+    async function loadWords() {
+      if (wordsLoading || gameplayStarted) return;
+      wordsLoading = true;
+      readyButton.disabled = true;
+      wordLoadError.hidden = true;
+      loadingWord.hidden = false;
+      wordLoadInfo = { status: "loading", url: new URL(WORDS_FILE, document.baseURI).href, count: 0, error: null };
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), WORDS_TIMEOUT_MS);
+      try {
+        const response = await fetch(wordLoadInfo.url, { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error(`The server returned HTTP ${response.status} for words.txt.`);
+        const text = await response.text();
+        acceptWordList(text, response.url, response.headers.get("content-type") || "");
+      } catch (error) {
+        if (error instanceof TypeError) {
+          error = new Error(location.protocol === "file:"
+            ? "This browser blocked automatic loading from a local HTML file. Choose words.txt below, or open the hosted game."
+            : "The browser could not read words.txt. Check the file address below and your connection.");
+        }
+        showWordLoadError(error);
+      } finally {
+        window.clearTimeout(timeout);
+        wordsLoading = false;
+      }
+    }
+
+    document.getElementById("retryWordsButton").addEventListener("click", loadWords);
+    document.getElementById("chooseWordsButton").addEventListener("click", () => wordFileInput.click());
+    wordFileInput.addEventListener("change", async () => {
+      const file = wordFileInput.files[0];
+      if (!file || wordsLoading || gameplayStarted) return;
+      wordsLoading = true;
+      try {
+        acceptWordList(await file.text(), file.name, file.type);
+      } catch (error) {
+        showWordLoadError(error);
+      } finally {
+        wordFileInput.value = "";
+        wordsLoading = false;
+      }
+    });
+
     function populateClueList() {
       clueList.replaceChildren();
       words.forEach(word => {
         const item = document.createElement("li");
-        item.textContent = word;
+        item.textContent = word.toUpperCase();
         clueList.appendChild(item);
       });
     }
@@ -917,7 +1017,7 @@
     }
 
     async function beginGameplayFromClues() {
-      if (gameplayStarted || gameplayStarting || gameOver) return;
+      if (!wordsReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       gameplayStarting = true;
       readyButton.disabled = true;
       try {
@@ -1064,7 +1164,7 @@
       currentWord = words[wordIndex];
       selectedCount = 0;
       selectionHistory = [];
-      status.textContent = `clue ${wordIndex + 1}/${words.length}`;
+      status.textContent = `CLUE ${wordIndex + 1}/${words.length}`;
       createHudWord();
       createScatteredLetters();
       updateCameraControls();
@@ -1090,31 +1190,39 @@
     }
 
     function updateCameraControls() {
-      snapButton.disabled = !gameplayStarted || handVisible || gameOver || wordTransitionPending || captureInProgress;
+      snapButton.disabled = !gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress;
     }
 
     function updateCameraTimer() {
       if (cameraStartedAt !== null) {
-        cameraElapsedSeconds = Math.floor((performance.now() - cameraStartedAt) / 1000);
+        cameraRemainingSeconds = Math.max(0, Math.ceil(
+          (ROOM_TIME_LIMIT_MS - (performance.now() - cameraStartedAt)) / 1000));
       }
-      const minutes = String(Math.floor(cameraElapsedSeconds / 60)).padStart(2, "0");
-      const seconds = String(cameraElapsedSeconds % 60).padStart(2, "0");
+      const minutes = String(Math.floor(cameraRemainingSeconds / 60)).padStart(2, "0");
+      const seconds = String(cameraRemainingSeconds % 60).padStart(2, "0");
       cameraTimer.textContent = `${minutes}:${seconds}`;
+      if (cameraStartedAt !== null && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
+        triggerJumpscare();
+      }
     }
 
     function startCameraTimer() {
       window.clearInterval(cameraTimerInterval);
       cameraStartedAt = performance.now();
-      cameraElapsedSeconds = 0;
+      cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       updateCameraTimer();
       cameraTimerInterval = window.setInterval(updateCameraTimer, 250);
     }
 
     function stopCameraTimer() {
-      updateCameraTimer();
+      if (cameraStartedAt !== null) {
+        cameraRemainingSeconds = Math.max(0, Math.ceil(
+          (ROOM_TIME_LIMIT_MS - (performance.now() - cameraStartedAt)) / 1000));
+      }
       cameraStartedAt = null;
       window.clearInterval(cameraTimerInterval);
       cameraTimerInterval = null;
+      updateCameraTimer();
     }
 
     function isCurrentLetterInFrame() {
@@ -1132,7 +1240,11 @@
     }
 
     function snapCamera() {
-      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending || captureInProgress) return;
+      if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      // Check the real deadline before accepting a photo, even if a browser
+      // throttled the interval while the tab was in the background.
+      updateCameraTimer();
+      if (gameOver) return;
       finishPanGesture();
       stopShutterEffect();
       const letterIsVisible = isCurrentLetterInFrame();
@@ -1370,7 +1482,9 @@
     }
 
     function selectLetter(letter, tileIndex, tile) {
-      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending || captureInProgress) return;
+      if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      updateCameraTimer();
+      if (gameOver) return;
       if (tileIndex !== selectedCount || tile !== tiles[tileIndex] || anchors[tileIndex].hidden) return;
       if (anomalyActive) {
         triggerJumpscare();
@@ -1386,7 +1500,7 @@
       anchor.classList.add("collected");
 
       selectionHistory.push(tileIndex);
-      hudSlot.textContent = expectedLetter;
+      hudSlot.textContent = expectedLetter.toUpperCase();
       hudSlot.classList.add("found");
       selectedCount++;
 
@@ -1395,7 +1509,7 @@
     }
 
     function undoLastLetter() {
-      if (!gameplayStarted || handVisible || gameOver || wordTransitionPending) return;
+      if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending) return;
       if (selectedCount <= 0 || !selectionHistory.length) return;
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
@@ -1414,22 +1528,36 @@
     }
 
     function completeWord() {
+      if (wordTransitionPending || gameOver || roomCompleted) return;
       wordTransitionPending = true;
       updateCameraControls();
       completedWordCount++;
-      if (!anomalyEnabled && completedWordCount >= 1) {
+      // Correct words use power, but only missed photos can spend the last slot.
+      if (batterySlotsRemaining > 1) drainBatterySlot();
+      if (completedWordCount >= words.length) {
+        roomCompleted = true;
+        stopCameraTimer();
+        window.clearTimeout(anomalyTimer);
+        window.clearTimeout(handTimer);
+      }
+      if (!roomCompleted && !anomalyEnabled && completedWordCount >= 1) {
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
-      status.textContent = `clue ${wordIndex + 1}/${words.length}`;
+      status.textContent = `CLUE ${wordIndex + 1}/${words.length}`;
       message.classList.remove("show");
       void message.offsetWidth;
       message.classList.add("show");
       wordAdvanceTimer = window.setTimeout(() => {
         if (gameOver) return;
-        const nextIndex = wordIndex + 1;
-        if (nextIndex >= words.length) shuffleArray(words);
-        startWord(nextIndex >= words.length ? 0 : nextIndex);
+        if (roomCompleted) {
+          document.getElementById("gameOverTitle").textContent = "ROOM COMPLETE";
+          document.getElementById("retryText").textContent = "TAP TO PLAY AGAIN";
+          gameOverScreen.setAttribute("aria-label", "Room complete. Tap to play again.");
+          gameOverScreen.classList.add("show");
+          return;
+        }
+        startWord(wordIndex + 1);
       }, 650);
     }
 
@@ -1468,7 +1596,7 @@
 
     function startCameraMomentum(velocity, travel) {
       stopCameraMomentum();
-      if (!gameplayStarted || isDragging || handVisible || gameOver || document.hidden) return;
+      if (!gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
       if (Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
 
       const width = viewport.getBoundingClientRect().width;
@@ -1530,7 +1658,7 @@
 
     function pointerDown(event) {
       // The clue card and its READY button own their own pointer events.
-      if (!gameplayStarted || handVisible || gameOver) return;
+      if (!gameplayStarted || handVisible || gameOver || roomCompleted) return;
       if (event.isPrimary === false) return;
       if (event.button !== undefined && event.button !== 0) return;
       // The shutter keeps its native click/tap. Never capture its press as
@@ -1603,9 +1731,9 @@
 
     function scheduleAnomalyCheck() {
       window.clearTimeout(anomalyTimer);
-      if (!anomalyEnabled || anomalyActive || gameOver) return;
+      if (!anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
       anomalyTimer = window.setTimeout(async () => {
-        if (!anomalyEnabled || anomalyActive || gameOver) return;
+        if (!anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
         if (Math.random() < ANOMALY_SPAWN_CHANCE) {
           const placed = await spawnAnomalyOffscreen();
           if (!placed) scheduleAnomalyCheck();
@@ -1672,10 +1800,10 @@
     }
 
     async function spawnAnomalyOffscreen() {
-      if (anomalyActive || gameOver || !renderedVideoWidth) return false;
+      if (anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (!meta || !meta.bbox) return false;
+      if (!meta || !meta.bbox || gameOver || roomCompleted) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -1730,7 +1858,7 @@
     }
 
     function triggerJumpscare() {
-      if (gameOver) return;
+      if (gameOver || roomCompleted) return;
       gameOver = true;
       updateCameraControls();
       stopCameraTimer();
@@ -1818,6 +1946,7 @@
 
     function scheduleNextHandCheck() {
       window.clearTimeout(handTimer);
+      if (gameOver || roomCompleted) return;
       const delay = 8000 + Math.random() * 4000; // 10 seconds ±2 seconds
       handTimer = window.setTimeout(() => {
         if (!handVisible && Math.random() < 0.25) {
@@ -1829,7 +1958,7 @@
     }
 
     function showHand() {
-      if (handVisible) return;
+      if (handVisible || gameOver || roomCompleted) return;
       handVisible = true;
       updateCameraControls();
       finishPanGesture();
@@ -2002,9 +2131,12 @@
     window.addEventListener("pagehide", interruptCameraInput);
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) interruptCameraInput();
-      else if (jumpscarePreparing && !jumpscareReady) {
-        const resume = jumpscareVideo.play();
-        if (resume) resume.catch(() => {});
+      else {
+        updateCameraTimer();
+        if (jumpscarePreparing && !jumpscareReady) {
+          const resume = jumpscareVideo.play();
+          if (resume) resume.catch(() => {});
+        }
       }
     });
     viewport.addEventListener("dragstart", event => event.preventDefault());
