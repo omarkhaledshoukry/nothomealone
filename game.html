@@ -907,6 +907,10 @@
     let jumpscarePreparing = null;
     let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
     let jumpscareFrameRequest = null;
+    let jumpscareAudioContext = null;
+    let jumpscareAudioGain = null;
+    let jumpscareAudioSource = null;
+    let jumpscareAudioUnlocked = false;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -1023,7 +1027,7 @@
       try {
         // Calling play here also unlocks decoding on browsers that require
         // a user gesture. Gameplay stays on the clue card until it is ready.
-        await prepareJumpscarePlayback();
+        await prepareJumpscarePlayback({ unlockAudio: true });
       } catch (error) {
         gameplayStarting = false;
         readyButton.disabled = false;
@@ -1885,6 +1889,10 @@
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
+      if (jumpscareAudioGain) {
+        jumpscareAudioGain.gain.setValueAtTime(1, jumpscareAudioContext.currentTime);
+        resumeJumpscareAudio();
+      }
 
       let movementStarted = false;
       const flyToCentre = () => {
@@ -1925,6 +1933,7 @@
         jumpscareFrameRequest = null;
       }
       jumpscareVideo.pause();
+      if (jumpscareAudioGain) jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
       gameOverScreen.classList.add("show");
@@ -2132,6 +2141,7 @@
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) interruptCameraInput();
       else {
+        if (gameplayStarted && !roomCompleted) resumeJumpscareAudio();
         updateCameraTimer();
         if (jumpscarePreparing && !jumpscareReady) {
           const resume = jumpscareVideo.play();
@@ -2169,11 +2179,52 @@
       }
     }
 
-    function prepareJumpscarePlayback() {
-      if (jumpscareReady) return Promise.resolve();
+    function resumeJumpscareAudio() {
+      if (!jumpscareAudioContext || jumpscareAudioContext.state === "running" || jumpscareAudioContext.state === "closed") return;
+      const resumed = jumpscareAudioContext.resume();
+      if (resumed) resumed.catch(error => console.warn("Could not resume jumpscare audio.", error));
+    }
+
+    // Keep desktop audio in the native media player. Routing file:// media
+    // through Web Audio can produce CORS silence even when video playback works.
+    // Touch devices use gain zero to unlock sound without an audible warm-up.
+    function unlockJumpscareAudio() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      const needsAudioGraph = location.protocol !== "file:" && window.matchMedia("(pointer: coarse)").matches;
+      if (!needsAudioGraph || !AudioContextClass) {
+        jumpscareVideo.volume = 0;
+        return Promise.resolve();
+      }
+      if (!jumpscareAudioContext) {
+        jumpscareAudioContext = new AudioContextClass();
+        jumpscareAudioGain = jumpscareAudioContext.createGain();
+        jumpscareAudioGain.gain.value = 0;
+        jumpscareAudioSource = jumpscareAudioContext.createMediaElementSource(jumpscareVideo);
+        jumpscareAudioSource.connect(jumpscareAudioGain);
+        jumpscareAudioGain.connect(jumpscareAudioContext.destination);
+      }
+      jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
+      // Call resume here, synchronously inside READY's click handler.
+      return jumpscareAudioContext.resume().then(() => {
+        if (jumpscareAudioContext.state !== "running") throw new Error("Jumpscare audio is not ready.");
+      });
+    }
+
+    // Restore an interrupted audio context on the next real interaction too.
+    window.addEventListener("pointerup", event => {
+      if (event.isTrusted && gameplayStarted && !gameOver && !roomCompleted) resumeJumpscareAudio();
+    }, true);
+
+    function prepareJumpscarePlayback({ unlockAudio = false } = {}) {
+      if (jumpscareReady && (!unlockAudio || jumpscareAudioUnlocked)) return Promise.resolve();
       if (jumpscarePreparing) return jumpscarePreparing;
+      const audioReady = unlockAudio ? unlockJumpscareAudio() : Promise.resolve();
       jumpscareVideo.classList.add("priming");
-      jumpscareVideo.muted = true;
+      // Unlock the same video from READY. Desktop uses volume zero during
+      // warm-up; mobile uses its gain node, since system volume is user-owned.
+      const audibleWarmup = unlockAudio;
+      jumpscareVideo.muted = !audibleWarmup;
+      if (audibleWarmup) jumpscareVideo.defaultMuted = false;
       let frameRequest = null;
       let frameFallback = null;
       let frameFallbackTimer = null;
@@ -2219,7 +2270,7 @@
       const playPromise = jumpscareVideo.play();
       const prepare = (async () => {
         try {
-          await Promise.all([playPromise, buffered, decoded]);
+          await Promise.all([playPromise, buffered, decoded, audioReady]);
           jumpscareVideo.pause();
           if (jumpscareVideo.currentTime > 0) {
             await new Promise((resolve, reject) => {
@@ -2235,6 +2286,7 @@
             });
           }
           jumpscareReady = true;
+          if (unlockAudio) jumpscareAudioUnlocked = true;
         } finally {
           cleanupBuffer();
           cleanupFrameError();
@@ -2242,6 +2294,7 @@
           if (frameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(frameRequest);
           if (frameFallback) jumpscareVideo.removeEventListener("playing", frameFallback);
           jumpscareVideo.pause();
+          jumpscareVideo.volume = 1;
           jumpscareVideo.muted = false;
           jumpscareVideo.classList.remove("priming");
         }
