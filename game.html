@@ -3,9 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="color-scheme" content="only light" />
   <title>Room Word Hunt</title>
   <style>
     :root {
+      color-scheme: only light;
       --tarantino-yellow: #f6d20a;
       --letter-beige: rgba(241, 239, 229, 0.80);
       --ink: #090909;
@@ -19,7 +21,7 @@
 
     @font-face {
       font-family: "Dudu Calligraphy";
-      src: local("Dudu Calligraphy"), local("DuduCalligraphy"),
+      src: local("Dudu Calligraphy"), local("DuduCalligraphy"), local("Dudu_Calligraphy"),
         url("./Dudu_Calligraphy.ttf") format("truetype");
       font-display: swap;
     }
@@ -40,6 +42,8 @@
     body.grabbing { cursor: grabbing; }
 
     #game {
+      color-scheme: only light;
+      forced-color-adjust: none;
       position: fixed;
       top: var(--game-top, 0px);
       left: var(--game-left, 0px);
@@ -311,6 +315,8 @@
       transform: translateX(-50%);
       padding: 4px;
       border: 2px solid #fff;
+      color: #fff;
+      opacity: 1;
       border-radius: 50%;
       outline: none;
       background: transparent;
@@ -326,7 +332,7 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #ed0017;
+      background: #fff;
       transition: transform 90ms ease;
     }
 
@@ -334,7 +340,7 @@
     #snapButton.held .shutter-core { transform: scale(.9); }
     #snapButton.snapping .shutter-core { animation: shutterPress 180ms ease-in-out; }
     #snapButton:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
-    #snapButton:disabled { cursor: default; }
+    #snapButton:disabled { cursor: default; opacity: 1; border-color: #fff; }
 
     @keyframes shutterPress {
       0%, 100% { transform: scale(1); }
@@ -461,12 +467,18 @@
       user-select: none;
       -webkit-user-drag: none;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.34));
+      color-scheme: only light;
+      forced-color-adjust: none;
+      opacity: 1;
+      mix-blend-mode: normal;
     }
 
     #cluePaperText {
       position: absolute;
       inset: 13% 12% 12% 17%;
-      color: rgba(31, 26, 21, .90);
+      color: #000;
+      -webkit-text-fill-color: #000;
+      forced-color-adjust: none;
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       text-align: left;
       transform: rotate(-0.4deg);
@@ -610,8 +622,18 @@
     }
 
     #gameOverScreen.show { display: flex; }
+    #gameOverScreen.show #gameOverTitle { animation: gameOverJitter .38s steps(1, end) infinite; }
+    #gameOverScreen.show #retryText { animation: gameOverJitter .43s steps(1, end) 75ms infinite; }
     #gameOverTitle { font-size: clamp(42px, calc(var(--view-unit) * 7), 72px); line-height: 1; }
     #retryText { font-size: clamp(20px, calc(var(--view-unit) * 3), 30px); opacity: .78; }
+
+    @keyframes gameOverJitter {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(2px, -1px); }
+      40% { transform: translate(-2px, 2px); }
+      60% { transform: translate(1px, -2px); }
+      80% { transform: translate(-1px, 1px); }
+    }
 
 
     #handBlocker {
@@ -780,7 +802,7 @@
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
-      <video id="jumpscareVideo" src="jumpscare.mp4" preload="auto" muted playsinline></video>
+      <video id="jumpscareVideo" preload="auto" muted playsinline></video>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
@@ -791,9 +813,15 @@
   <script>
     const WORDS_FILE = "words.txt";
     const WORDS_TIMEOUT_MS = 15000;
-    const ROOM_IMAGE_FILE = "room.png";
-    const ROOM_VIDEO_FILE = "room.mp4";
-    const ROOM_NAME = "ROOM 01";
+    const LEVELS_DIRECTORY = "levels/";
+    // Directory listings / levels/index.json support any numbering, including gaps.
+    // Hosts without either use numbered probes and stop after 16 absent numbers.
+    const LEVEL_PROBE_GAP = 16;
+    let ROOM_IMAGE_FILE = null;
+    let ROOM_VIDEO_FILE = null;
+    let ROOM_NAME = "ROOM";
+    let availableScenes = [];
+    let currentScene = null;
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
     const ANOMALY_CHECK_MS = 15000;
     const ANOMALY_SPAWN_CHANCE = 0.50;
@@ -913,6 +941,187 @@
     let jumpscareAudioUnlocked = false;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+
+    const levelBaseURL = new URL(LEVELS_DIRECTORY, document.baseURI);
+
+    // Only these exact numbered filenames can enter the scene catalogue.
+    // Group by number before choosing anything, so missing partners are skipped.
+    function buildSceneCatalog(filenames) {
+      const groups = new Map();
+      const imageTypes = ["png", "webp", "jpg", "jpeg"];
+      const videoTypes = ["mp4", "webm", "m4v", "mov"];
+      for (const entry of filenames) {
+        const name = typeof entry === "string" ? entry : entry?.name;
+        if (!name) continue;
+        const match = /^(room|jumpscare)_(\d+)\.(png|webp|jpe?g|mp4|webm|m4v|mov)$/i.exec(name);
+        if (!match) continue;
+        const number = Number(match[2]);
+        if (!Number.isSafeInteger(number) || number < 1) continue;
+        if (!groups.has(number)) groups.set(number, { number, images: [], videos: [], scares: [] });
+        const group = groups.get(number);
+        const extension = match[3].toLowerCase();
+        if (match[1].toLowerCase() === "room") {
+          (imageTypes.includes(extension) ? group.images : group.videos).push(name);
+        } else if (videoTypes.includes(extension)) group.scares.push(name);
+      }
+      const preferred = (names, types) => names.sort((a, b) =>
+        types.indexOf(a.split(".").pop().toLowerCase()) - types.indexOf(b.split(".").pop().toLowerCase()))[0] || null;
+      const assetURL = name => name ? new URL(encodeURIComponent(name), levelBaseURL).href : null;
+      return [...groups.values()].sort((a, b) => a.number - b.number).flatMap(group => {
+        const roomImage = preferred(group.images, imageTypes);
+        const roomVideo = preferred(group.videos, videoTypes);
+        const jumpscare = preferred(group.scares, videoTypes);
+        if ((!roomImage && !roomVideo) || !jumpscare) return [];
+        return [{ number: group.number, roomImage: assetURL(roomImage), roomVideo: assetURL(roomVideo), jumpscare: assetURL(jumpscare) }];
+      });
+    }
+
+    async function fetchLevelResource(url, options = {}, consume = response => response) {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 6000);
+      try {
+        const response = await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
+        return await consume(response);
+      } finally { window.clearTimeout(timer); }
+    }
+
+    async function readLevelIndex() {
+      try {
+        return await fetchLevelResource(new URL("index.json", levelBaseURL), {}, async response => {
+          if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
+          const data = await response.json();
+          return Array.isArray(data) ? data : Array.isArray(data.files) ? data.files : [];
+        });
+      } catch { return []; }
+    }
+
+    async function readLevelDirectory() {
+      try {
+        return await fetchLevelResource(levelBaseURL, {}, async response => {
+          if (!response.ok) return [];
+          const html = new DOMParser().parseFromString(await response.text(), "text/html");
+          return [...html.querySelectorAll("a[href]")].flatMap(link => {
+            try {
+              const url = new URL(link.getAttribute("href"), levelBaseURL);
+              if (url.origin !== levelBaseURL.origin || !url.pathname.startsWith(levelBaseURL.pathname)) return [];
+              const name = decodeURIComponent(url.pathname.slice(levelBaseURL.pathname.length));
+              return name && !name.includes("/") ? [name] : [];
+            } catch { return []; }
+          });
+        });
+      } catch { return []; }
+    }
+
+    async function levelAssetExists(name) {
+      const url = new URL(name, levelBaseURL);
+      if (url.protocol === "file:") {
+        // Local HTML cannot fetch a folder, but media metadata remains readable.
+        // Probe without playing, then release each temporary media element.
+        return new Promise(resolve => {
+          const image = /\.png$/i.test(name);
+          const probe = document.createElement(image ? "img" : "video");
+          let timer;
+          const finish = exists => {
+            window.clearTimeout(timer);
+            probe.onload = probe.onloadedmetadata = probe.onerror = null;
+            probe.removeAttribute("src");
+            if (!image) probe.load();
+            resolve(exists);
+          };
+          probe.onerror = () => finish(false);
+          if (image) probe.onload = () => finish(probe.naturalWidth > 0);
+          else {
+            probe.preload = "metadata";
+            probe.muted = true;
+            probe.playsInline = true;
+            probe.onloadedmetadata = () => finish(probe.videoWidth > 0);
+          }
+          timer = window.setTimeout(() => finish(false), 6000);
+          probe.src = url.href;
+        });
+      }
+      try {
+        const response = await fetchLevelResource(url, { method: "HEAD" });
+        if (response.ok) {
+          const type = response.headers.get("content-type") || "";
+          if (/^video\/|^image\//i.test(type)) return true;
+          if (/text\/html/i.test(type)) return false;
+        } else if (response.status !== 405 && response.status !== 501) return false;
+        // Some static hosts do not implement HEAD. Read just the first chunk
+        // and cancel it, rather than downloading every video for discovery.
+        return await fetchLevelResource(url, { headers: { Range: "bytes=0-31" } }, async sample => {
+          if (!sample.ok || /text\/html/i.test(sample.headers.get("content-type") || "")) return false;
+          const reader = sample.body?.getReader();
+          if (!reader) return false;
+          try {
+            const { value } = await reader.read();
+            if (!value || value.length < 8) return false;
+            const tag = String.fromCharCode(...value.slice(4, 8));
+            return tag === "ftyp" || value[0] === 0x1a && value[1] === 0x45 && value[2] === 0xdf && value[3] === 0xa3 ||
+              value[0] === 0x89 && value[1] === 0x50 && value[2] === 0x4e && value[3] === 0x47;
+          } finally { await reader.cancel().catch(() => {}); }
+        });
+      } catch { return false; }
+    }
+
+    async function probeNumberedLevels() {
+      const filenames = [];
+      let next = 1;
+      let absent = 0;
+      while (absent < LEVEL_PROBE_GAP) {
+        const batch = await Promise.all(Array.from({ length: 4 }, (_, i) => next + i).map(async number => {
+          const names = [`room_${number}.png`, `room_${number}.mp4`, `jumpscare_${number}.mp4`];
+          const found = await Promise.all(names.map(levelAssetExists));
+          return names.filter((_, i) => found[i]);
+        }));
+        for (const found of batch) {
+          filenames.push(...found);
+          absent = found.length ? 0 : absent + 1;
+        }
+        next += batch.length;
+      }
+      return buildSceneCatalog(filenames);
+    }
+
+    async function discoverScenes() {
+      if (levelBaseURL.protocol === "file:") return probeNumberedLevels();
+      // An optional index is {"files":["room_1.mp4","jumpscare_1.mp4",...]}
+      // or a filename array. Normal web-server directory listings work too.
+      const [indexed, listed] = await Promise.all([readLevelIndex(), readLevelDirectory()]);
+      const scenes = buildSceneCatalog([...indexed, ...listed]);
+      return scenes.length ? scenes : probeNumberedLevels();
+    }
+
+    function chooseScene(scenes) {
+      return scenes.length ? scenes[Math.floor(Math.random() * scenes.length)] : null;
+    }
+
+    function showLevelLoadError(error) {
+      console.error("Could not load a matching room/jumpscare pair from levels/.", error);
+      gameOver = true;
+      loadingScreen.classList.add("hidden");
+      document.getElementById("gameOverTitle").textContent = "LEVELS UNAVAILABLE";
+      showGameOver();
+    }
+
+    async function loadRandomLevel() {
+      try {
+        availableScenes = await discoverScenes();
+        currentScene = chooseScene(availableScenes);
+        if (!currentScene) throw new Error("No complete numbered pairs were found. Use levels/room_1.mp4 and levels/jumpscare_1.mp4, etc.");
+        ROOM_IMAGE_FILE = currentScene.roomImage;
+        ROOM_VIDEO_FILE = currentScene.roomVideo;
+        ROOM_NAME = `ROOM ${String(currentScene.number).padStart(2, "0")}`;
+        cameraRoom.textContent = ROOM_NAME;
+        console.info(`Found ${availableScenes.length} level pairs; selected room ${currentScene.number}.`);
+        // Assign both sources together before any preload or gameplay begins.
+        jumpscareVideo.src = currentScene.jumpscare;
+        jumpscareVideo.load();
+        prepareJumpscarePlayback().catch(() => {});
+        if (ROOM_IMAGE_FILE) roomImage.src = ROOM_IMAGE_FILE;
+        else useRoomVideo();
+      } catch (error) { showLevelLoadError(error); }
+    }
 
     function acceptWordList(text, source, contentType = "") {
       if (/text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(text)) {
@@ -2314,9 +2523,15 @@
     };
     video.addEventListener("loadeddata", markRoomVideoReady, { once: true });
     video.addEventListener("canplay", markRoomVideoReady, { once: true });
-    video.addEventListener("error", markRoomVideoReady, { once: true });
+    video.addEventListener("error", () => {
+      if (roomMedia === video) showLevelLoadError(new Error(`Could not load ${ROOM_VIDEO_FILE}`));
+    }, { once: true });
 
     function useRoomVideo() {
+      if (!ROOM_VIDEO_FILE) {
+        showLevelLoadError(new Error(`Could not decode ${ROOM_IMAGE_FILE}; no matching room video is available.`));
+        return;
+      }
       roomMedia = video;
       roomImage.style.display = "none";
       video.style.display = "block";
@@ -2346,10 +2561,8 @@
       jumpscareMetadataReady = true;
       revealWhenMediaReady();
     });
-    prepareJumpscarePlayback().catch(() => {});
-
     resizeGameViewport();
-    roomImage.src = ROOM_IMAGE_FILE;
+    loadRandomLevel();
     revealWhenMediaReady();
     cameraRoom.textContent = ROOM_NAME;
     updateBatteryUI();
