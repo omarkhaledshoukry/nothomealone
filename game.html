@@ -7,6 +7,7 @@
   <title>Room Word Hunt</title>
   <style>
     :root {
+      color-scheme: light;
       color-scheme: only light;
       --tarantino-yellow: #f6d20a;
       --letter-beige: rgba(241, 239, 229, 0.80);
@@ -42,6 +43,7 @@
     body.grabbing { cursor: grabbing; }
 
     #game {
+      color-scheme: light;
       color-scheme: only light;
       forced-color-adjust: none;
       position: fixed;
@@ -125,7 +127,8 @@
     #roomVideo.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
-    #jumpscareVideo.snapping {
+    #jumpscareVideo.snapping,
+    #jumpscarePreview.snapping {
       transition: transform 420ms cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
 
@@ -321,6 +324,10 @@
       outline: none;
       background: transparent;
       box-shadow: none;
+      /* Legacy Android forced-dark can repaint the border and fill. Apply
+         white to their final painted pixels; transparent pixels stay clear. */
+      -webkit-filter: brightness(0) invert(1);
+      filter: brightness(0) invert(1);
       cursor: pointer;
       pointer-events: auto;
       touch-action: none;
@@ -467,6 +474,7 @@
       user-select: none;
       -webkit-user-drag: none;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.34));
+      color-scheme: light;
       color-scheme: only light;
       forced-color-adjust: none;
       opacity: 1;
@@ -479,6 +487,10 @@
       color: #000;
       -webkit-text-fill-color: #000;
       forced-color-adjust: none;
+      /* Force the painted ink back to black on older Android browsers that
+         ignore the colour-scheme opt-out. Keep the paper outside this filter. */
+      -webkit-filter: brightness(0);
+      filter: brightness(0);
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       text-align: left;
       transform: rotate(-0.4deg);
@@ -577,7 +589,8 @@
 
     #blackFlash { display: none; }
 
-    #jumpscareVideo {
+    #jumpscareVideo,
+    #jumpscarePreview {
       position: absolute;
       z-index: 150;
       top: 0;
@@ -604,6 +617,9 @@
       display: block;
       opacity: .001;
     }
+
+    #jumpscarePreview { z-index: 151; }
+    #jumpscarePreview.playing { display: block; }
 
     #gameOverScreen {
       position: absolute;
@@ -803,6 +819,7 @@
 
       <div id="blackFlash" aria-hidden="true"></div>
       <video id="jumpscareVideo" preload="auto" muted playsinline></video>
+      <canvas id="jumpscarePreview" aria-hidden="true"></canvas>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
@@ -866,6 +883,7 @@
     const anomalyImage = document.getElementById("anomalyImage");
     const blackFlash = document.getElementById("blackFlash");
     const jumpscareVideo = document.getElementById("jumpscareVideo");
+    const jumpscarePreview = document.getElementById("jumpscarePreview");
     const gameOverScreen = document.getElementById("gameOverScreen");
     const body = document.body;
 
@@ -935,6 +953,9 @@
     let jumpscarePreparing = null;
     let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
     let jumpscareFrameRequest = null;
+    let jumpscarePaintFrame = 0;
+    let jumpscareObjectURL = null;
+    let jumpscarePreviewReady = false;
     let jumpscareAudioContext = null;
     let jumpscareAudioGain = null;
     let jumpscareAudioSource = null;
@@ -1114,13 +1135,29 @@
         ROOM_NAME = `ROOM ${String(currentScene.number).padStart(2, "0")}`;
         cameraRoom.textContent = ROOM_NAME;
         console.info(`Found ${availableScenes.length} level pairs; selected room ${currentScene.number}.`);
-        // Assign both sources together before any preload or gameplay begins.
-        jumpscareVideo.src = currentScene.jumpscare;
-        jumpscareVideo.load();
-        prepareJumpscarePlayback().catch(() => {});
         if (ROOM_IMAGE_FILE) roomImage.src = ROOM_IMAGE_FILE;
         else useRoomVideo();
+        // preload="auto" / canplaythrough are estimates, not a complete
+        // download. A selected hosted clip must be fully local before READY.
+        jumpscareVideo.src = await preloadJumpscareFile(currentScene.jumpscare);
+        jumpscareVideo.load();
+        prepareJumpscarePlayback().catch(() => {});
       } catch (error) { showLevelLoadError(error); }
+    }
+
+    async function preloadJumpscareFile(url) {
+      // file:// playback already reads from disk; fetching it is prohibited
+      // by browsers and would break the native desktop audio path.
+      if (new URL(url, document.baseURI).protocol === "file:") return url;
+      const response = await fetch(url);
+      if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
+        throw new Error(`Could not download ${url}`);
+      }
+      const clip = await response.blob();
+      if (!clip.size) throw new Error(`The jumpscare video is empty: ${url}`);
+      if (jumpscareObjectURL) URL.revokeObjectURL(jumpscareObjectURL);
+      jumpscareObjectURL = URL.createObjectURL(clip);
+      return jumpscareObjectURL;
     }
 
     function acceptWordList(text, source, contentType = "") {
@@ -1321,6 +1358,8 @@
       // aspect ratio from the original room video.
       jumpscareVideo.style.width = `${renderedVideoWidth}px`;
       jumpscareVideo.style.height = `${height}px`;
+      jumpscarePreview.style.width = `${renderedVideoWidth}px`;
+      jumpscarePreview.style.height = `${height}px`;
       if (anomalyActive && anomalyMeta) {
         anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
         anomalyImage.style.height = `${height}px`;
@@ -1359,12 +1398,14 @@
       letterWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
       jumpscareVideo.classList.toggle("snapping", animate);
+      jumpscarePreview.classList.toggle("snapping", animate);
       const transform = `translateX(${offsetX}px)`;
       roomImage.style.transform = transform;
       video.style.transform = transform;
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
       jumpscareVideo.style.transform = transform;
+      jumpscarePreview.style.transform = transform;
     }
 
     function startWord(index) {
@@ -2070,6 +2111,34 @@
       if (!gameOver) scheduleAnomalyCheck();
     }
 
+    function paintJumpscareFrame() {
+      if (jumpscareVideo.seeking || jumpscareVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
+          !jumpscareVideo.videoWidth || !jumpscareVideo.videoHeight) return false;
+      // Cache actual video pixels, not a poster URL. Cap the fallback surface
+      // to keep memory and canvas playback reasonable on older phones.
+      const scale = Math.min(1, 1280 / Math.max(jumpscareVideo.videoWidth, jumpscareVideo.videoHeight));
+      const width = Math.round(jumpscareVideo.videoWidth * scale);
+      const height = Math.round(jumpscareVideo.videoHeight * scale);
+      if (jumpscarePreview.width !== width || jumpscarePreview.height !== height) {
+        jumpscarePreview.width = width;
+        jumpscarePreview.height = height;
+      }
+      const context = jumpscarePreview.getContext("2d");
+      if (!context) return false;
+      context.drawImage(jumpscareVideo, 0, 0, width, height);
+      jumpscarePreviewReady = true;
+      return true;
+    }
+
+    function stopJumpscarePresentation() {
+      if (jumpscarePaintFrame) cancelAnimationFrame(jumpscarePaintFrame);
+      jumpscarePaintFrame = 0;
+      if (jumpscareFrameRequest !== null) {
+        jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
+        jumpscareFrameRequest = null;
+      }
+    }
+
     function triggerJumpscare() {
       if (gameOver || roomCompleted) return;
       gameOver = true;
@@ -2083,18 +2152,20 @@
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
 
-      // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
-      // Put it into that exact panorama coordinate space at the CURRENT camera
-      // position first, so the first visible frame perfectly overlays the room.
+      // Put the matching clip and its cached opening frame into the same
+      // panorama coordinates at the CURRENT view before moving the camera.
       const previousOffset = offsetX;
       roomImage.classList.remove("snapping");
       video.classList.remove("snapping");
       letterWorld.classList.remove("snapping");
       anomalyWorld.classList.remove("snapping");
       jumpscareVideo.classList.remove("snapping");
+      jumpscarePreview.classList.remove("snapping");
       jumpscareVideo.style.transform = `translateX(${previousOffset}px)`;
-      // The first frame is already decoded and parked at time zero. Avoid a
-      // redundant seek here, which can delay the first visible scare frame.
+      jumpscarePreview.style.transform = jumpscareVideo.style.transform;
+      // A mobile decoder or video surface can sleep while the player searches.
+      // Its cached first frame appears immediately, even while play restarts.
+      if (jumpscarePreviewReady) jumpscarePreview.classList.add("playing");
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
@@ -2113,15 +2184,40 @@
           applyWorldOffset(true);
         });
       };
-      // Show and start playback at the player's current view. Begin the
-      // camera flight only after the video presents its first playing frame.
-      void jumpscareVideo.offsetWidth;
-      if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
-        jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(() => {
-          jumpscareFrameRequest = null;
+      const startTime = jumpscareVideo.currentTime;
+      stopJumpscarePresentation();
+      // While the native video surface wakes, render decoded frames on the
+      // cached surface. On legacy browsers this remains the visible player;
+      // audio still comes from the same unlocked video element.
+      const paintUntilPresented = () => {
+        jumpscarePaintFrame = 0;
+        if (!jumpscareVideo.classList.contains("playing")) return;
+        if (!jumpscareVideo.paused && jumpscareVideo.currentTime > startTime && paintJumpscareFrame()) {
           flyToCentre();
-        });
-      } else jumpscareVideo.addEventListener("playing", flyToCentre, { once: true });
+        }
+        jumpscarePaintFrame = requestAnimationFrame(paintUntilPresented);
+      };
+      jumpscarePaintFrame = requestAnimationFrame(paintUntilPresented);
+      if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
+        const presented = (now, metadata) => {
+          jumpscareFrameRequest = null;
+          if (!jumpscareVideo.classList.contains("playing")) return;
+          if (metadata.mediaTime <= startTime) {
+            jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(presented);
+            return;
+          }
+          flyToCentre();
+          // Retain the opening surface through the next paint, then hand
+          // over only once the native surface has a presented playing frame.
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            if (!jumpscareVideo.classList.contains("playing")) return;
+            jumpscarePreview.classList.remove("playing");
+            if (jumpscarePaintFrame) cancelAnimationFrame(jumpscarePaintFrame);
+            jumpscarePaintFrame = 0;
+          }));
+        };
+        jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(presented);
+      }
       const playPromise = jumpscareVideo.play();
       if (playPromise && typeof playPromise.catch === "function") {
         playPromise.catch(error => {
@@ -2137,14 +2233,12 @@
     function showGameOver() {
       stopCameraTimer();
       snapButton.disabled = true;
-      if (jumpscareFrameRequest !== null) {
-        jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
-        jumpscareFrameRequest = null;
-      }
+      stopJumpscarePresentation();
       jumpscareVideo.pause();
       if (jumpscareAudioGain) jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
+      jumpscarePreview.classList.remove("playing");
       gameOverScreen.classList.add("show");
     }
 
@@ -2494,6 +2588,7 @@
               jumpscareVideo.currentTime = 0;
             });
           }
+          if (!paintJumpscareFrame()) throw new Error("Could not cache the jumpscare opening frame.");
           jumpscareReady = true;
           if (unlockAudio) jumpscareAudioUnlocked = true;
         } finally {
