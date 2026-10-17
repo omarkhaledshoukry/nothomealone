@@ -618,6 +618,10 @@
       opacity: .001;
     }
 
+    /* Keep iOS's prepared inline video layer allocated while the player
+       searches. The visible scare uses the canvas, without a layer handoff. */
+    #jumpscareVideo.parked { display: block; opacity: .001; }
+
     #jumpscarePreview { z-index: 151; }
     #jumpscarePreview.playing { display: block; }
 
@@ -818,7 +822,7 @@
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
-      <video id="jumpscareVideo" preload="auto" muted playsinline></video>
+      <video id="jumpscareVideo" preload="auto" muted playsinline webkit-playsinline></video>
       <canvas id="jumpscarePreview" aria-hidden="true"></canvas>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <div id="gameOverTitle">GAME OVER</div>
@@ -849,6 +853,8 @@
     const LETTER_TRANSFER_MS = 260;
     const BATTERY_SLOT_COUNT = 4;
     const ROOM_TIME_LIMIT_MS = 60000;
+    const USE_IOS_SCARE_CANVAS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
@@ -956,6 +962,7 @@
     let jumpscarePaintFrame = 0;
     let jumpscareObjectURL = null;
     let jumpscarePreviewReady = false;
+    let jumpscareScratch = null;
     let jumpscareAudioContext = null;
     let jumpscareAudioGain = null;
     let jumpscareAudioSource = null;
@@ -2111,7 +2118,7 @@
       if (!gameOver) scheduleAnomalyCheck();
     }
 
-    function paintJumpscareFrame() {
+    function paintJumpscareFrame({ validate = false } = {}) {
       if (jumpscareVideo.seeking || jumpscareVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA ||
           !jumpscareVideo.videoWidth || !jumpscareVideo.videoHeight) return false;
       // Cache actual video pixels, not a poster URL. Cap the fallback surface
@@ -2125,9 +2132,40 @@
       }
       const context = jumpscarePreview.getContext("2d");
       if (!context) return false;
-      context.drawImage(jumpscareVideo, 0, 0, width, height);
+      if (validate) {
+        // WebKit can report ready / seeked before drawImage has real pixels.
+        // Probe separately so an empty read cannot erase the cached scare.
+        if (!jumpscareScratch) jumpscareScratch = document.createElement("canvas");
+        if (jumpscareScratch.width !== width || jumpscareScratch.height !== height) {
+          jumpscareScratch.width = width;
+          jumpscareScratch.height = height;
+        }
+        const scratch = jumpscareScratch.getContext("2d", { willReadFrequently: true });
+        if (!scratch) return false;
+        scratch.clearRect(0, 0, width, height);
+        scratch.drawImage(jumpscareVideo, 0, 0, width, height);
+        try {
+          if (scratch.getImageData(Math.floor(width / 2), Math.floor(height / 2), 1, 1).data[3] === 0) return false;
+        } catch (error) {
+          // Local file media may be displayable but not readable by canvas.
+          if (error.name !== "SecurityError") throw error;
+        }
+        context.drawImage(jumpscareScratch, 0, 0);
+      } else context.drawImage(jumpscareVideo, 0, 0, width, height);
       jumpscarePreviewReady = true;
       return true;
+    }
+
+    async function cacheIOSOpeningFrame() {
+      // Capture while the decoder is PLAYING. Copying immediately after a
+      // paused seek can produce an empty or stale image on iOS.
+      const deadline = performance.now() + 8000;
+      while (!paintJumpscareFrame({ validate: true })) {
+        if (jumpscareVideo.error || performance.now() >= deadline) {
+          throw new Error("Could not prepare the iOS jumpscare opening frame.");
+        }
+        await new Promise(resolve => requestAnimationFrame(resolve));
+      }
     }
 
     function stopJumpscarePresentation() {
@@ -2166,6 +2204,7 @@
       // A mobile decoder or video surface can sleep while the player searches.
       // Its cached first frame appears immediately, even while play restarts.
       if (jumpscarePreviewReady) jumpscarePreview.classList.add("playing");
+      jumpscareVideo.classList.remove("parked");
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
@@ -2178,13 +2217,20 @@
       const flyToCentre = () => {
         if (movementStarted || !jumpscareVideo.classList.contains("playing")) return;
         movementStarted = true;
-        requestAnimationFrame(() => {
+        const move = () => {
           if (!jumpscareVideo.classList.contains("playing")) return;
           offsetX = minOffset / 2;
           applyWorldOffset(true);
-        });
+        };
+        // Let the iOS canvas paint a playing frame before the camera moves.
+        requestAnimationFrame(() => USE_IOS_SCARE_CANVAS ? requestAnimationFrame(move) : move());
       };
       const startTime = jumpscareVideo.currentTime;
+      const hasFrameCallbacks = typeof jumpscareVideo.requestVideoFrameCallback === "function";
+      const decodedFrameCount = () => jumpscareVideo.getVideoPlaybackQuality?.().totalVideoFrames ??
+        jumpscareVideo.webkitDecodedFrameCount ?? null;
+      const initialFrameCount = decodedFrameCount();
+      let iosFramePainted = false;
       stopJumpscarePresentation();
       // While the native video surface wakes, render decoded frames on the
       // cached surface. On legacy browsers this remains the visible player;
@@ -2192,17 +2238,33 @@
       const paintUntilPresented = () => {
         jumpscarePaintFrame = 0;
         if (!jumpscareVideo.classList.contains("playing")) return;
-        if (!jumpscareVideo.paused && jumpscareVideo.currentTime > startTime && paintJumpscareFrame()) {
+        const frameAdvanced = !USE_IOS_SCARE_CANVAS || (initialFrameCount === null
+          ? jumpscareVideo.currentTime - startTime >= .12 : decodedFrameCount() > initialFrameCount);
+        if (!jumpscareVideo.paused && jumpscareVideo.currentTime > startTime && frameAdvanced &&
+            paintJumpscareFrame({ validate: USE_IOS_SCARE_CANVAS && !iosFramePainted })) {
+          iosFramePainted = true;
           flyToCentre();
         }
         jumpscarePaintFrame = requestAnimationFrame(paintUntilPresented);
       };
-      jumpscarePaintFrame = requestAnimationFrame(paintUntilPresented);
-      if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
+      // With iOS frame callbacks, currentTime alone must never start motion:
+      // its audio clock may advance while the video layer is still waking.
+      if (!USE_IOS_SCARE_CANVAS || !hasFrameCallbacks) {
+        jumpscarePaintFrame = requestAnimationFrame(paintUntilPresented);
+      }
+      if (hasFrameCallbacks) {
         const presented = (now, metadata) => {
           jumpscareFrameRequest = null;
           if (!jumpscareVideo.classList.contains("playing")) return;
-          if (metadata.mediaTime <= startTime) {
+          if (metadata.mediaTime <= startTime || jumpscareVideo.paused || jumpscareVideo.seeking) {
+            jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(presented);
+            return;
+          }
+          if (USE_IOS_SCARE_CANVAS) {
+            if (paintJumpscareFrame({ validate: !iosFramePainted })) {
+              iosFramePainted = true;
+              flyToCentre();
+            }
             jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(presented);
             return;
           }
@@ -2574,6 +2636,7 @@
       const prepare = (async () => {
         try {
           await Promise.all([playPromise, buffered, decoded, audioReady]);
+          if (USE_IOS_SCARE_CANVAS) await cacheIOSOpeningFrame();
           jumpscareVideo.pause();
           if (jumpscareVideo.currentTime > 0) {
             await new Promise((resolve, reject) => {
@@ -2588,7 +2651,7 @@
               jumpscareVideo.currentTime = 0;
             });
           }
-          if (!paintJumpscareFrame()) throw new Error("Could not cache the jumpscare opening frame.");
+          if (!USE_IOS_SCARE_CANVAS && !paintJumpscareFrame()) throw new Error("Could not cache the jumpscare opening frame.");
           jumpscareReady = true;
           if (unlockAudio) jumpscareAudioUnlocked = true;
         } finally {
@@ -2601,6 +2664,7 @@
           jumpscareVideo.volume = 1;
           jumpscareVideo.muted = false;
           jumpscareVideo.classList.remove("priming");
+          jumpscareVideo.classList.toggle("parked", USE_IOS_SCARE_CANVAS && jumpscarePreviewReady);
         }
       })();
       jumpscarePreparing = prepare.finally(() => {
