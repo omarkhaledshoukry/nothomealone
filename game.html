@@ -870,7 +870,18 @@
     const CAMERA_VELOCITY_WINDOW_MS = 100;
     const LETTER_TRANSFER_MS = 260;
     const BATTERY_SLOT_COUNT = 4;
-    const ROOM_TIME_LIMIT_MS = 60000;
+    const DECOY_LEVEL_CHANCE = .20;
+    const LEVEL_TYPES = {
+      standard: { name: "standard", wordCount: 3, timeLimitMs: 120000, decoyLetterChance: 0 },
+      decoy: { name: "decoy", wordCount: 2, timeLimitMs: 60000, decoyLetterChance: .10 }
+    };
+    function chooseLevelType() {
+      return Math.random() < DECOY_LEVEL_CHANCE ? LEVEL_TYPES.decoy : LEVEL_TYPES.standard;
+    }
+    // Choose once per room, before either words or scene assets finish loading.
+    // Independent rolls give roughly four standard rooms for every decoy room.
+    const levelType = chooseLevelType();
+    const ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
 
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
@@ -1200,8 +1211,7 @@
       wordLoadInfo = { status: "loaded", url: source, count: loaded.length, error: null };
       console.info(`Loaded ${loaded.length} words from ${source}`);
       words = shuffleArray(loaded);
-      // This run uses exactly three randomly selected clues from words.txt.
-      words = words.slice(0, Math.min(3, words.length));
+      words = words.slice(0, Math.min(levelType.wordCount, words.length));
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
       readyButton.disabled = false;
@@ -1415,7 +1425,7 @@
       return best;
     }
 
-    function applyWorldOffset(animate = false) {
+    function applyWorldOffset(animate = false, observeDecoys = false) {
       roomImage.classList.toggle("snapping", animate);
       video.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
@@ -1427,6 +1437,9 @@
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
       jumpscareVideo.style.transform = transform;
+      // Only actual camera gestures/coasting can fix a decoy. Resizing and
+      // layout updates also reposition the world, but do not count as looking away.
+      if (observeDecoys) updateDecoyVisibilityState({ allowCorrection: true });
     }
 
     function startWord(index) {
@@ -1512,6 +1525,33 @@
       return letterRect.width > 0 && letterRect.height > 0 &&
         letterRect.left >= frame.left - tolerance && letterRect.right <= frame.right + tolerance &&
         letterRect.top >= frame.top - tolerance && letterRect.bottom <= frame.bottom + tolerance;
+    }
+
+    function chooseLetterGlyph(letter, word) {
+      if (!levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
+      // A decoy must be absent from the entire clue, not just the current slot.
+      const candidates = [..."abcdefghijklmnopqrstuvwxyz"].filter(candidate => !word.includes(candidate));
+      return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : letter;
+    }
+
+    function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
+      if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      const anchor = anchors[selectedCount];
+      const tile = tiles[selectedCount];
+      if (!anchor || anchor.hidden || tile.dataset.decoy !== "true") return;
+      if (isCurrentLetterInFrame()) {
+        tile.dataset.decoySeen = "true";
+        return;
+      }
+      if (!allowCorrection || tile.dataset.decoySeen !== "true") return;
+      const glyph = tile.querySelector(".letter-glyph");
+      const bounds = glyph.getBoundingClientRect();
+      const frame = viewport.getBoundingClientRect();
+      // Partial visibility is still looking at the letter.
+      if (bounds.right > frame.left && bounds.left < frame.right) return;
+      glyph.textContent = tile.dataset.letter;
+      tile.setAttribute("aria-label", `Letter ${tile.dataset.letter}`);
+      tile.dataset.decoy = "false";
     }
 
     function drawShutterBitmap() {
@@ -1724,6 +1764,7 @@
           }
         }
       });
+      updateDecoyVisibilityState();
     }
 
     function createScatteredLetters() {
@@ -1753,11 +1794,12 @@
             tile.style.setProperty(`--jitter-y${step}`, `${Math.random() * 4 - 2}px`);
           }
         }
-        tile.setAttribute("aria-label", `Letter ${letter}`);
-
         const glyph = document.createElement("span");
         glyph.className = "letter-glyph";
-        glyph.textContent = letter;
+        glyph.textContent = chooseLetterGlyph(letter, currentWord);
+        tile.dataset.decoy = String(glyph.textContent !== letter);
+        tile.dataset.decoySeen = "false";
+        tile.setAttribute("aria-label", `Letter ${glyph.textContent}`);
         tile.appendChild(glyph);
 
         anchor.appendChild(tile);
@@ -1786,7 +1828,16 @@
         const wasHidden = anchor.hidden;
         anchor.hidden = false;
         const glyph = anchor.querySelector(".letter-glyph");
-        const footprint = glyph.getBoundingClientRect();
+        let footprint = glyph.getBoundingClientRect();
+        if (tiles[index].dataset.decoy === "true") {
+          // Reserve room for both glyphs so correcting it offscreen cannot
+          // move the fixed anchor or push the real letter beneath the UI.
+          const decoy = glyph.textContent;
+          glyph.textContent = tiles[index].dataset.letter;
+          const correct = glyph.getBoundingClientRect();
+          glyph.textContent = decoy;
+          footprint = { width: Math.max(footprint.width, correct.width), height: Math.max(footprint.height, correct.height) };
+        }
         anchor.hidden = wasHidden;
         // Include rotation, the first letter's small vibration, and a margin
         // so the complete glyph remains clear of both UI rows and room edges.
@@ -1805,7 +1856,7 @@
       updateCameraTimer();
       if (gameOver) return;
       if (tileIndex !== selectedCount || tile !== tiles[tileIndex] || anchors[tileIndex].hidden) return;
-      if (anomalyActive) {
+      if (anomalyActive || tile.dataset.decoy === "true") {
         triggerJumpscare();
         return;
       }
@@ -1943,7 +1994,7 @@
         const eased = 1 - Math.pow(1 - progress, 3);
         offsetX = clamp(origin + (target - origin) * eased, minOffset, 0);
         if (progress === 1) offsetX = target;
-        applyWorldOffset(false);
+        applyWorldOffset(false, true);
         updateAnomalyVisibilityState();
         cameraMomentumFrame = progress < 1 ? requestAnimationFrame(step) : 0;
       };
@@ -2023,7 +2074,7 @@
       const deltaX = event.clientX - lastPanClientX;
       lastPanClientX = event.clientX;
       offsetX = clamp(offsetX + deltaX * CAMERA_DRAG_GAIN, minOffset, 0);
-      applyWorldOffset(false);
+      applyWorldOffset(false, true);
       updateAnomalyVisibilityState();
     }
 
@@ -2036,6 +2087,7 @@
       const travel = panDirectionTravel;
       if (movedDuringDrag) {
         offsetX = clamp(offsetX + (event.clientX - lastPanClientX) * CAMERA_DRAG_GAIN, minOffset, 0);
+        applyWorldOffset(false, true);
       }
       // Release pointer ownership before starting the independent glide, so
       // the next press can immediately stop it and start a fresh drag.
