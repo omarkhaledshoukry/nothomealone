@@ -479,7 +479,8 @@
       width: 100%;
     }
 
-    #cluePaper {
+    #cluePaper,
+    #cluePaperBitmap {
       display: block;
       width: 100%;
       height: auto;
@@ -492,6 +493,18 @@
       opacity: 1;
       mix-blend-mode: normal;
     }
+
+    #cluePaperBitmap {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #cluePaperWrap.bitmap-paper #cluePaper { visibility: hidden; }
+    #cluePaperWrap.bitmap-paper #cluePaperBitmap { visibility: visible; }
 
     #cluePaperText {
       position: absolute;
@@ -777,6 +790,7 @@
         <div id="clueCard">
           <div id="cluePaperWrap">
             <img id="cluePaper" src="note.png" alt="" draggable="false" />
+            <canvas id="cluePaperBitmap" aria-hidden="true"></canvas>
             <div id="cluePaperText">
               <div id="clueTitle">CLUES</div>
               <ul id="clueList"></ul>
@@ -888,6 +902,24 @@
     const wordLoadUrl = document.getElementById("wordLoadUrl");
     const wordFileInput = document.getElementById("wordFileInput");
     const clueIntro = document.getElementById("clueIntro");
+    const cluePaper = document.getElementById("cluePaper");
+    const cluePaperBitmap = document.getElementById("cluePaperBitmap");
+    const cluePaperBitmapContext = /Android/i.test(navigator.userAgent) ? cluePaperBitmap.getContext("2d") : null;
+    function preserveCluePaperColors() {
+      if (!cluePaperBitmapContext || !cluePaper.naturalWidth || !cluePaper.naturalHeight) return;
+      // Older Android dark modes can tint <img> pixels despite color-scheme.
+      // Paint the original artwork separately; keep the image for sizing and fallback.
+      try {
+        cluePaperBitmap.width = cluePaper.naturalWidth;
+        cluePaperBitmap.height = cluePaper.naturalHeight;
+        cluePaperBitmapContext.drawImage(cluePaper, 0, 0);
+        cluePaper.parentElement.classList.add("bitmap-paper");
+      } catch (error) {
+        cluePaper.parentElement.classList.remove("bitmap-paper");
+      }
+    }
+    cluePaper.addEventListener("load", preserveCluePaperColors);
+    if (cluePaper.complete) preserveCluePaperColors();
     const clueList = document.getElementById("clueList");
     const readyButton = document.getElementById("readyButton");
     const anomalyWorld = document.getElementById("anomalyWorld");
