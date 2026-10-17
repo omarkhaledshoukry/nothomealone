@@ -181,6 +181,11 @@
 
     .letter-anchor.appearing .letter-tile { animation: letterFadeIn 150ms ease-out both; }
     .letter-tile.first-letter .letter-glyph { animation: letterVibrate .4s steps(1, end) infinite; }
+    .letter-tile.butterfly-letter {
+      transform: rotate(calc(var(--letter-rotation, 0deg) + var(--butterfly-bank, 0deg)))
+        rotateY(var(--butterfly-flutter, 0deg));
+      will-change: transform;
+    }
 
     @keyframes letterFadeIn {
       from { opacity: 0; }
@@ -601,7 +606,8 @@
       will-change: transform;
     }
 
-    #anomalyImage {
+    #anomalyImage,
+    #anomalyBitmap {
       position: absolute;
       display: none;
       height: 100%;
@@ -691,7 +697,8 @@
       cursor: grabbing;
     }
 
-    #handImage {
+    #handImage,
+    #handBitmap {
       position: absolute;
       left: 50%;
       bottom: -10%;
@@ -707,15 +714,18 @@
       will-change: transform;
     }
 
-    #handBlocker.entering #handImage {
+    #handBlocker.entering #handImage,
+    #handBlocker.entering #handBitmap {
       animation: handEnter 520ms cubic-bezier(.18,.82,.28,1) forwards;
     }
 
-    #handBlocker.resting #handImage {
+    #handBlocker.resting #handImage,
+    #handBlocker.resting #handBitmap {
       transform: translate(-50%, 0);
     }
 
-    #handBlocker.exiting #handImage {
+    #handBlocker.exiting #handImage,
+    #handBlocker.exiting #handBitmap {
       animation: handExit 300ms cubic-bezier(.55,.05,.82,.34) forwards;
     }
 
@@ -747,6 +757,21 @@
     }
 
     #message.show { animation: messageFlash 620ms ease both; }
+
+    #handBitmap, #anomalyBitmap, #messageBitmap {
+      display: none;
+      visibility: hidden;
+      color-scheme: light;
+      color-scheme: only light;
+      forced-color-adjust: none;
+      pointer-events: none;
+    }
+    #messageBitmap {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
     @keyframes hudPop {
       from { transform: scale(.68); }
@@ -806,6 +831,7 @@
         <div id="letterWorld" aria-label="Current letter to photograph"></div>
         <div id="anomalyWorld" aria-hidden="true">
           <img id="anomalyImage" alt="" draggable="false" />
+          <canvas id="anomalyBitmap" aria-hidden="true"></canvas>
         </div>
       </div>
 
@@ -834,10 +860,11 @@
       </div>
 
       <div id="captureEffects" aria-hidden="true"></div>
-      <div id="message">Found!</div>
+      <div id="message"><span id="messageText">Found!</span><canvas id="messageBitmap" aria-hidden="true"></canvas></div>
 
       <div id="handBlocker" aria-hidden="true">
         <img id="handImage" src="hand.png" alt="" draggable="false" />
+        <canvas id="handBitmap" aria-hidden="true"></canvas>
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
@@ -870,18 +897,21 @@
     const CAMERA_VELOCITY_WINDOW_MS = 100;
     const LETTER_TRANSFER_MS = 260;
     const BATTERY_SLOT_COUNT = 4;
-    const DECOY_LEVEL_CHANCE = .20;
     const LEVEL_TYPES = {
-      standard: { name: "standard", wordCount: 3, timeLimitMs: 120000, decoyLetterChance: 0 },
-      decoy: { name: "decoy", wordCount: 2, timeLimitMs: 60000, decoyLetterChance: .10 }
+      standard: { name: "standard", chance: .70, wordCount: 3, timeLimitMs: 120000, decoyLetterChance: 0 },
+      decoy: { name: "decoy", chance: .20, wordCount: 2, timeLimitMs: 60000, decoyLetterChance: .10 },
+      butterfly: { name: "butterfly", chance: .10, wordCount: 1, timeLimitMs: 60000, decoyLetterChance: 0, flyingLetters: true }
     };
     function chooseLevelType() {
-      return Math.random() < DECOY_LEVEL_CHANCE ? LEVEL_TYPES.decoy : LEVEL_TYPES.standard;
+      const roll = Math.random();
+      if (roll < LEVEL_TYPES.standard.chance) return LEVEL_TYPES.standard;
+      if (roll < LEVEL_TYPES.standard.chance + LEVEL_TYPES.decoy.chance) return LEVEL_TYPES.decoy;
+      return LEVEL_TYPES.butterfly;
     }
     // Choose once per room, before either words or scene assets finish loading.
-    // Independent rolls give roughly four standard rooms for every decoy room.
     const levelType = chooseLevelType();
     const ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
+    const USE_ANDROID_BITMAPS = /Android/i.test(navigator.userAgent);
 
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
@@ -901,11 +931,15 @@
     const cameraRoom = document.getElementById("cameraRoom");
     const snapButton = document.getElementById("snapButton");
     const shutterBitmap = document.getElementById("shutterBitmap");
-    const shutterBitmapContext = /Android/i.test(navigator.userAgent) ? shutterBitmap.getContext("2d") : null;
+    const shutterBitmapContext = USE_ANDROID_BITMAPS ? shutterBitmap.getContext("2d") : null;
     if (shutterBitmapContext) cameraOverlay.classList.add("bitmap-shutter");
     const message = document.getElementById("message");
+    const messageText = document.getElementById("messageText");
+    const messageBitmap = document.getElementById("messageBitmap");
+    const messageBitmapContext = USE_ANDROID_BITMAPS ? messageBitmap.getContext("2d") : null;
     const handBlocker = document.getElementById("handBlocker");
     const handImage = document.getElementById("handImage");
+    const handBitmap = document.getElementById("handBitmap");
     const loadingScreen = document.getElementById("loadingScreen");
     const loadingWord = document.getElementById("loadingWord");
     const wordLoadError = document.getElementById("wordLoadError");
@@ -915,7 +949,7 @@
     const clueIntro = document.getElementById("clueIntro");
     const cluePaper = document.getElementById("cluePaper");
     const cluePaperBitmap = document.getElementById("cluePaperBitmap");
-    const cluePaperBitmapContext = /Android/i.test(navigator.userAgent) ? cluePaperBitmap.getContext("2d") : null;
+    const cluePaperBitmapContext = USE_ANDROID_BITMAPS ? cluePaperBitmap.getContext("2d") : null;
     function preserveCluePaperColors() {
       if (!cluePaperBitmapContext || !cluePaper.naturalWidth || !cluePaper.naturalHeight) return;
       // Older Android dark modes can tint <img> pixels despite color-scheme.
@@ -935,10 +969,70 @@
     const readyButton = document.getElementById("readyButton");
     const anomalyWorld = document.getElementById("anomalyWorld");
     const anomalyImage = document.getElementById("anomalyImage");
+    const anomalyBitmap = document.getElementById("anomalyBitmap");
     const blackFlash = document.getElementById("blackFlash");
     const jumpscareVideo = document.getElementById("jumpscareVideo");
     const gameOverScreen = document.getElementById("gameOverScreen");
     const body = document.body;
+
+    function preserveOverlayImageColors(image, bitmap) {
+      const context = USE_ANDROID_BITMAPS ? bitmap.getContext("2d") : null;
+      if (!context) return;
+      const paint = () => {
+        if (!image.naturalWidth || !image.naturalHeight) return;
+        try {
+          bitmap.width = image.naturalWidth;
+          bitmap.height = image.naturalHeight;
+          context.drawImage(image, 0, 0);
+          bitmap.style.display = getComputedStyle(image).display;
+          bitmap.style.visibility = "visible";
+          image.style.visibility = "hidden";
+        } catch (error) {
+          bitmap.style.visibility = "hidden";
+          image.style.visibility = "";
+        }
+      };
+      image.addEventListener("load", paint);
+      if (image.complete) paint();
+    }
+    // Keep the original images for decoding, dimensions and fallback. Their
+    // canvas twins share every animation and drag transform, with untinted pixels.
+    preserveOverlayImageColors(handImage, handBitmap);
+    preserveOverlayImageColors(anomalyImage, anomalyBitmap);
+
+    function setOverlayImageStyles(image, bitmap, styles) {
+      Object.assign(image.style, styles);
+      if (USE_ANDROID_BITMAPS) Object.assign(bitmap.style, styles);
+    }
+
+    function refreshMessageBitmap() {
+      if (!messageBitmapContext || !message.clientWidth || !message.clientHeight) return;
+      const context = messageBitmapContext;
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      messageBitmap.width = Math.round(message.clientWidth * scale);
+      messageBitmap.height = Math.round(message.clientHeight * scale);
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      const style = getComputedStyle(message);
+      const text = messageText.textContent.toUpperCase();
+      context.font = `${Math.min(900, parseInt(style.fontWeight, 10) || 700)} ${style.fontSize} ${style.fontFamily}`;
+      context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--tarantino-yellow").trim();
+      context.textBaseline = "alphabetic";
+      const metrics = context.measureText(text);
+      const size = parseFloat(style.fontSize);
+      const ascent = metrics.fontBoundingBoxAscent || size * .9;
+      const descent = metrics.fontBoundingBoxDescent || size * .23;
+      const baseline = messageText.offsetTop + messageText.offsetHeight / 2 + (ascent - descent) / 2;
+      const spacing = parseFloat(style.letterSpacing) || 0;
+      let x = messageText.offsetLeft;
+      // Draw spacing explicitly: legacy Android canvas lacks letterSpacing.
+      for (const character of text) {
+        context.fillText(character, x, baseline);
+        x += context.measureText(character).width + spacing;
+      }
+      messageBitmap.style.display = "block";
+      messageBitmap.style.visibility = "visible";
+      messageText.style.opacity = "0";
+    }
 
     let words = [];
     let wordsLoading = false;
@@ -949,6 +1043,8 @@
     let batterySlotsRemaining = BATTERY_SLOT_COUNT;
     let tiles = [];
     let anchors = [];
+    let butterflyFlightFrame = 0;
+    let butterflyFlightState = null;
     let selectionHistory = [];
     let captureInProgress = false;
     let captureFlightAnimation = null;
@@ -1004,6 +1100,10 @@
     let gameplayStarted = false;
     let gameplayStarting = false;
     let jumpscareReady = false;
+    let jumpscareSourceURL = null;
+    let jumpscareObjectURL = null;
+    let jumpscareDeadlineWarmStarted = false;
+    let jumpscareStandbySeekCancel = null;
     let jumpscareWarmAttempted = false;
     let jumpscarePreparing = null;
     let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
@@ -1187,13 +1287,33 @@
         ROOM_NAME = `ROOM ${String(currentScene.number).padStart(2, "0")}`;
         cameraRoom.textContent = ROOM_NAME;
         console.info(`Found ${availableScenes.length} level pairs; selected room ${currentScene.number}.`);
-        // Assign both sources together before any preload or gameplay begins.
-        jumpscareVideo.src = currentScene.jumpscare;
-        jumpscareVideo.load();
-        prepareJumpscarePlayback().catch(() => {});
+        // Load the room in parallel, but require every byte of the selected
+        // hosted scare before exposing READY. canplaythrough is only an estimate.
         if (ROOM_IMAGE_FILE) roomImage.src = ROOM_IMAGE_FILE;
         else useRoomVideo();
+        jumpscareSourceURL = currentScene.jumpscare;
+        jumpscareVideo.src = await preloadJumpscareFile(jumpscareSourceURL);
+        jumpscareVideo.load();
+        prepareJumpscarePlayback().catch(() => {});
       } catch (error) { showLevelLoadError(error); }
+    }
+
+    async function preloadJumpscareFile(url) {
+      // Keep direct disk playback and its native audio path for file:// games.
+      if (!/^https?:$/.test(new URL(url, document.baseURI).protocol)) return url;
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 60000);
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
+          throw new Error("Could not download the selected jumpscare video.");
+        }
+        const clip = await response.blob();
+        if (!clip.size) throw new Error("The selected jumpscare video is empty.");
+        if (jumpscareObjectURL) URL.revokeObjectURL(jumpscareObjectURL);
+        jumpscareObjectURL = URL.createObjectURL(clip);
+        return jumpscareObjectURL;
+      } finally { window.clearTimeout(timeout); }
     }
 
     function acceptWordList(text, source, contentType = "") {
@@ -1395,8 +1515,7 @@
       jumpscareVideo.style.height = `${height}px`;
       if (anomalyActive && anomalyMeta) {
         anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
-        anomalyImage.style.height = `${height}px`;
-        anomalyImage.style.width = `${renderedVideoWidth}px`;
+        setOverlayImageStyles(anomalyImage, anomalyBitmap, { height: `${height}px`, width: `${renderedVideoWidth}px` });
       }
 
       // Preserve the freely dragged camera position when the frame resizes.
@@ -1489,6 +1608,10 @@
       const minutes = String(Math.floor(cameraRemainingSeconds / 60)).padStart(2, "0");
       const seconds = String(cameraRemainingSeconds % 60).padStart(2, "0");
       cameraTimer.textContent = `${minutes}:${seconds}`;
+      if (cameraStartedAt !== null && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= 3 &&
+          !jumpscareDeadlineWarmStarted && !gameOver && !roomCompleted && !document.hidden) {
+        warmJumpscareBeforeDeadline();
+      }
       if (cameraStartedAt !== null && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
         triggerJumpscare();
       }
@@ -1503,6 +1626,7 @@
     }
 
     function stopCameraTimer() {
+      cancelJumpscareStandbySeek();
       if (cameraStartedAt !== null) {
         cameraRemainingSeconds = Math.max(0, Math.ceil(
           (ROOM_TIME_LIMIT_MS - (performance.now() - cameraStartedAt)) / 1000));
@@ -1680,7 +1804,8 @@
 
       const dx = target.left + target.width / 2 - start.left - start.width / 2;
       const dy = target.top + target.height / 2 - start.top - start.height / 2;
-      const rotation = parseFloat(anchor.firstElementChild.style.getPropertyValue("--letter-rotation")) || 0;
+      const rotation = (parseFloat(anchor.firstElementChild.style.getPropertyValue("--letter-rotation")) || 0) +
+        (parseFloat(anchor.firstElementChild.style.getPropertyValue("--butterfly-bank")) || 0);
       captureInProgress = true;
       updateCameraControls();
       const animation = flight.animate([
@@ -1765,9 +1890,81 @@
         }
       });
       updateDecoyVisibilityState();
+      if (levelType.flyingLetters && gameplayStarted && !gameOver && !roomCompleted &&
+          !wordTransitionPending && !captureInProgress && anchors[selectedCount] && !anchors[selectedCount].hidden) startButterflyFlight();
+      else stopButterflyFlight();
+    }
+
+    function stopButterflyFlight() {
+      if (butterflyFlightFrame) cancelAnimationFrame(butterflyFlightFrame);
+      butterflyFlightFrame = 0;
+      butterflyFlightState = null;
+    }
+
+    function startButterflyFlight() {
+      const anchor = anchors[selectedCount];
+      if (butterflyFlightState?.anchor === anchor && butterflyFlightFrame) return;
+      stopButterflyFlight();
+      const tile = tiles[selectedCount];
+      const radius = Number(anchor.dataset.flightRadius) + 15;
+      const band = getSafeLetterBand();
+      const bounds = { left: radius, right: Math.max(radius, renderedVideoWidth - radius),
+        top: band.top + radius, bottom: Math.max(band.top + radius, band.bottom - radius) };
+      const phase = Math.random() * Math.PI * 2;
+      const swayX = 16 + Math.random() * 17;
+      const swayY = 12 + Math.random() * 15;
+      const x = parseFloat(anchor.style.left);
+      const y = parseFloat(anchor.style.top);
+      const state = { anchor, tile, bounds, phase, swayX, swayY,
+        x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * 1.7) * swayY,
+        vx: 0, vy: 0, goalX: x, goalY: y, elapsed: 0, nextTurn: 0,
+        speed: 44 + Math.random() * 38, lastTime: performance.now() };
+      butterflyFlightState = state;
+      const step = time => {
+        butterflyFlightFrame = 0;
+        if (butterflyFlightState !== state || !gameplayStarted || gameOver || roomCompleted ||
+            captureInProgress || wordTransitionPending || anchor !== anchors[selectedCount] || anchor.hidden) {
+          stopButterflyFlight();
+          return;
+        }
+        // Capped elapsed steps prevent a leap when a background tab resumes.
+        const dt = Math.min(.05, Math.max(0, (time - state.lastTime) / 1000));
+        state.lastTime = time;
+        state.elapsed += dt;
+        const t = state.elapsed;
+        if (t >= state.nextTurn) {
+          // Mostly local wandering, with occasional longer exploratory arcs.
+          const travel = Math.random() < .2 ? 380 : 190;
+          state.goalX = clamp(state.x + (Math.random() * 2 - 1) * travel, bounds.left, bounds.right);
+          state.goalY = clamp(state.y + (Math.random() * 2 - 1) * 110, bounds.top, bounds.bottom);
+          state.nextTurn = t + 1.1 + Math.random() * 1.9;
+        }
+        const dx = state.goalX - state.x, dy = state.goalY - state.y;
+        const distance = Math.max(1, Math.hypot(dx, dy));
+        // Ease the heading and alternate hovering with short bursts of flight.
+        const pace = state.speed * (.25 + .75 * Math.pow(.5 + .5 * Math.sin(t * 1.8 + phase), 2)) * Math.min(1, distance / 45);
+        const steering = 1 - Math.exp(-dt * 2.4);
+        state.vx += (dx / distance * pace - state.vx) * steering;
+        state.vy += (dy / distance * pace - state.vy) * steering;
+        state.x += state.vx * dt;
+        state.y += state.vy * dt;
+        // Unequal oscillation frequencies make little loops instead of a
+        // straight bounce; a restrained 3D tilt suggests fluttering wings.
+        const flightX = clamp(state.x + Math.sin(t * 3.1 + phase) * swayX, bounds.left, bounds.right);
+        const flightY = clamp(state.y + Math.sin(t * 4.3 + phase * 1.7) * swayY, bounds.top, bounds.bottom);
+        anchor.style.left = `${flightX}px`;
+        anchor.style.top = `${flightY}px`;
+        anchor.dataset.worldX = (flightX - bounds.left) / Math.max(1, bounds.right - bounds.left);
+        anchor.dataset.worldY = (flightY - bounds.top) / Math.max(1, bounds.bottom - bounds.top);
+        tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * .32 + Math.sin(t * 3.1 + phase) * 17, -36, 36)}deg`);
+        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * 17 + phase) * 23}deg`);
+        butterflyFlightFrame = requestAnimationFrame(step);
+      };
+      butterflyFlightFrame = requestAnimationFrame(step);
     }
 
     function createScatteredLetters() {
+      stopButterflyFlight();
       letterWorld.replaceChildren();
       tiles = [];
       anchors = [];
@@ -1783,6 +1980,7 @@
 
         const tile = document.createElement("span");
         tile.className = "letter-tile";
+        if (levelType.flyingLetters) tile.classList.add("butterfly-letter");
         tile.dataset.index = index;
         tile.dataset.letter = letter;
         tile.style.setProperty("--letter-scale", .7 + Math.random() * .3);
@@ -1829,6 +2027,11 @@
         anchor.hidden = false;
         const glyph = anchor.querySelector(".letter-glyph");
         let footprint = glyph.getBoundingClientRect();
+        if (levelType.flyingLetters) {
+          const radius = Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + 5;
+          anchor.dataset.flightRadius = radius;
+          footprint = { width: radius * 2, height: radius * 2 };
+        }
         if (tiles[index].dataset.decoy === "true") {
           // Reserve room for both glyphs so correcting it offscreen cannot
           // move the fixed anchor or push the real letter beneath the UI.
@@ -1841,7 +2044,7 @@
         anchor.hidden = wasHidden;
         // Include rotation, the first letter's small vibration, and a margin
         // so the complete glyph remains clear of both UI rows and room edges.
-        const padding = index === 0 ? 15 : 12;
+        const padding = levelType.flyingLetters || index === 0 ? 15 : 12;
         const minX = footprint.width / 2 + padding;
         const maxX = Math.max(minX, worldWidth - minX);
         const minY = band.top + footprint.height / 2 + padding;
@@ -1916,6 +2119,7 @@
       }
       status.textContent = `CLUE ${wordIndex + 1}/${words.length}`;
       message.classList.remove("show");
+      refreshMessageBitmap();
       void message.offsetWidth;
       message.classList.add("show");
       wordAdvanceTimer = window.setTimeout(() => {
@@ -2196,11 +2400,8 @@
       anomalyHasBeenSeen = false;
       anomalyActive = true;
       anomalyImage.src = src;
-      anomalyImage.style.left = "0px";
-      anomalyImage.style.top = "0px";
-      anomalyImage.style.height = `${viewport.getBoundingClientRect().height}px`;
-      anomalyImage.style.width = `${renderedVideoWidth}px`;
-      anomalyImage.style.display = "block";
+      setOverlayImageStyles(anomalyImage, anomalyBitmap, { left: "0px", top: "0px",
+        height: `${viewport.getBoundingClientRect().height}px`, width: `${renderedVideoWidth}px`, display: "block" });
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       anomalyWorld.style.height = `${viewport.getBoundingClientRect().height}px`;
       updateAnomalyVisibilityState();
@@ -2223,7 +2424,7 @@
       anomalyHasBeenSeen = false;
       anomalyMeta = null;
       anomalyWorldBox = null;
-      anomalyImage.style.display = "none";
+      setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
       anomalyImage.removeAttribute("src");
       if (!gameOver) scheduleAnomalyCheck();
     }
@@ -2231,6 +2432,7 @@
     function triggerJumpscare() {
       if (gameOver || roomCompleted) return;
       gameOver = true;
+      stopButterflyFlight();
       updateCameraControls();
       stopCameraTimer();
       window.clearTimeout(wordAdvanceTimer);
@@ -2240,6 +2442,8 @@
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
+      // Stop competing room-video decoding once the full-screen scare owns playback.
+      video.pause();
 
       // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
       // Put it into that exact panorama coordinate space at the CURRENT camera
@@ -2254,6 +2458,7 @@
       // The first frame is already decoded and parked at time zero. Avoid a
       // redundant seek here, which can delay the first visible scare frame.
       jumpscareVideo.style.display = "block";
+      jumpscareVideo.classList.remove("priming");
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
       if (jumpscareAudioGain) {
@@ -2293,6 +2498,7 @@
     }
 
     function showGameOver() {
+      stopButterflyFlight();
       stopCameraTimer();
       snapButton.disabled = true;
       if (jumpscareFrameRequest !== null) {
@@ -2363,11 +2569,11 @@
         // Continue smoothly from the exact dragged position. Do NOT reset the
         // transform to the resting position first, which caused a visible flicker.
         handBlocker.className = "active";
-        handImage.style.transition = "transform 280ms cubic-bezier(.55,.05,.82,.34)";
+        setOverlayImageStyles(handImage, handBitmap, { transition: "transform 280ms cubic-bezier(.55,.05,.82,.34)" });
         const exitY = Math.max(viewport.clientHeight * 1.15, handImage.getBoundingClientRect().height * 1.10);
 
         requestAnimationFrame(() => {
-          handImage.style.transform = `translate(-50%, ${exitY}px)`;
+          setOverlayImageStyles(handImage, handBitmap, { transform: `translate(-50%, ${exitY}px)` });
         });
       } else {
         handBlocker.className = "active exiting";
@@ -2378,8 +2584,7 @@
         updateCameraControls();
         handBlocker.className = "";
         handBlocker.setAttribute("aria-hidden", "true");
-        handImage.style.transition = "";
-        handImage.style.transform = "";
+        setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
         scheduleNextHandCheck();
       }, 300);
     }
@@ -2408,7 +2613,7 @@
       if (dy > 0) {
         const maxDrag = viewport.clientHeight * 0.55;
         const visualDy = Math.min(dy, maxDrag);
-        handImage.style.transform = `translate(-50%, ${visualDy}px)`;
+        setOverlayImageStyles(handImage, handBitmap, { transform: `translate(-50%, ${visualDy}px)` });
       }
     }
 
@@ -2427,11 +2632,9 @@
         // directly off-screen without jumping back up first.
         hideHand({ continueFromDrag: true });
       } else {
-        handImage.style.transition = "transform 180ms ease-out";
-        handImage.style.transform = "translate(-50%, 0)";
+        setOverlayImageStyles(handImage, handBitmap, { transition: "transform 180ms ease-out", transform: "translate(-50%, 0)" });
         window.setTimeout(() => {
-          handImage.style.transition = "";
-          handImage.style.transform = "";
+          setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
         }, 190);
       }
     }
@@ -2457,6 +2660,7 @@
 
     function resizeGameViewport() {
       viewportLayoutFrame = 0;
+      stopButterflyFlight();
       syncVisibleViewport();
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
@@ -2469,6 +2673,7 @@
       showCurrentLetter({ animate: false });
       updateAnomalyVisibilityState();
       refreshShutterBitmap();
+      refreshMessageBitmap();
     }
 
     function requestViewportLayout() {
@@ -2551,6 +2756,50 @@
       if (!jumpscareAudioContext || jumpscareAudioContext.state === "running" || jumpscareAudioContext.state === "closed") return;
       const resumed = jumpscareAudioContext.resume();
       if (resumed) resumed.catch(error => console.warn("Could not resume jumpscare audio.", error));
+    }
+
+    function cancelJumpscareStandbySeek() {
+      if (jumpscareStandbySeekCancel) jumpscareStandbySeekCancel();
+      jumpscareVideo.classList.remove("priming");
+    }
+
+    function seekJumpscareStandbyFrame(time) {
+      return new Promise(resolve => {
+        let settled = false;
+        const finish = success => {
+          if (settled) return;
+          settled = true;
+          window.clearTimeout(timeout);
+          jumpscareVideo.removeEventListener("seeked", done);
+          jumpscareVideo.removeEventListener("error", failed);
+          jumpscareStandbySeekCancel = null;
+          resolve(success);
+        };
+        const done = () => finish(true);
+        const failed = () => finish(false);
+        const timeout = window.setTimeout(failed, 1200);
+        jumpscareStandbySeekCancel = failed;
+        jumpscareVideo.addEventListener("seeked", done);
+        jumpscareVideo.addEventListener("error", failed);
+        try { jumpscareVideo.currentTime = time; } catch (error) { failed(); }
+      });
+    }
+
+    async function warmJumpscareBeforeDeadline() {
+      jumpscareDeadlineWarmStarted = true;
+      if (!jumpscareReady || !jumpscareVideo.paused || !jumpscareVideo.duration) return;
+      // A paused hidden player can lose its decoder while the level runs.
+      // A tiny paused seek wakes it before zero; no play(), mute or volume
+      // changes means READY's audio permission and silent standby are preserved.
+      jumpscareVideo.classList.add("priming");
+      try {
+        const ready = await seekJumpscareStandbyFrame(Math.min(.001, jumpscareVideo.duration / 2));
+        if (ready && !gameOver && !roomCompleted && cameraStartedAt !== null) {
+          await seekJumpscareStandbyFrame(0);
+        }
+      } finally {
+        jumpscareVideo.classList.remove("priming");
+      }
     }
 
     // Keep desktop audio in the native media player. Routing file:// media
