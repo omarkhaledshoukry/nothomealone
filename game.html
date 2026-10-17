@@ -7,6 +7,7 @@
   <title>Room Word Hunt</title>
   <style>
     :root {
+      color-scheme: light;
       color-scheme: only light;
       --tarantino-yellow: #f6d20a;
       --letter-beige: rgba(241, 239, 229, 0.80);
@@ -42,6 +43,7 @@
     body.grabbing { cursor: grabbing; }
 
     #game {
+      color-scheme: light;
       color-scheme: only light;
       forced-color-adjust: none;
       position: fixed;
@@ -342,6 +344,23 @@
     #snapButton:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
     #snapButton:disabled { cursor: default; opacity: 1; border-color: #fff; }
 
+    #shutterBitmap { display: none; }
+    #cameraOverlay.bitmap-shutter #shutterBitmap {
+      display: block;
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    #cameraOverlay.bitmap-shutter #snapButton {
+      border-color: transparent;
+      background: transparent;
+      -webkit-filter: none;
+      filter: none;
+    }
+    #cameraOverlay.bitmap-shutter .shutter-core { visibility: hidden; }
+
     @keyframes shutterPress {
       0%, 100% { transform: scale(1); }
       45% { transform: scale(.9); }
@@ -467,6 +486,7 @@
       user-select: none;
       -webkit-user-drag: none;
       filter: drop-shadow(0 10px 18px rgba(0,0,0,.34));
+      color-scheme: light;
       color-scheme: only light;
       forced-color-adjust: none;
       opacity: 1;
@@ -479,6 +499,10 @@
       color: #000;
       -webkit-text-fill-color: #000;
       forced-color-adjust: none;
+      /* Keep the final ink black when legacy Android forced-dark changes
+         text paint colours. The paper image stays outside this filter. */
+      -webkit-filter: brightness(0);
+      filter: brightness(0);
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       text-align: left;
       transform: rotate(-0.4deg);
@@ -792,6 +816,7 @@
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
           <span class="shutter-core" aria-hidden="true"></span>
         </button>
+        <canvas id="shutterBitmap" aria-hidden="true"></canvas>
       </div>
 
       <div id="captureEffects" aria-hidden="true"></div>
@@ -850,6 +875,9 @@
     const batterySlots = [...document.querySelectorAll(".battery-slot")];
     const cameraRoom = document.getElementById("cameraRoom");
     const snapButton = document.getElementById("snapButton");
+    const shutterBitmap = document.getElementById("shutterBitmap");
+    const shutterBitmapContext = /Android/i.test(navigator.userAgent) ? shutterBitmap.getContext("2d") : null;
+    if (shutterBitmapContext) cameraOverlay.classList.add("bitmap-shutter");
     const message = document.getElementById("message");
     const handBlocker = document.getElementById("handBlocker");
     const handImage = document.getElementById("handImage");
@@ -890,6 +918,8 @@
     let cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
     let cameraTimerInterval = null;
     let shutterAnimationTimer = null;
+    let shutterBitmapFrame = 0;
+    let shutterBitmapUntil = 0;
     let shutterPointerId = null;
     let shutterStartX = 0;
     let shutterStartY = 0;
@@ -1452,6 +1482,47 @@
         letterRect.top >= frame.top - tolerance && letterRect.bottom <= frame.bottom + tolerance;
     }
 
+    function drawShutterBitmap() {
+      shutterBitmapFrame = 0;
+      if (!shutterBitmapContext) return;
+      // A viewport-sized image surface avoids legacy Android's recolouring
+      // of button backgrounds, borders and their CSS filter layers. The real
+      // button and its animated core still provide layout and native input.
+      const frame = cameraOverlay.getBoundingClientRect();
+      const ring = snapButton.getBoundingClientRect();
+      const core = snapButton.querySelector(".shutter-core").getBoundingClientRect();
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.round(frame.width * scale);
+      const height = Math.round(frame.height * scale);
+      if (shutterBitmap.width !== width || shutterBitmap.height !== height) {
+        shutterBitmap.width = width;
+        shutterBitmap.height = height;
+      }
+      const context = shutterBitmapContext;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      context.clearRect(0, 0, frame.width, frame.height);
+      context.strokeStyle = "#fff";
+      context.lineWidth = 2;
+      context.beginPath();
+      context.arc(ring.left - frame.left + ring.width / 2, ring.top - frame.top + ring.height / 2,
+        Math.max(0, Math.min(ring.width, ring.height) / 2 - 1), 0, Math.PI * 2);
+      context.stroke();
+      context.fillStyle = "#fff";
+      context.beginPath();
+      context.arc(core.left - frame.left + core.width / 2, core.top - frame.top + core.height / 2,
+        Math.max(0, Math.min(core.width, core.height) / 2), 0, Math.PI * 2);
+      context.fill();
+      if (performance.now() < shutterBitmapUntil || snapButton.classList.contains("held") || snapButton.classList.contains("snapping")) {
+        shutterBitmapFrame = requestAnimationFrame(drawShutterBitmap);
+      }
+    }
+
+    function refreshShutterBitmap(duration = 220) {
+      if (!shutterBitmapContext) return;
+      shutterBitmapUntil = Math.max(shutterBitmapUntil, performance.now() + duration);
+      if (!shutterBitmapFrame) shutterBitmapFrame = requestAnimationFrame(drawShutterBitmap);
+    }
+
     function snapCamera() {
       if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
@@ -1464,6 +1535,7 @@
       snapButton.classList.remove("snapping");
       void snapButton.offsetWidth;
       snapButton.classList.add("snapping");
+      refreshShutterBitmap();
       window.clearTimeout(shutterAnimationTimer);
       shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), 200);
 
@@ -1555,6 +1627,7 @@
       shutterPointerId = null;
       shutterMoved = false;
       snapButton.classList.remove("held");
+      refreshShutterBitmap();
       if (pointerId !== null) {
         try {
           if (snapButton.hasPointerCapture(pointerId)) snapButton.releasePointerCapture(pointerId);
@@ -1571,6 +1644,7 @@
       shutterStartX = event.clientX;
       shutterStartY = event.clientY;
       snapButton.classList.add("held");
+      refreshShutterBitmap();
       try { snapButton.setPointerCapture(event.pointerId); } catch {}
     });
     snapButton.addEventListener("pointermove", event => {
@@ -2310,6 +2384,7 @@
       fitHudWord();
       showCurrentLetter({ animate: false });
       updateAnomalyVisibilityState();
+      refreshShutterBitmap();
     }
 
     function requestViewportLayout() {
