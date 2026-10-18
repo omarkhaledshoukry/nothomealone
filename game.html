@@ -127,6 +127,7 @@
     #roomVideo.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
+    #spiderWorld.snapping,
     #jumpscareVideo.snapping {
       transition: transform 420ms cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
@@ -593,7 +594,8 @@
       opacity: 0;
     }
 
-    #anomalyWorld {
+    #anomalyWorld,
+    #spiderWorld {
       position: absolute;
       z-index: 3;
       top: 0;
@@ -605,6 +607,27 @@
       pointer-events: none;
       will-change: transform;
     }
+
+    #spiderWorld { z-index: 4; }
+    #spiderActor {
+      position: absolute;
+      top: -10px;
+      pointer-events: none;
+      will-change: transform;
+    }
+    #spiderActor[hidden] { display: none; }
+    #spiderCanvas, #spiderImage {
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      color-scheme: light;
+      color-scheme: only light;
+      forced-color-adjust: none;
+    }
+    #spiderImage { display: none; }
 
     #anomalyImage,
     #anomalyBitmap {
@@ -833,6 +856,12 @@
           <img id="anomalyImage" alt="" draggable="false" />
           <canvas id="anomalyBitmap" aria-hidden="true"></canvas>
         </div>
+        <div id="spiderWorld" aria-hidden="true">
+          <div id="spiderActor" hidden>
+            <canvas id="spiderCanvas"></canvas>
+            <img id="spiderImage" alt="" draggable="false" />
+          </div>
+        </div>
       </div>
 
       <div id="cameraOverlay" aria-hidden="true">
@@ -891,6 +920,15 @@
     const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
     const ANOMALY_CHECK_MS = 15000;
     const ANOMALY_SPAWN_CHANCE = 0.50;
+    const SPIDER_FRAME_FILES = ["spider-1.png", "spider-2.png"];
+    const SPIDER_SOUND_FILE = "spider.wav";
+    const SPIDER_CHECK_MS = 20000;
+    const SPIDER_SPAWN_CHANCE = .25;
+    const SPIDER_SCALE = .20;
+    const SPIDER_TOP = -10;
+    const SPIDER_REVEAL_FRACTION = .25;
+    const SPIDER_RETREAT_MS = 520;
+    const SPIDER_FRAME_MS = 70;
     const CAMERA_DRAG_GAIN = 1.2;
     const CAMERA_MOMENTUM_MIN_SPEED = 0.25;
     const CAMERA_FLICK_SPEED = 0.75;
@@ -970,6 +1008,11 @@
     const anomalyWorld = document.getElementById("anomalyWorld");
     const anomalyImage = document.getElementById("anomalyImage");
     const anomalyBitmap = document.getElementById("anomalyBitmap");
+    const spiderWorld = document.getElementById("spiderWorld");
+    const spiderActor = document.getElementById("spiderActor");
+    const spiderCanvas = document.getElementById("spiderCanvas");
+    const spiderImage = document.getElementById("spiderImage");
+    const spiderCanvasContext = spiderCanvas.getContext("2d");
     const blackFlash = document.getElementById("blackFlash");
     const jumpscareVideo = document.getElementById("jumpscareVideo");
     const gameOverScreen = document.getElementById("gameOverScreen");
@@ -1093,6 +1136,25 @@
     let anomalyHasBeenSeen = false;
     let anomalyMeta = null;
     let anomalyWorldBox = null;
+    let spiderFrames = [];
+    let spiderMeta = null;
+    let spiderAssetsReady = false;
+    let spiderTimer = null;
+    let spiderActive = false;
+    let spiderRetreating = false;
+    let spiderRetreatFrame = 0;
+    let spiderFrameIndex = 0;
+    let spiderWorldX = 0;
+    let spiderWorldFraction = 0;
+    let spiderLastViewOffset = 0;
+    let spiderSoundDataPromise = Promise.resolve(null);
+    let spiderSoundPreparing = null;
+    let spiderSoundReady = false;
+    let spiderAudioContext = null;
+    let spiderAudioBuffer = null;
+    let spiderAudioSource = null;
+    let spiderSoundOffset = 0;
+    let spiderNativeAudio = null;
     let gameOver = false;
     let wordsReadyForClue = false;
     let videosReadyForClue = false;
@@ -1428,7 +1490,10 @@
       try {
         // Calling play here also unlocks decoding on browsers that require
         // a user gesture. Gameplay stays on the clue card until it is ready.
-        await prepareJumpscarePlayback({ unlockAudio: true });
+        const jumpscarePreparation = prepareJumpscarePlayback({ unlockAudio: true });
+        // Unlock the optional encounter sound within the same trusted READY tap.
+        unlockSpiderSound();
+        await jumpscarePreparation;
       } catch (error) {
         gameplayStarting = false;
         readyButton.disabled = false;
@@ -1449,6 +1514,7 @@
         clueIntro.setAttribute("aria-hidden", "true");
       }, 190);
       scheduleNextHandCheck();
+      scheduleSpiderCheck();
     }
 
     readyButton.addEventListener("click", beginGameplayFromClues);
@@ -1509,6 +1575,8 @@
       letterWorld.style.height = `${height}px`;
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       anomalyWorld.style.height = `${height}px`;
+      spiderWorld.style.width = `${renderedVideoWidth}px`;
+      spiderWorld.style.height = `${height}px`;
       // Keep full-canvas overlays registered even if a PNG uses a different
       // aspect ratio from the original room video.
       jumpscareVideo.style.width = `${renderedVideoWidth}px`;
@@ -1521,6 +1589,7 @@
       // Preserve the freely dragged camera position when the frame resizes.
       offsetX = clamp(offsetX, minOffset, 0);
       applyWorldOffset(false);
+      if (spiderActive) layoutSpider();
     }
 
     function buildSnapPoints() {
@@ -1549,16 +1618,21 @@
       video.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
+      spiderWorld.classList.toggle("snapping", animate);
       jumpscareVideo.classList.toggle("snapping", animate);
       const transform = `translateX(${offsetX}px)`;
       roomImage.style.transform = transform;
       video.style.transform = transform;
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
+      spiderWorld.style.transform = transform;
       jumpscareVideo.style.transform = transform;
       // Only actual camera gestures/coasting can fix a decoy. Resizing and
       // layout updates also reposition the world, but do not count as looking away.
-      if (observeDecoys) updateDecoyVisibilityState({ allowCorrection: true });
+      if (observeDecoys) {
+        updateDecoyVisibilityState({ allowCorrection: true });
+        updateSpiderVisibilityState();
+      }
     }
 
     function startWord(index) {
@@ -2112,6 +2186,7 @@
         stopCameraTimer();
         window.clearTimeout(anomalyTimer);
         window.clearTimeout(handTimer);
+        stopSpiderEncounter();
       }
       if (!roomCompleted && !anomalyEnabled && completedWordCount >= 1) {
         anomalyEnabled = true;
@@ -2304,6 +2379,223 @@
       finishPanGesture();
     }
 
+    async function loadSpiderAssets() {
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (/^https?:$/.test(location.protocol) && AudioContextClass) {
+        // Fetch now, decode after READY has unlocked an audio context. Buffer
+        // playback avoids reopening a cold media player when the spider moves.
+        spiderSoundDataPromise = fetch(SPIDER_SOUND_FILE).then(response => {
+          if (!response.ok) throw new Error("Spider sound is unavailable.");
+          return response.arrayBuffer();
+        }).catch(() => null);
+      } else {
+        // Browsers block fetch(file://); native local audio still works.
+        spiderNativeAudio = new Audio(SPIDER_SOUND_FILE);
+        spiderNativeAudio.preload = "auto";
+      }
+      try {
+        spiderFrames = await Promise.all(SPIDER_FRAME_FILES.map(src => new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => image.naturalWidth ? resolve(image) : reject(new Error("Invalid spider image."));
+          image.onerror = reject;
+          image.src = src;
+        })));
+        spiderMeta = await readAlphaBounds(SPIDER_FRAME_FILES[0]);
+        spiderAssetsReady = Boolean(spiderMeta?.bbox);
+      } catch (error) {
+        // Optional encounters must not stop rooms loading when assets are absent.
+        console.warn("Spider images are unavailable; spider encounters are disabled.");
+      }
+    }
+
+    function unlockSpiderSound() {
+      if (spiderSoundReady || spiderSoundPreparing) return;
+      if (spiderNativeAudio) {
+        spiderNativeAudio.volume = 0;
+        spiderNativeAudio.muted = false;
+        const played = spiderNativeAudio.play();
+        spiderSoundPreparing = Promise.resolve(played).then(() => {
+          spiderNativeAudio.pause();
+          spiderNativeAudio.currentTime = 0;
+          spiderNativeAudio.volume = 1;
+          spiderSoundReady = true;
+        }).catch(() => {}).finally(() => { spiderSoundPreparing = null; });
+        return;
+      }
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return;
+      try {
+        if (!spiderAudioContext) spiderAudioContext = jumpscareAudioContext || new AudioContextClass();
+        // resume() must happen synchronously inside READY's trusted handler.
+        const resumed = spiderAudioContext.resume();
+        const decoded = spiderSoundDataPromise.then(bytes => {
+          if (!bytes) throw new Error("Spider sound is unavailable.");
+          return new Promise((resolve, reject) => spiderAudioContext.decodeAudioData(bytes.slice(0), resolve, reject));
+        }).then(buffer => {
+          spiderAudioBuffer = buffer;
+          // The supplied WAV begins with silence. Skip that lead-in at playback
+          // so the audible effect begins with the upward movement, keeping the file intact.
+          const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
+          let first = 0;
+          while (first < buffer.length && !channels.some(channel => Math.abs(channel[first]) > .001)) first++;
+          spiderSoundOffset = first < buffer.length ? Math.max(0, (first - 256) / buffer.sampleRate) : 0;
+        });
+        spiderSoundPreparing = Promise.all([resumed, decoded]).then(() => {
+          spiderSoundReady = true;
+        }).catch(() => {}).finally(() => { spiderSoundPreparing = null; });
+      } catch (error) { /* Keep the rest of the game available without optional audio. */ }
+    }
+
+    function resumeSpiderSound() {
+      if (spiderAudioContext && spiderAudioContext.state === "suspended") {
+        const resumed = spiderAudioContext.resume();
+        if (resumed) resumed.catch(() => {});
+      }
+    }
+
+    function stopSpiderSound() {
+      if (spiderAudioSource) {
+        try { spiderAudioSource.stop(); } catch (error) {}
+        spiderAudioSource.disconnect();
+        spiderAudioSource = null;
+      }
+      if (spiderNativeAudio) spiderNativeAudio.pause();
+    }
+
+    function playSpiderSound() {
+      stopSpiderSound();
+      if (spiderAudioBuffer && spiderAudioContext) {
+        resumeSpiderSound();
+        const source = spiderAudioContext.createBufferSource();
+        source.buffer = spiderAudioBuffer;
+        source.connect(spiderAudioContext.destination);
+        source.onended = () => {
+          source.disconnect();
+          if (spiderAudioSource === source) spiderAudioSource = null;
+        };
+        spiderAudioSource = source;
+        source.start(0, spiderSoundOffset);
+      } else if (spiderNativeAudio && spiderSoundReady) {
+        spiderNativeAudio.currentTime = 0;
+        const played = spiderNativeAudio.play();
+        if (played) played.catch(() => {});
+      }
+    }
+
+    function drawSpiderFrame(index) {
+      spiderFrameIndex = index;
+      const frame = spiderFrames[index];
+      if (!frame) return;
+      if (!spiderCanvasContext) {
+        spiderCanvas.style.display = "none";
+        spiderImage.style.display = "block";
+        spiderImage.src = frame.src;
+        return;
+      }
+      const ratio = Math.min(window.devicePixelRatio || 1, 2);
+      const width = Math.ceil(spiderMeta.width * SPIDER_SCALE * ratio);
+      const height = Math.ceil(spiderMeta.height * SPIDER_SCALE * ratio);
+      if (spiderCanvas.width !== width || spiderCanvas.height !== height) {
+        spiderCanvas.width = width;
+        spiderCanvas.height = height;
+      }
+      spiderCanvasContext.clearRect(0, 0, width, height);
+      spiderCanvasContext.drawImage(frame, 0, 0, width, height);
+    }
+
+    function layoutSpider() {
+      if (!spiderMeta) return;
+      const width = spiderMeta.width * SPIDER_SCALE;
+      spiderWorldX = spiderWorldFraction * Math.max(0, renderedVideoWidth - width);
+      spiderActor.style.left = `${spiderWorldX}px`;
+      spiderActor.style.top = `${SPIDER_TOP}px`;
+      spiderActor.style.width = `${width}px`;
+      spiderActor.style.height = `${spiderMeta.height * SPIDER_SCALE}px`;
+      spiderLastViewOffset = offsetX;
+      drawSpiderFrame(spiderFrameIndex);
+    }
+
+    function scheduleSpiderCheck() {
+      window.clearTimeout(spiderTimer);
+      spiderTimer = null;
+      if (!gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+      spiderTimer = window.setTimeout(() => {
+        spiderTimer = null;
+        if (!gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+        if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
+        scheduleSpiderCheck();
+      }, SPIDER_CHECK_MS);
+    }
+
+    function spawnSpiderOffscreen() {
+      if (!gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
+      const width = spiderMeta.width * SPIDER_SCALE;
+      const visible = currentVisibleWorldRange();
+      const ranges = [];
+      const lastX = renderedVideoWidth - width;
+      if (visible.left - 8 - width >= 0) ranges.push([0, Math.min(lastX, visible.left - 8 - width)]);
+      if (visible.right + 8 <= lastX) ranges.push([visible.right + 8, lastX]);
+      if (!ranges.length) return false;
+      const range = ranges[Math.floor(Math.random() * ranges.length)];
+      const x = range[0] + Math.random() * (range[1] - range[0]);
+      spiderWorldFraction = x / Math.max(1, lastX);
+      spiderActive = true;
+      spiderRetreating = false;
+      spiderFrameIndex = 0;
+      spiderActor.style.transform = "translateY(0px)";
+      layoutSpider();
+      spiderActor.hidden = false;
+      return true;
+    }
+
+    function updateSpiderVisibilityState() {
+      if (!spiderActive || spiderRetreating || gameOver || roomCompleted) return;
+      const moved = Math.abs(offsetX - spiderLastViewOffset) > .01;
+      spiderLastViewOffset = offsetX;
+      if (!moved) return;
+      const visible = currentVisibleWorldRange();
+      const left = spiderWorldX + spiderMeta.bbox.left * SPIDER_SCALE;
+      const right = spiderWorldX + spiderMeta.bbox.right * SPIDER_SCALE;
+      const overlap = Math.max(0, Math.min(right, visible.right) - Math.max(left, visible.left));
+      if (overlap / (right - left) >= SPIDER_REVEAL_FRACTION) startSpiderRetreat();
+    }
+
+    function startSpiderRetreat() {
+      if (!spiderActive || spiderRetreating || gameOver || roomCompleted) return;
+      spiderRetreating = true;
+      playSpiderSound();
+      const started = performance.now();
+      const distance = spiderMeta.height * SPIDER_SCALE + 4;
+      const step = time => {
+        spiderRetreatFrame = 0;
+        if (!spiderActive || gameOver || roomCompleted) return;
+        const elapsed = time - started;
+        const progress = clamp(elapsed / SPIDER_RETREAT_MS, 0, 1);
+        const index = Math.floor(elapsed / SPIDER_FRAME_MS) % spiderFrames.length;
+        if (index !== spiderFrameIndex) drawSpiderFrame(index);
+        spiderActor.style.transform = `translateY(${-distance * progress * progress}px)`;
+        if (progress < 1) spiderRetreatFrame = requestAnimationFrame(step);
+        else {
+          spiderActive = false;
+          spiderRetreating = false;
+          spiderActor.hidden = true;
+          scheduleSpiderCheck();
+        }
+      };
+      spiderRetreatFrame = requestAnimationFrame(step);
+    }
+
+    function stopSpiderEncounter() {
+      window.clearTimeout(spiderTimer);
+      spiderTimer = null;
+      if (spiderRetreatFrame) cancelAnimationFrame(spiderRetreatFrame);
+      spiderRetreatFrame = 0;
+      spiderActive = false;
+      spiderRetreating = false;
+      spiderActor.hidden = true;
+      stopSpiderSound();
+    }
+
     function scheduleAnomalyCheck() {
       window.clearTimeout(anomalyTimer);
       if (!anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
@@ -2433,6 +2725,7 @@
       if (gameOver || roomCompleted) return;
       gameOver = true;
       stopButterflyFlight();
+      stopSpiderEncounter();
       updateCameraControls();
       stopCameraTimer();
       window.clearTimeout(wordAdvanceTimer);
@@ -2499,6 +2792,7 @@
 
     function showGameOver() {
       stopButterflyFlight();
+      stopSpiderEncounter();
       stopCameraTimer();
       snapButton.disabled = true;
       if (jumpscareFrameRequest !== null) {
@@ -2714,7 +3008,10 @@
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) interruptCameraInput();
       else {
-        if (gameplayStarted && !roomCompleted) resumeJumpscareAudio();
+        if (gameplayStarted && !roomCompleted) {
+          resumeJumpscareAudio();
+          resumeSpiderSound();
+        }
         updateCameraTimer();
         if (jumpscarePreparing && !jumpscareReady) {
           const resume = jumpscareVideo.play();
@@ -2829,7 +3126,10 @@
 
     // Restore an interrupted audio context on the next real interaction too.
     window.addEventListener("pointerup", event => {
-      if (event.isTrusted && gameplayStarted && !gameOver && !roomCompleted) resumeJumpscareAudio();
+      if (event.isTrusted && gameplayStarted && !gameOver && !roomCompleted) {
+        resumeJumpscareAudio();
+        resumeSpiderSound();
+      }
     }, true);
 
     function prepareJumpscarePlayback({ unlockAudio = false } = {}) {
@@ -2970,6 +3270,7 @@
       revealWhenMediaReady();
     });
     resizeGameViewport();
+    loadSpiderAssets();
     loadRandomLevel();
     revealWhenMediaReady();
     cameraRoom.textContent = ROOM_NAME;
