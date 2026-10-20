@@ -1,0 +1,298 @@
+# ROOM WORD HUNT - config.txt
+# Place beside the game HTML. Save as UTF-8 and reload the page after editing.
+# Full-line comments start with # or ;. Sections and key names are case-sensitive.
+# Use key = value. Quote text/paths/colors; arrays use JSON ["file-a.png", "file-b.png"].
+# Probabilities: 0.25 = 25%; milliseconds: 120000 = 2 minutes. Booleans: true / false.
+# Omitted/invalid values use built-in defaults; unknown keys are ignored with a console warning.
+# Missing/unreadable/empty/HTML/malformed/duplicate-key files use all built-in defaults.
+# Invalid min/max pairs use the default pair; all-zero level chances use default level chances.
+# Settings load once, before level selection. No config file is required to play.
+# Runtime values (current camera position, collected letters, remaining time) are managed by the game.
+# Direct file:// opening may block text fetches; use the hosted game/local web server to apply config.
+# Defaults: standard 63%, decoy 18%, butterfly 9%, flyingDecoy 10%.
+
+# Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
+[assets]
+wordsFile = "words.txt"
+levelsDirectory = "levels/"
+levelIndexFile = "index.json"
+paperFile = "note.png"
+handFile = "hand.png"
+anomalyFiles = ["anomaly.png"]
+spiderFrames = ["spider-1.png", "spider-2.png"]
+spiderSound = "spider.wav"
+letterFontFile = "Dudu_Calligraphy.ttf"
+letterFontLocalNames = ["Dudu Calligraphy", "DuduCalligraphy", "Dudu_Calligraphy"]
+
+# Milliseconds unless the key ends in Seconds. Built-in config fetch deadline: 4 seconds.
+[loading]
+wordsTimeoutMs = 15000
+resourceTimeoutMs = 6000
+jumpscareDownloadTimeoutMs = 60000
+levelProbeGap = 16
+levelProbeBatchSize = 4
+deadlineWarmSeconds = 3
+standbySeekTimeoutMs = 1200
+standbySeekSeconds = 0.001
+decodedFrameFallbackMs = 250
+decodedFramePollMs = 100
+
+# Level chances are weights in [0,1]; the game normalizes their sum. These defaults total 1.
+[levels.standard]
+chance = 0.63
+wordCount = 3
+timeLimitMs = 120000
+decoyLetterChance = 0
+flyingLetters = false
+
+# Fixed decoy letters correct only after being seen and panned fully out of view.
+[levels.decoy]
+chance = 0.18
+wordCount = 2
+timeLimitMs = 60000
+decoyLetterChance = 0.1
+flyingLetters = false
+
+# Original flying-letter type. timeLimitMs=30000 means 30 seconds.
+[levels.butterfly]
+chance = 0.09
+wordCount = 1
+timeLimitMs = 30000
+decoyLetterChance = 0
+flyingLetters = true
+
+# NEW: three flying words with decoys, two minutes. Each next letter appears only after capture.
+[levels.flyingDecoy]
+chance = 0.1
+wordCount = 3
+timeLimitMs = 120000
+decoyLetterChance = 0.1
+flyingLetters = true
+
+# 0 = skip jumpscare; 1 = always play; 0.5 = 50% chance. One roll per failure.
+[failures.timeout]
+title = "GAME OVER"
+jumpscareChance = 0.5
+
+# Battery exhaustion always ends the level, with or without a jumpscare.
+[failures.battery]
+title = "BATTERY DIED"
+jumpscareChance = 0.5
+
+# Photographing a letter while the monster anomaly is active.
+[failures.anomaly]
+title = "Anomaly Undetected"
+jumpscareChance = 1
+
+# Photographing a wrong/decoy letter.
+[failures.decoy]
+title = "Wrong Letter Captured"
+jumpscareChance = 1
+
+# Fallback for a failure without a more specific cause.
+[failures.other]
+title = "GAME OVER"
+jumpscareChance = 1
+
+# Asset-load errors go directly to this message; no unavailable video can be played.
+[failures.levels]
+title = "LEVELS UNAVAILABLE"
+
+# Video-load errors before gameplay go directly to this message.
+[failures.video]
+title = "VIDEO UNAVAILABLE"
+
+# slotCount: integer 1..12. wordReserve protects this many slots from correct-word costs (not misses).
+[battery]
+slotCount = 4
+missCost = 1
+wordCost = 1
+wordReserve = 1
+slotColors = ["#e0bd38", "#a6d33c", "#78d936", "#52d52f"]
+
+# Drag/inertia settings use CSS pixels and milliseconds. Speed thresholds are CSS pixels per millisecond.
+[camera]
+dragGain = 1.2
+momentumMinSpeed = 0.25
+flickSpeed = 0.75
+velocityWindowMs = 100
+dragThresholdPx = 6
+flickMinTravelPx = 48
+flickViewportFraction = 0.12
+coastVelocityMultiplier = 180
+coastTravelMultiplier = 1.75
+coastViewportFraction = 0.75
+momentumMinMs = 240
+momentumMaxMs = 850
+momentumDurationMultiplier = 3
+momentumEasePower = 3
+centreFlightMs = 420
+timerRefreshMs = 250
+
+# Uniform random scale and rotation; positive padding keeps letters clear of the UI. Time values in milliseconds.
+[letters]
+minScale = 0.7
+maxScale = 1
+minRotationDeg = -25
+maxRotationDeg = 25
+firstLetterVibrates = true
+vibrationPx = 2
+vibrationMs = 400
+fadeInMs = 150
+transferMs = 260
+transferFallbackMs = 40
+transferEndScale = 0.5
+wordTransitionMs = 650
+captureTolerancePx = 0.5
+paddingPx = 12
+firstPaddingPx = 15
+minFontPx = 35
+maxFontPx = 53
+fontHeightFraction = 0.054
+blurPx = 0.7
+hudMinFontPx = 9
+hudMaxFontPx = 40
+hudGlyphWidthRatio = 0.67
+hudGapPx = 2
+
+# Flying motion applies to both butterfly and flyingDecoy. Speeds are CSS pixels/second; travel/sway in CSS pixels.
+[butterfly]
+minSpeed = 44
+maxSpeed = 82
+horizontalSpeedMultiplier = 1.3
+longArcChance = 0.2
+horizontalTravelPx = 280
+longHorizontalTravelPx = 560
+verticalTravelPx = 110
+minTurnMs = 1100
+maxTurnMs = 3000
+minSwayXPx = 16
+maxSwayXPx = 33
+minSwayYPx = 12
+maxSwayYPx = 27
+swayXFrequency = 3.1
+swayYFrequency = 4.3
+verticalPhaseMultiplier = 1.7
+hoverFrequency = 1.8
+minPaceFraction = 0.25
+steering = 2.4
+slowdownDistancePx = 45
+bankVelocityMultiplier = 0.32
+bankSwayDeg = 17
+maxBankDeg = 36
+flutterFrequency = 17
+flutterDeg = 23
+maxStepMs = 50
+paddingPx = 15
+radiusPaddingPx = 5
+
+# afterWords=1 preserves the original first-word requirement. Set 0 to start its checks from READY.
+[anomaly]
+enabled = true
+afterWords = 1
+checkMs = 15000
+spawnChance = 0.5
+offscreenMarginPx = 8
+alphaThreshold = 8
+
+# afterWords=0 starts at READY. scale=0.2 is 20% of source size; topPx=-10 is 10px above the viewport.
+[spider]
+enabled = true
+afterWords = 0
+checkMs = 20000
+spawnChance = 0.25
+scale = 0.2
+topPx = -10
+revealFraction = 0.25
+retreatMs = 520
+frameMs = 70
+offscreenMarginPx = 8
+retreatExtraPx = 4
+volume = 1
+skipLeadingSilence = true
+silenceThreshold = 0.001
+soundPreRollSamples = 256
+
+# Check delay is uniform between minCheckMs and maxCheckMs. Set enabled=false to disable the hand.
+[hand]
+enabled = true
+minCheckMs = 8000
+maxCheckMs = 12000
+spawnChance = 0.25
+enterMs = 520
+exitMs = 300
+dragExitMs = 280
+resetMs = 180
+resetCleanupMs = 190
+dragThresholdPx = 4
+maxDragFraction = 0.55
+dismissMinPx = 70
+dismissHeightFraction = 0.1
+exitViewportMultiplier = 1.15
+exitImageMultiplier = 1.1
+blurPx = 3
+
+# Color also drives the older-Android bitmap. zoom=1.014 is a very slight centered zoom.
+[shutter]
+durationMs = 240
+blurPx = 2
+zoom = 1.014
+peakFraction = 0.42
+pressMs = 180
+releaseMs = 90
+heldScale = 0.9
+classResetMs = 200
+bitmapRefreshMs = 220
+tapSlopPx = 8
+minSizePx = 56
+maxSizePx = 88
+heightVh = 10
+bottomPercent = 8
+ringPx = 2
+paddingPx = 4
+color = "#ffffff"
+
+# Responsive font sizes and effects. Vh values are a percentage of the visible height, including mobile toolbar resizing.
+[ui]
+viewportAspectRatio = 0.625
+minFontPx = 14
+maxFontPx = 21
+fontHeightFraction = 0.026
+fontWidthFraction = 0.052
+batteryMinWidthPx = 24
+batteryMaxWidthPx = 44
+batteryHeightFraction = 0.05
+batteryWidthFraction = 0.1
+letterColor = "rgba(241, 239, 229, 0.80)"
+foundColor = "#f6d20a"
+cameraColor = "#ffffff"
+clueBlurPx = 5
+clueDismissMs = 190
+clueFadeMs = 180
+loaderFadeMs = 220
+loadingJitterMs = 400
+loadingJitterPx = 2
+loadingLetterDelayMs = 37
+gameOverJitterMs = 380
+retryJitterMs = 430
+retryJitterDelayMs = 75
+foundFlashMs = 620
+hudPopMs = 160
+gameOverMinFontPx = 42
+gameOverMaxFontPx = 72
+gameOverFontVh = 7
+retryMinFontPx = 20
+retryMaxFontPx = 30
+retryFontVh = 3
+
+# Plain text only. Available placeholders: clueFormat {current}/{total}; roomFormat {number}.
+[text]
+clueFormat = "CLUE {current}/{total}"
+roomFormat = "ROOM {number}"
+clueTitle = "CLUES"
+ready = "READY"
+found = "FOUND"
+roomComplete = "ROOM COMPLETE"
+retry = "TAP TO RETRY"
+playAgain = "TAP TO PLAY AGAIN"
+

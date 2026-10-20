@@ -62,7 +62,7 @@
       --safe-right: max(0px, calc(env(safe-area-inset-right) - var(--frame-right-gap, 0px)));
       position: relative;
       height: 100%;
-      aspect-ratio: 10 / 16;
+      aspect-ratio: var(--frame-aspect, .625);
       max-width: 100%;
       overflow: hidden;
       background: #000;
@@ -129,23 +129,23 @@
     #anomalyWorld.snapping,
     #spiderWorld.snapping,
     #jumpscareVideo.snapping {
-      transition: transform 420ms cubic-bezier(.22,.72,.22,1), filter 420ms ease;
+      transition: transform var(--centre-flight-ms, 420ms) cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
 
     #portraitViewport.hand-active #roomImage,
     #portraitViewport.hand-active #roomVideo {
-      filter: blur(3px);
+      filter: blur(var(--hand-blur, 3px));
     }
 
     #letterWorld {
       z-index: 2;
       pointer-events: none;
-      filter: blur(0.7px);
+      filter: blur(var(--letter-blur, .7px));
       transition: filter 420ms ease;
     }
 
     #portraitViewport.hand-active #letterWorld {
-      filter: blur(3px);
+      filter: blur(var(--hand-blur, 3px));
     }
 
     .letter-anchor {
@@ -180,8 +180,8 @@
       pointer-events: none;
     }
 
-    .letter-anchor.appearing .letter-tile { animation: letterFadeIn 150ms ease-out both; }
-    .letter-tile.first-letter .letter-glyph { animation: letterVibrate .4s steps(1, end) infinite; }
+    .letter-anchor.appearing .letter-tile { animation: letterFadeIn var(--letter-fade-ms, 150ms) ease-out both; }
+    .letter-tile.first-letter .letter-glyph { animation: letterVibrate var(--letter-vibrate-ms, 400ms) steps(1, end) infinite; }
     .letter-tile.butterfly-letter {
       transform: rotate(calc(var(--letter-rotation, 0deg) + var(--butterfly-bank, 0deg)))
         rotateY(var(--butterfly-flutter, 0deg));
@@ -225,12 +225,12 @@
       position: absolute;
       z-index: 10;
       inset: 0;
-      color: #fff;
+      color: var(--camera-color, #fff);
       font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
       font-variant-numeric: tabular-nums;
       pointer-events: none;
       text-shadow: none;
-      transition: opacity 180ms ease;
+      transition: opacity var(--clue-fade-ms, 180ms) ease;
     }
 
     #cameraBattery,
@@ -276,7 +276,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 2px;
+      gap: var(--hud-letter-gap, 2px);
     }
 
     .hud-letter {
@@ -292,7 +292,7 @@
     .hud-letter.found {
       color: #fff;
       border: 0;
-      animation: hudPop 160ms ease both;
+      animation: hudPop var(--hud-pop-ms, 160ms) ease both;
     }
 
     #status,
@@ -314,15 +314,15 @@
       -webkit-appearance: none;
       position: absolute;
       left: 50%;
-      bottom: max(8%, calc(env(safe-area-inset-bottom) + 12px));
-      width: clamp(56px, calc(var(--view-unit) * 10), 88px);
-      height: clamp(56px, calc(var(--view-unit) * 10), 88px);
+      bottom: max(var(--shutter-bottom, 8%), calc(env(safe-area-inset-bottom) + 12px));
+      width: clamp(var(--shutter-min, 56px), calc(var(--view-unit) * var(--shutter-size-vh, 10)), var(--shutter-max, 88px));
+      height: clamp(var(--shutter-min, 56px), calc(var(--view-unit) * var(--shutter-size-vh, 10)), var(--shutter-max, 88px));
       aspect-ratio: 1;
       display: grid;
       place-items: center;
       transform: translateX(-50%);
-      padding: 4px;
-      border: 2px solid #fff;
+      padding: var(--shutter-padding, 4px);
+      border: var(--shutter-ring, 2px) solid var(--shutter-color, #fff);
       color: #fff;
       opacity: 1;
       border-radius: 50%;
@@ -340,15 +340,15 @@
       width: 100%;
       height: 100%;
       border-radius: 50%;
-      background: #fff;
-      transition: transform 90ms ease;
+      background: var(--shutter-color, #fff);
+      transition: transform var(--shutter-release-ms, 90ms) ease;
     }
 
     #snapButton:active:not(:disabled) .shutter-core,
-    #snapButton.held .shutter-core { transform: scale(.9); }
-    #snapButton.snapping .shutter-core { animation: shutterPress 180ms ease-in-out; }
+    #snapButton.held .shutter-core { transform: scale(var(--shutter-held-scale, .9)); }
+    #snapButton.snapping .shutter-core { animation: shutterPress var(--shutter-press-ms, 180ms) ease-in-out; }
     #snapButton:focus-visible { outline: 2px solid #fff; outline-offset: 5px; }
-    #snapButton:disabled { cursor: default; opacity: 1; border-color: #fff; }
+    #snapButton:disabled { cursor: default; opacity: 1; border-color: var(--shutter-color, #fff); }
 
     #shutterBitmap { display: none; }
     #cameraOverlay.bitmap-shutter #shutterBitmap {
@@ -369,7 +369,7 @@
 
     @keyframes shutterPress {
       0%, 100% { transform: scale(1); }
-      45% { transform: scale(.9); }
+      45% { transform: scale(var(--shutter-held-scale, .9)); }
     }
 
 
@@ -386,7 +386,7 @@
 
     #loadingScreen {
       z-index: 200;
-      transition: opacity 220ms ease;
+      transition: opacity var(--loader-fade-ms, 220ms) ease;
     }
 
     #loadingScreen.hidden {
@@ -434,7 +434,7 @@
 
     .loading-letter {
       display: inline-block;
-      animation: loadingJitter 0.4s steps(1, end) infinite;
+      animation: loadingJitter var(--loading-jitter-ms, 400ms) steps(1, end) infinite;
     }
 
     @keyframes loadingJitter {
@@ -456,7 +456,7 @@
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 180ms ease;
+      transition: opacity var(--clue-fade-ms, 180ms) ease;
     }
 
     #clueIntro.show {
@@ -581,7 +581,7 @@
     /* During the clue card, keep the prepared room soft and hide gameplay UI. */
     #portraitViewport.clue-intro-active #roomImage,
     #portraitViewport.clue-intro-active #roomVideo {
-      filter: blur(5px);
+      filter: blur(var(--clue-blur, 5px));
     }
 
     #letterWorld,
@@ -688,10 +688,10 @@
     }
 
     #gameOverScreen.show { display: flex; }
-    #gameOverScreen.show #gameOverTitle { animation: gameOverJitter .38s steps(1, end) infinite; }
-    #gameOverScreen.show #retryText { animation: gameOverJitter .43s steps(1, end) 75ms infinite; }
-    #gameOverTitle { font-size: clamp(42px, calc(var(--view-unit) * 7), 72px); line-height: 1; }
-    #retryText { font-size: clamp(20px, calc(var(--view-unit) * 3), 30px); opacity: .78; }
+    #gameOverScreen.show #gameOverTitle { animation: gameOverJitter var(--game-over-jitter-ms, 380ms) steps(1, end) infinite; }
+    #gameOverScreen.show #retryText { animation: gameOverJitter var(--retry-jitter-ms, 430ms) steps(1, end) var(--retry-jitter-delay, 75ms) infinite; }
+    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)); line-height: 1; }
+    #retryText { max-width: 94%; font-size: clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)); opacity: .78; }
 
     @keyframes gameOverJitter {
       0%, 100% { transform: translate(0, 0); }
@@ -739,7 +739,7 @@
 
     #handBlocker.entering #handImage,
     #handBlocker.entering #handBitmap {
-      animation: handEnter 520ms cubic-bezier(.18,.82,.28,1) forwards;
+      animation: handEnter var(--hand-enter-ms, 520ms) cubic-bezier(.18,.82,.28,1) forwards;
     }
 
     #handBlocker.resting #handImage,
@@ -749,7 +749,7 @@
 
     #handBlocker.exiting #handImage,
     #handBlocker.exiting #handBitmap {
-      animation: handExit 300ms cubic-bezier(.55,.05,.82,.34) forwards;
+      animation: handExit var(--hand-exit-ms, 300ms) cubic-bezier(.55,.05,.82,.34) forwards;
     }
 
     @keyframes handEnter {
@@ -779,7 +779,7 @@
       pointer-events: none;
     }
 
-    #message.show { animation: messageFlash 620ms ease both; }
+    #message.show { animation: messageFlash var(--found-flash-ms, 620ms) ease both; }
 
     #handBitmap, #anomalyBitmap, #messageBitmap {
       display: none;
@@ -837,7 +837,7 @@
       <div id="clueIntro" aria-hidden="true">
         <div id="clueCard">
           <div id="cluePaperWrap">
-            <img id="cluePaper" src="note.png" alt="" draggable="false" />
+            <img id="cluePaper"  alt="" draggable="false" />
             <canvas id="cluePaperBitmap" aria-hidden="true"></canvas>
             <div id="cluePaperText">
               <div id="clueTitle">CLUES</div>
@@ -892,7 +892,7 @@
       <div id="message"><span id="messageText">Found!</span><canvas id="messageBitmap" aria-hidden="true"></canvas></div>
 
       <div id="handBlocker" aria-hidden="true">
-        <img id="handImage" src="hand.png" alt="" draggable="false" />
+        <img id="handImage"  alt="" draggable="false" />
         <canvas id="handBitmap" aria-hidden="true"></canvas>
       </div>
 
@@ -906,49 +906,455 @@
   </div>
 
   <script>
-    const WORDS_FILE = "words.txt";
-    const WORDS_TIMEOUT_MS = 15000;
-    const LEVELS_DIRECTORY = "levels/";
+
+    // Optional config.txt is read before choosing a level or loading its assets.
+    // Runtime state (camera position, collected letters, timers) stays internal.
+    const CONFIG_FILE = "config.txt";
+    const CONFIG_DEFAULTS = {
+  "assets": {
+    "wordsFile": "words.txt",
+    "levelsDirectory": "levels/",
+    "levelIndexFile": "index.json",
+    "paperFile": "note.png",
+    "handFile": "hand.png",
+    "anomalyFiles": [
+      "anomaly.png"
+    ],
+    "spiderFrames": [
+      "spider-1.png",
+      "spider-2.png"
+    ],
+    "spiderSound": "spider.wav",
+    "letterFontFile": "Dudu_Calligraphy.ttf",
+    "letterFontLocalNames": [
+      "Dudu Calligraphy",
+      "DuduCalligraphy",
+      "Dudu_Calligraphy"
+    ]
+  },
+  "loading": {
+    "wordsTimeoutMs": 15000,
+    "resourceTimeoutMs": 6000,
+    "jumpscareDownloadTimeoutMs": 60000,
+    "levelProbeGap": 16,
+    "levelProbeBatchSize": 4,
+    "deadlineWarmSeconds": 3,
+    "standbySeekTimeoutMs": 1200,
+    "standbySeekSeconds": 0.001,
+    "decodedFrameFallbackMs": 250,
+    "decodedFramePollMs": 100
+  },
+  "levels": {
+    "standard": {
+      "chance": 0.63,
+      "wordCount": 3,
+      "timeLimitMs": 120000,
+      "decoyLetterChance": 0,
+      "flyingLetters": false
+    },
+    "decoy": {
+      "chance": 0.18,
+      "wordCount": 2,
+      "timeLimitMs": 60000,
+      "decoyLetterChance": 0.1,
+      "flyingLetters": false
+    },
+    "butterfly": {
+      "chance": 0.09,
+      "wordCount": 1,
+      "timeLimitMs": 30000,
+      "decoyLetterChance": 0,
+      "flyingLetters": true
+    },
+    "flyingDecoy": {
+      "chance": 0.1,
+      "wordCount": 3,
+      "timeLimitMs": 120000,
+      "decoyLetterChance": 0.1,
+      "flyingLetters": true
+    }
+  },
+  "failures": {
+    "timeout": {
+      "title": "GAME OVER",
+      "jumpscareChance": 0.5
+    },
+    "battery": {
+      "title": "Battery Died",
+      "jumpscareChance": 0.5
+    },
+    "anomaly": {
+      "title": "Anomaly Undetected",
+      "jumpscareChance": 1
+    },
+    "decoy": {
+      "title": "Wrong Letter Captured",
+      "jumpscareChance": 1
+    },
+    "other": {
+      "title": "GAME OVER",
+      "jumpscareChance": 1
+    },
+    "levels": {
+      "title": "LEVELS UNAVAILABLE"
+    },
+    "video": {
+      "title": "VIDEO UNAVAILABLE"
+    }
+  },
+  "battery": {
+    "slotCount": 4,
+    "missCost": 1,
+    "wordCost": 1,
+    "wordReserve": 1,
+    "slotColors": [
+      "#e0bd38",
+      "#a6d33c",
+      "#78d936",
+      "#52d52f"
+    ]
+  },
+  "camera": {
+    "dragGain": 1.2,
+    "momentumMinSpeed": 0.25,
+    "flickSpeed": 0.75,
+    "velocityWindowMs": 100,
+    "dragThresholdPx": 6,
+    "flickMinTravelPx": 48,
+    "flickViewportFraction": 0.12,
+    "coastVelocityMultiplier": 180,
+    "coastTravelMultiplier": 1.75,
+    "coastViewportFraction": 0.75,
+    "momentumMinMs": 240,
+    "momentumMaxMs": 850,
+    "momentumDurationMultiplier": 3,
+    "momentumEasePower": 3,
+    "centreFlightMs": 420,
+    "timerRefreshMs": 250
+  },
+  "letters": {
+    "minScale": 0.7,
+    "maxScale": 1,
+    "minRotationDeg": -25,
+    "maxRotationDeg": 25,
+    "firstLetterVibrates": true,
+    "vibrationPx": 2,
+    "vibrationMs": 400,
+    "fadeInMs": 150,
+    "transferMs": 260,
+    "transferFallbackMs": 40,
+    "transferEndScale": 0.5,
+    "wordTransitionMs": 650,
+    "captureTolerancePx": 0.5,
+    "paddingPx": 12,
+    "firstPaddingPx": 15,
+    "minFontPx": 35,
+    "maxFontPx": 53,
+    "fontHeightFraction": 0.054,
+    "blurPx": 0.7,
+    "hudMinFontPx": 9,
+    "hudMaxFontPx": 40,
+    "hudGlyphWidthRatio": 0.67,
+    "hudGapPx": 2
+  },
+  "butterfly": {
+    "minSpeed": 44,
+    "maxSpeed": 82,
+    "horizontalSpeedMultiplier": 1.3,
+    "longArcChance": 0.2,
+    "horizontalTravelPx": 280,
+    "longHorizontalTravelPx": 560,
+    "verticalTravelPx": 110,
+    "minTurnMs": 1100,
+    "maxTurnMs": 3000,
+    "minSwayXPx": 16,
+    "maxSwayXPx": 33,
+    "minSwayYPx": 12,
+    "maxSwayYPx": 27,
+    "swayXFrequency": 3.1,
+    "swayYFrequency": 4.3,
+    "verticalPhaseMultiplier": 1.7,
+    "hoverFrequency": 1.8,
+    "minPaceFraction": 0.25,
+    "steering": 2.4,
+    "slowdownDistancePx": 45,
+    "bankVelocityMultiplier": 0.32,
+    "bankSwayDeg": 17,
+    "maxBankDeg": 36,
+    "flutterFrequency": 17,
+    "flutterDeg": 23,
+    "maxStepMs": 50,
+    "paddingPx": 15,
+    "radiusPaddingPx": 5
+  },
+  "anomaly": {
+    "enabled": true,
+    "afterWords": 1,
+    "checkMs": 15000,
+    "spawnChance": 0.5,
+    "offscreenMarginPx": 8,
+    "alphaThreshold": 8
+  },
+  "spider": {
+    "enabled": true,
+    "afterWords": 0,
+    "checkMs": 20000,
+    "spawnChance": 0.25,
+    "scale": 0.2,
+    "topPx": -10,
+    "revealFraction": 0.25,
+    "retreatMs": 520,
+    "frameMs": 70,
+    "offscreenMarginPx": 8,
+    "retreatExtraPx": 4,
+    "volume": 1,
+    "skipLeadingSilence": true,
+    "silenceThreshold": 0.001,
+    "soundPreRollSamples": 256
+  },
+  "hand": {
+    "enabled": true,
+    "minCheckMs": 8000,
+    "maxCheckMs": 12000,
+    "spawnChance": 0.25,
+    "enterMs": 520,
+    "exitMs": 300,
+    "dragExitMs": 280,
+    "resetMs": 180,
+    "resetCleanupMs": 190,
+    "dragThresholdPx": 4,
+    "maxDragFraction": 0.55,
+    "dismissMinPx": 70,
+    "dismissHeightFraction": 0.1,
+    "exitViewportMultiplier": 1.15,
+    "exitImageMultiplier": 1.1,
+    "blurPx": 3
+  },
+  "shutter": {
+    "durationMs": 240,
+    "blurPx": 2,
+    "zoom": 1.014,
+    "peakFraction": 0.42,
+    "pressMs": 180,
+    "releaseMs": 90,
+    "heldScale": 0.9,
+    "classResetMs": 200,
+    "bitmapRefreshMs": 220,
+    "tapSlopPx": 8,
+    "minSizePx": 56,
+    "maxSizePx": 88,
+    "heightVh": 10,
+    "bottomPercent": 8,
+    "ringPx": 2,
+    "paddingPx": 4,
+    "color": "#ffffff"
+  },
+  "ui": {
+    "viewportAspectRatio": 0.625,
+    "minFontPx": 14,
+    "maxFontPx": 21,
+    "fontHeightFraction": 0.026,
+    "fontWidthFraction": 0.052,
+    "batteryMinWidthPx": 24,
+    "batteryMaxWidthPx": 44,
+    "batteryHeightFraction": 0.05,
+    "batteryWidthFraction": 0.1,
+    "letterColor": "rgba(241, 239, 229, 0.80)",
+    "foundColor": "#f6d20a",
+    "cameraColor": "#ffffff",
+    "clueBlurPx": 5,
+    "clueDismissMs": 190,
+    "clueFadeMs": 180,
+    "loaderFadeMs": 220,
+    "loadingJitterMs": 400,
+    "loadingJitterPx": 2,
+    "loadingLetterDelayMs": 37,
+    "gameOverJitterMs": 380,
+    "retryJitterMs": 430,
+    "retryJitterDelayMs": 75,
+    "foundFlashMs": 620,
+    "hudPopMs": 160,
+    "gameOverMinFontPx": 42,
+    "gameOverMaxFontPx": 72,
+    "gameOverFontVh": 7,
+    "retryMinFontPx": 20,
+    "retryMaxFontPx": 30,
+    "retryFontVh": 3
+  },
+  "text": {
+    "clueFormat": "CLUE {current}/{total}",
+    "roomFormat": "ROOM {number}",
+    "clueTitle": "CLUES",
+    "ready": "READY",
+    "found": "FOUND",
+    "roomComplete": "ROOM COMPLETE",
+    "retry": "TAP TO RETRY",
+    "playAgain": "TAP TO PLAY AGAIN"
+  }
+};
+    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true]};
+    const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"]];
+    const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
+    let configLoadInfo = { status: "pending", warnings: [] };
+
+    function configLeaf(path, tree = CONFIG_DEFAULTS) {
+      return path.split(".").reduce((value, key) => value && Object.prototype.hasOwnProperty.call(value, key) ? value[key] : undefined, tree);
+    }
+
+    function configValueIsValid(path, value, fallback) {
+      if (path.startsWith("assets.") && path !== "assets.letterFontLocalNames") {
+        try {
+          for (const file of Array.isArray(value) ? value : [value]) {
+            if (typeof file !== "string" || !/^(https?:|file:)$/.test(new URL(file, document.baseURI).protocol)) return false;
+          }
+        } catch { return false; }
+      }
+      if (typeof fallback === "number") {
+        if (typeof value !== "number" || !Number.isFinite(value)) return false;
+        let bounds = CONFIG_LIMITS[path] || [0, 1000000];
+        if (!CONFIG_LIMITS[path] && /chance$|Chance$|Fraction$|\.volume$|\.silenceThreshold$/i.test(path)) bounds = [0, 1];
+        if (/Ms$/.test(path) && !CONFIG_LIMITS[path]) bounds = [1, 86400000];
+        return value >= bounds[0] && value <= bounds[1] && (!bounds[2] || Number.isInteger(value));
+      }
+      if (typeof fallback === "boolean") return typeof value === "boolean";
+      if (Array.isArray(fallback)) return Array.isArray(value) && value.length > 0 && value.length <= 64 &&
+        value.every(item => typeof item === "string" && item.trim() && item.length <= 2048 && !/[\r\n]/.test(item)) &&
+        (!/Colors$/.test(path) || value.every(item => CSS.supports("color", item)));
+      if (typeof fallback === "string") return typeof value === "string" && value.trim().length > 0 && value.length <= 2048 &&
+        !/[\r\n]/.test(value) && (!/Color$|\.color$/.test(path) || CSS.supports("color", value));
+      return false;
+    }
+
+    function parseGameConfig(text) {
+      if (!text.trim() || text.length > 512000 || /^\s*</.test(text)) throw new Error("Empty, oversized config or HTML response.");
+      const values = new Map();
+      let section = "";
+      for (const [index, original] of text.replace(/^\uFEFF/, "").split(/\r\n?|\n/).entries()) {
+        const line = original.trim();
+        if (!line || line.startsWith("#") || line.startsWith(";")) continue;
+        if (/^\[[A-Za-z][\w.]*\]$/.test(line)) { section = line.slice(1, -1); continue; }
+        const match = /^([A-Za-z][\w.]*)\s*=\s*(.+)$/.exec(line);
+        if (!match) throw new Error(`Invalid config syntax at line ${index + 1}.`);
+        const path = section ? `${section}.${match[1]}` : match[1];
+        if (values.has(path)) throw new Error(`Duplicate config key: ${path}`);
+        let value;
+        try { value = JSON.parse(match[2]); } catch {
+          if (/^["\[{]/.test(match[2])) throw new Error(`Invalid value syntax at line ${index + 1}.`);
+          value = match[2].trim();
+        }
+        values.set(path, value);
+      }
+      if (!values.size) throw new Error("No config settings were found.");
+      const resolved = JSON.parse(JSON.stringify(CONFIG_DEFAULTS)), warnings = [];
+      for (const [path, value] of values) {
+        const fallback = configLeaf(path);
+        if (fallback === undefined) { warnings.push(`Unknown setting: ${path}`); continue; }
+        if (!configValueIsValid(path, value, fallback)) { warnings.push(`Default used for invalid ${path}`); continue; }
+        const parts = path.split("."), key = parts.pop();
+        configLeaf(parts.join("."), resolved)[key] = value;
+      }
+      for (const [sectionName, minKey, maxKey] of CONFIG_RANGE_PAIRS) {
+        if (resolved[sectionName][minKey] <= resolved[sectionName][maxKey]) continue;
+        resolved[sectionName][minKey] = CONFIG_DEFAULTS[sectionName][minKey];
+        resolved[sectionName][maxKey] = CONFIG_DEFAULTS[sectionName][maxKey];
+        warnings.push(`Default range used for ${sectionName}.${minKey}/${maxKey}`);
+      }
+      if (Object.values(resolved.levels).every(level => level.chance === 0)) {
+        for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
+        warnings.push("All level chances were zero; default chances used.");
+      }
+      return { resolved, warnings };
+    }
+
+    async function loadGameConfig() {
+      // A missing/blocked config must never hold the loader indefinitely.
+      const controller = new AbortController();
+      const timeout = window.setTimeout(() => controller.abort(), 4000);
+      try {
+        const response = await fetch(new URL(CONFIG_FILE, document.baseURI), { cache: "no-store", signal: controller.signal });
+        if (!response.ok) throw new Error(`Config HTTP ${response.status}`);
+        const parsed = parseGameConfig(await response.text());
+        Object.assign(CONFIG, parsed.resolved);
+        configLoadInfo = { status: "loaded", warnings: parsed.warnings };
+        if (parsed.warnings.length) console.warn("Some config settings use defaults:", parsed.warnings);
+      } catch (error) {
+        configLoadInfo = { status: "defaults", warnings: [error.message] };
+        console.info("Using built-in game settings.", error.message);
+      } finally { window.clearTimeout(timeout); }
+    }
+
+    function gameText(template, values) {
+      return template.replace(/\{(\w+)\}/g, (match, key) => values[key] === undefined ? match : String(values[key]));
+    }
+
+    let WORDS_FILE = CONFIG.assets.wordsFile;
+    let WORDS_TIMEOUT_MS = CONFIG.loading.wordsTimeoutMs;
+    let LEVELS_DIRECTORY = CONFIG.assets.levelsDirectory;
     // Directory listings / levels/index.json support any numbering, including gaps.
     // Hosts without either use numbered probes and stop after 16 absent numbers.
-    const LEVEL_PROBE_GAP = 16;
+    let LEVEL_PROBE_GAP = CONFIG.loading.levelProbeGap;
     let ROOM_IMAGE_FILE = null;
     let ROOM_VIDEO_FILE = null;
     let ROOM_NAME = "ROOM";
     let availableScenes = [];
     let currentScene = null;
-    const ANOMALY_FILES = ["anomaly.png"]; // Add more filenames here when needed.
-    const ANOMALY_CHECK_MS = 15000;
-    const ANOMALY_SPAWN_CHANCE = 0.50;
-    const SPIDER_FRAME_FILES = ["spider-1.png", "spider-2.png"];
-    const SPIDER_SOUND_FILE = "spider.wav";
-    const SPIDER_CHECK_MS = 20000;
-    const SPIDER_SPAWN_CHANCE = .25;
-    const SPIDER_SCALE = .20;
-    const SPIDER_TOP = -10;
-    const SPIDER_REVEAL_FRACTION = .25;
-    const SPIDER_RETREAT_MS = 520;
-    const SPIDER_FRAME_MS = 70;
-    const CAMERA_DRAG_GAIN = 1.2;
-    const CAMERA_MOMENTUM_MIN_SPEED = 0.25;
-    const CAMERA_FLICK_SPEED = 0.75;
-    const CAMERA_VELOCITY_WINDOW_MS = 100;
-    const LETTER_TRANSFER_MS = 260;
-    const BATTERY_SLOT_COUNT = 4;
-    const LEVEL_TYPES = {
-      standard: { name: "standard", chance: .70, wordCount: 3, timeLimitMs: 120000, decoyLetterChance: 0 },
-      decoy: { name: "decoy", chance: .20, wordCount: 2, timeLimitMs: 60000, decoyLetterChance: .10 },
-      butterfly: { name: "butterfly", chance: .10, wordCount: 1, timeLimitMs: 30000, decoyLetterChance: 0, flyingLetters: true }
-    };
-    function chooseLevelType() {
-      const roll = Math.random();
-      if (roll < LEVEL_TYPES.standard.chance) return LEVEL_TYPES.standard;
-      if (roll < LEVEL_TYPES.standard.chance + LEVEL_TYPES.decoy.chance) return LEVEL_TYPES.decoy;
-      return LEVEL_TYPES.butterfly;
+    let ANOMALY_FILES = CONFIG.assets.anomalyFiles;
+    let ANOMALY_CHECK_MS = CONFIG.anomaly.checkMs;
+    let ANOMALY_SPAWN_CHANCE = CONFIG.anomaly.spawnChance;
+    let SPIDER_FRAME_FILES = CONFIG.assets.spiderFrames;
+    let SPIDER_SOUND_FILE = CONFIG.assets.spiderSound;
+    let SPIDER_CHECK_MS = CONFIG.spider.checkMs;
+    let SPIDER_SPAWN_CHANCE = CONFIG.spider.spawnChance;
+    let SPIDER_SCALE = CONFIG.spider.scale;
+    let SPIDER_TOP = CONFIG.spider.topPx;
+    let SPIDER_REVEAL_FRACTION = CONFIG.spider.revealFraction;
+    let SPIDER_RETREAT_MS = CONFIG.spider.retreatMs;
+    let SPIDER_FRAME_MS = CONFIG.spider.frameMs;
+    let CAMERA_DRAG_GAIN = CONFIG.camera.dragGain;
+    let CAMERA_MOMENTUM_MIN_SPEED = CONFIG.camera.momentumMinSpeed;
+    let CAMERA_FLICK_SPEED = CONFIG.camera.flickSpeed;
+    let CAMERA_VELOCITY_WINDOW_MS = CONFIG.camera.velocityWindowMs;
+    let LETTER_TRANSFER_MS = CONFIG.letters.transferMs;
+    let BATTERY_SLOT_COUNT = CONFIG.battery.slotCount;
+    const LEVEL_TYPES = {};
+    function refreshConfigBindings() {
+      WORDS_FILE = CONFIG.assets.wordsFile;
+      WORDS_TIMEOUT_MS = CONFIG.loading.wordsTimeoutMs;
+      LEVELS_DIRECTORY = CONFIG.assets.levelsDirectory;
+      LEVEL_PROBE_GAP = CONFIG.loading.levelProbeGap;
+      ANOMALY_FILES = CONFIG.assets.anomalyFiles;
+      ANOMALY_CHECK_MS = CONFIG.anomaly.checkMs;
+      ANOMALY_SPAWN_CHANCE = CONFIG.anomaly.spawnChance;
+      SPIDER_FRAME_FILES = CONFIG.assets.spiderFrames;
+      SPIDER_SOUND_FILE = CONFIG.assets.spiderSound;
+      SPIDER_CHECK_MS = CONFIG.spider.checkMs;
+      SPIDER_SPAWN_CHANCE = CONFIG.spider.spawnChance;
+      SPIDER_SCALE = CONFIG.spider.scale;
+      SPIDER_TOP = CONFIG.spider.topPx;
+      SPIDER_REVEAL_FRACTION = CONFIG.spider.revealFraction;
+      SPIDER_RETREAT_MS = CONFIG.spider.retreatMs;
+      SPIDER_FRAME_MS = CONFIG.spider.frameMs;
+      CAMERA_DRAG_GAIN = CONFIG.camera.dragGain;
+      CAMERA_MOMENTUM_MIN_SPEED = CONFIG.camera.momentumMinSpeed;
+      CAMERA_FLICK_SPEED = CONFIG.camera.flickSpeed;
+      CAMERA_VELOCITY_WINDOW_MS = CONFIG.camera.velocityWindowMs;
+      LETTER_TRANSFER_MS = CONFIG.letters.transferMs;
+      BATTERY_SLOT_COUNT = CONFIG.battery.slotCount;
+      for (const [name, values] of Object.entries(CONFIG.levels)) LEVEL_TYPES[name] = { name, ...values };
     }
-    // Choose once per room, before either words or scene assets finish loading.
-    const levelType = chooseLevelType();
-    const ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
+    function chooseLevelType() {
+      const types = Object.values(LEVEL_TYPES);
+      const total = types.reduce((sum, level) => sum + level.chance, 0);
+      let roll = Math.random() * total;
+      for (const type of types) {
+        roll -= type.chance;
+        if (type.chance > 0 && roll < 0) return type;
+      }
+      return types.find(type => type.chance > 0) || LEVEL_TYPES.standard;
+    }
+    refreshConfigBindings();
+    let levelType = LEVEL_TYPES.standard;
+    let ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
     const USE_ANDROID_BITMAPS = /Android/i.test(navigator.userAgent);
 
     const viewport = document.getElementById("portraitViewport");
@@ -965,7 +1371,7 @@
     const hud = document.getElementById("hud");
     const cameraTimer = document.getElementById("cameraTimer");
     const batteryPercent = document.getElementById("batteryPercent");
-    const batterySlots = [...document.querySelectorAll(".battery-slot")];
+    let batterySlots = [...document.querySelectorAll(".battery-slot")];
     const cameraRoom = document.getElementById("cameraRoom");
     const snapButton = document.getElementById("snapButton");
     const shutterBitmap = document.getElementById("shutterBitmap");
@@ -1111,6 +1517,7 @@
     let movedDuringDrag = false;
     let lastPanClientX = 0;
     let offsetX = 0;
+    let lastAppliedWorldOffset = 0;
     let minOffset = 0;
     let renderedVideoWidth = 0;
     let snapPoints = [0];
@@ -1156,6 +1563,7 @@
     let spiderSoundOffset = 0;
     let spiderNativeAudio = null;
     let gameOver = false;
+    let gameOverReason = null;
     let wordsReadyForClue = false;
     let videosReadyForClue = false;
     let clueIntroShown = false;
@@ -1177,7 +1585,7 @@
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
-    const levelBaseURL = new URL(LEVELS_DIRECTORY, document.baseURI);
+    let levelBaseURL = new URL(LEVELS_DIRECTORY, document.baseURI);
 
     // Only these exact numbered filenames can enter the scene catalogue.
     // Group by number before choosing anything, so missing partners are skipped.
@@ -1213,7 +1621,7 @@
 
     async function fetchLevelResource(url, options = {}, consume = response => response) {
       const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), 6000);
+      const timer = window.setTimeout(() => controller.abort(), CONFIG.loading.resourceTimeoutMs);
       try {
         const response = await fetch(url, { cache: "no-store", ...options, signal: controller.signal });
         return await consume(response);
@@ -1222,7 +1630,7 @@
 
     async function readLevelIndex() {
       try {
-        return await fetchLevelResource(new URL("index.json", levelBaseURL), {}, async response => {
+        return await fetchLevelResource(new URL(CONFIG.assets.levelIndexFile, levelBaseURL), {}, async response => {
           if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
           const data = await response.json();
           return Array.isArray(data) ? data : Array.isArray(data.files) ? data.files : [];
@@ -1271,7 +1679,7 @@
             probe.playsInline = true;
             probe.onloadedmetadata = () => finish(probe.videoWidth > 0);
           }
-          timer = window.setTimeout(() => finish(false), 6000);
+          timer = window.setTimeout(() => finish(false), CONFIG.loading.resourceTimeoutMs);
           probe.src = url.href;
         });
       }
@@ -1304,7 +1712,7 @@
       let next = 1;
       let absent = 0;
       while (absent < LEVEL_PROBE_GAP) {
-        const batch = await Promise.all(Array.from({ length: 4 }, (_, i) => next + i).map(async number => {
+        const batch = await Promise.all(Array.from({ length: CONFIG.loading.levelProbeBatchSize }, (_, i) => next + i).map(async number => {
           const names = [`room_${number}.png`, `room_${number}.mp4`, `jumpscare_${number}.mp4`];
           const found = await Promise.all(names.map(levelAssetExists));
           return names.filter((_, i) => found[i]);
@@ -1333,9 +1741,8 @@
 
     function showLevelLoadError(error) {
       console.error("Could not load a matching room/jumpscare pair from levels/.", error);
-      gameOver = true;
+      beginGameOver("levels");
       loadingScreen.classList.add("hidden");
-      document.getElementById("gameOverTitle").textContent = "LEVELS UNAVAILABLE";
       showGameOver();
     }
 
@@ -1346,7 +1753,7 @@
         if (!currentScene) throw new Error("No complete numbered pairs were found. Use levels/room_1.mp4 and levels/jumpscare_1.mp4, etc.");
         ROOM_IMAGE_FILE = currentScene.roomImage;
         ROOM_VIDEO_FILE = currentScene.roomVideo;
-        ROOM_NAME = `ROOM ${String(currentScene.number).padStart(2, "0")}`;
+        ROOM_NAME = gameText(CONFIG.text.roomFormat, { number: String(currentScene.number).padStart(2, "0") });
         cameraRoom.textContent = ROOM_NAME;
         console.info(`Found ${availableScenes.length} level pairs; selected room ${currentScene.number}.`);
         // Load the room in parallel, but require every byte of the selected
@@ -1364,7 +1771,7 @@
       // Keep direct disk playback and its native audio path for file:// games.
       if (!/^https?:$/.test(new URL(url, document.baseURI).protocol)) return url;
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), 60000);
+      const timeout = window.setTimeout(() => controller.abort(), CONFIG.loading.jumpscareDownloadTimeoutMs);
       try {
         const response = await fetch(url, { signal: controller.signal });
         if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
@@ -1461,6 +1868,21 @@
       }
     });
 
+    function fitClueList() {
+      if (!cluePaper.naturalHeight || !clueList.children.length) return;
+      clueList.style.fontSize = "";
+      clueList.style.gap = "";
+      const text = document.getElementById("cluePaperText"), title = document.getElementById("clueTitle");
+      const available = Math.max(1, text.clientHeight - title.offsetHeight - parseFloat(getComputedStyle(title).marginBottom));
+      const current = getComputedStyle(clueList);
+      const scale = Math.min(1, available / Math.max(1, clueList.scrollHeight), clueList.clientWidth / Math.max(1, clueList.scrollWidth));
+      if (scale < 1) {
+        clueList.style.fontSize = `${parseFloat(current.fontSize) * scale}px`;
+        clueList.style.gap = `${parseFloat(current.rowGap) * scale}px`;
+      }
+    }
+    cluePaper.addEventListener("load", fitClueList);
+
     function populateClueList() {
       clueList.replaceChildren();
       words.forEach(word => {
@@ -1468,10 +1890,12 @@
         item.textContent = word.toUpperCase();
         clueList.appendChild(item);
       });
+      fitClueList();
     }
 
     function maybeShowClueIntro() {
       if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue) return;
+      fitClueList();
       clueIntroShown = true;
       viewport.classList.add("clue-intro-active");
       clueIntro.classList.add("show");
@@ -1512,7 +1936,8 @@
       window.setTimeout(() => {
         clueIntro.classList.remove("show", "dismiss");
         clueIntro.setAttribute("aria-hidden", "true");
-      }, 190);
+      }, CONFIG.ui.clueDismissMs);
+      if (CONFIG.anomaly.enabled && completedWordCount >= CONFIG.anomaly.afterWords) { anomalyEnabled = true; scheduleAnomalyCheck(); }
       scheduleNextHandCheck();
       scheduleSpiderCheck();
     }
@@ -1551,11 +1976,11 @@
       const visibleLeft = visible?.offsetLeft || 0;
       viewport.style.setProperty("--frame-left-gap", `${Math.max(0, left - visibleLeft)}px`);
       viewport.style.setProperty("--frame-right-gap", `${Math.max(0, visibleLeft + (visible?.width || window.innerWidth) - right)}px`);
-      viewport.style.setProperty("--ui-font-size", `${Math.min(21, Math.max(14, height * .026), width * .052)}px`);
-      viewport.style.setProperty("--battery-width", `${Math.min(44, Math.max(24, height * .05), width * .1)}px`);
+      viewport.style.setProperty("--ui-font-size", `${Math.min(CONFIG.ui.maxFontPx, Math.max(CONFIG.ui.minFontPx, height * CONFIG.ui.fontHeightFraction), width * CONFIG.ui.fontWidthFraction)}px`);
+      viewport.style.setProperty("--battery-width", `${Math.min(CONFIG.ui.batteryMaxWidthPx, Math.max(CONFIG.ui.batteryMinWidthPx, height * CONFIG.ui.batteryHeightFraction), width * CONFIG.ui.batteryWidthFraction)}px`);
       fitHudWord();
       const band = getSafeLetterBand();
-      const baseSize = Math.min(53, Math.max(35, height * .054), Math.max(4, (band.bottom - band.top - 30) / 1.5));
+      const baseSize = Math.min(CONFIG.letters.maxFontPx, Math.max(CONFIG.letters.minFontPx, height * CONFIG.letters.fontHeightFraction), Math.max(4, (band.bottom - band.top - 30) / 1.5));
       viewport.style.setProperty("--letter-base-size", `${baseSize}px`);
     }
 
@@ -1614,6 +2039,8 @@
     }
 
     function applyWorldOffset(animate = false, observeDecoys = false) {
+      const cameraMoved = Math.abs(offsetX - lastAppliedWorldOffset) > .01;
+      lastAppliedWorldOffset = offsetX;
       roomImage.classList.toggle("snapping", animate);
       video.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
@@ -1630,7 +2057,7 @@
       // Only actual camera gestures/coasting can fix a decoy. Resizing and
       // layout updates also reposition the world, but do not count as looking away.
       if (observeDecoys) {
-        updateDecoyVisibilityState({ allowCorrection: true });
+        updateDecoyVisibilityState({ allowCorrection: cameraMoved });
         updateSpiderVisibilityState();
       }
     }
@@ -1645,7 +2072,7 @@
       currentWord = words[wordIndex];
       selectedCount = 0;
       selectionHistory = [];
-      status.textContent = `CLUE ${wordIndex + 1}/${words.length}`;
+      status.textContent = gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       createHudWord();
       createScatteredLetters();
       updateCameraControls();
@@ -1665,9 +2092,9 @@
 
     function fitHudWord() {
       const width = wordDisplay.getBoundingClientRect().width;
-      const size = Math.min(40, (width - Math.max(0, currentWord.length - 1) * 2) /
-        Math.max(1, currentWord.length * .67));
-      wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(9, size)}px`);
+      const size = Math.min(CONFIG.letters.hudMaxFontPx, (width - Math.max(0, currentWord.length - 1) * CONFIG.letters.hudGapPx) /
+        Math.max(1, currentWord.length * CONFIG.letters.hudGlyphWidthRatio));
+      wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, size)}px`);
     }
 
     function updateCameraControls() {
@@ -1682,12 +2109,12 @@
       const minutes = String(Math.floor(cameraRemainingSeconds / 60)).padStart(2, "0");
       const seconds = String(cameraRemainingSeconds % 60).padStart(2, "0");
       cameraTimer.textContent = `${minutes}:${seconds}`;
-      if (cameraStartedAt !== null && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= 3 &&
+      if (cameraStartedAt !== null && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= CONFIG.loading.deadlineWarmSeconds &&
           !jumpscareDeadlineWarmStarted && !gameOver && !roomCompleted && !document.hidden) {
         warmJumpscareBeforeDeadline();
       }
       if (cameraStartedAt !== null && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
-        triggerJumpscare();
+        endGame("timeout");
       }
     }
 
@@ -1696,7 +2123,7 @@
       cameraStartedAt = performance.now();
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       updateCameraTimer();
-      cameraTimerInterval = window.setInterval(updateCameraTimer, 250);
+      cameraTimerInterval = window.setInterval(updateCameraTimer, CONFIG.camera.timerRefreshMs);
     }
 
     function stopCameraTimer() {
@@ -1719,7 +2146,7 @@
       const frame = viewport.getBoundingClientRect();
       // The whole viewport is the camera frame.
       // Use visible glyph bounds rather than the letter's invisible padding.
-      const tolerance = .5;
+      const tolerance = CONFIG.letters.captureTolerancePx;
       return letterRect.width > 0 && letterRect.height > 0 &&
         letterRect.left >= frame.left - tolerance && letterRect.right <= frame.right + tolerance &&
         letterRect.top >= frame.top - tolerance && letterRect.bottom <= frame.bottom + tolerance;
@@ -1771,13 +2198,13 @@
       const context = shutterBitmapContext;
       context.setTransform(scale, 0, 0, scale, 0, 0);
       context.clearRect(0, 0, frame.width, frame.height);
-      context.strokeStyle = "#fff";
-      context.lineWidth = 2;
+      context.strokeStyle = CONFIG.shutter.color;
+      context.lineWidth = CONFIG.shutter.ringPx;
       context.beginPath();
       context.arc(ring.left - frame.left + ring.width / 2, ring.top - frame.top + ring.height / 2,
-        Math.max(0, Math.min(ring.width, ring.height) / 2 - 1), 0, Math.PI * 2);
+        Math.max(0, Math.min(ring.width, ring.height) / 2 - CONFIG.shutter.ringPx / 2), 0, Math.PI * 2);
       context.stroke();
-      context.fillStyle = "#fff";
+      context.fillStyle = CONFIG.shutter.color;
       context.beginPath();
       context.arc(core.left - frame.left + core.width / 2, core.top - frame.top + core.height / 2,
         Math.max(0, Math.min(core.width, core.height) / 2), 0, Math.PI * 2);
@@ -1787,7 +2214,7 @@
       }
     }
 
-    function refreshShutterBitmap(duration = 220) {
+    function refreshShutterBitmap(duration = CONFIG.shutter.bitmapRefreshMs) {
       if (!shutterBitmapContext) return;
       shutterBitmapUntil = Math.max(shutterBitmapUntil, performance.now() + duration);
       if (!shutterBitmapFrame) shutterBitmapFrame = requestAnimationFrame(drawShutterBitmap);
@@ -1807,7 +2234,7 @@
       snapButton.classList.add("snapping");
       refreshShutterBitmap();
       window.clearTimeout(shutterAnimationTimer);
-      shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), 200);
+      shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
       if (letterIsVisible) {
         const tile = tiles[selectedCount];
@@ -1822,10 +2249,10 @@
       cameraBattery.setAttribute("aria-label", `Camera battery: ${batterySlotsRemaining} of ${BATTERY_SLOT_COUNT} slots`);
     }
 
-    function drainBatterySlot() {
-      batterySlotsRemaining = Math.max(0, batterySlotsRemaining - 1);
+    function drainBatterySlot(cost = CONFIG.battery.missCost) {
+      batterySlotsRemaining = Math.max(0, batterySlotsRemaining - cost);
       updateBatteryUI();
-      if (batterySlotsRemaining === 0) triggerJumpscare();
+      if (batterySlotsRemaining === 0) endGame("battery");
     }
 
     function stopShutterEffect() {
@@ -1839,9 +2266,9 @@
       // on the current view even after panning to either end of the room.
       const animation = sceneEffects.animate([
         { filter: "blur(0px)", transform: "scale(1)" },
-        { filter: "blur(2px)", transform: "scale(1.014)", offset: .42 },
+        { filter: `blur(${CONFIG.shutter.blurPx}px)`, transform: `scale(${CONFIG.shutter.zoom})`, offset: CONFIG.shutter.peakFraction },
         { filter: "blur(0px)", transform: "scale(1)" }
-      ], { duration: 240, easing: "ease-in-out" });
+      ], { duration: CONFIG.shutter.durationMs, easing: "ease-in-out" });
       shutterSceneAnimation = animation;
       animation.finished.then(() => {
         if (shutterSceneAnimation === animation) shutterSceneAnimation = null;
@@ -1884,13 +2311,13 @@
       updateCameraControls();
       const animation = flight.animate([
         { transform: `translate(-50%, -50%) rotate(${rotation}deg) scale(1)`, opacity: 1 },
-        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(0deg) scale(.5)`, opacity: 0 }
+        { transform: `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px)) rotate(0deg) scale(${CONFIG.letters.transferEndScale})`, opacity: 0 }
       ], { duration: LETTER_TRANSFER_MS, easing: "cubic-bezier(.3,.65,.35,1)", fill: "forwards" });
       captureFlightAnimation = animation;
       animation.finished.then(() => {
         if (captureFlightAnimation === animation) finishLetterTransfer();
       }).catch(() => {});
-      captureFinishTimer = window.setTimeout(() => finishLetterTransfer(), LETTER_TRANSFER_MS + 40);
+      captureFinishTimer = window.setTimeout(() => finishLetterTransfer(), LETTER_TRANSFER_MS + CONFIG.letters.transferFallbackMs);
     }
 
     function finishShutterGesture() {
@@ -1924,13 +2351,13 @@
         finishShutterGesture();
         return;
       }
-      if (Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) > 8) shutterMoved = true;
+      if (Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) > CONFIG.shutter.tapSlopPx) shutterMoved = true;
     });
     snapButton.addEventListener("pointerup", event => {
       if (event.pointerId !== shutterPointerId) return;
       const rect = snapButton.getBoundingClientRect();
       const isTap = !shutterMoved &&
-        Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) <= 8 &&
+        Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) <= CONFIG.shutter.tapSlopPx &&
         event.clientX >= rect.left && event.clientX <= rect.right &&
         event.clientY >= rect.top && event.clientY <= rect.bottom;
       finishShutterGesture();
@@ -1980,19 +2407,19 @@
       if (butterflyFlightState?.anchor === anchor && butterflyFlightFrame) return;
       stopButterflyFlight();
       const tile = tiles[selectedCount];
-      const radius = Number(anchor.dataset.flightRadius) + 15;
+      const radius = Number(anchor.dataset.flightRadius) + CONFIG.butterfly.paddingPx;
       const band = getSafeLetterBand();
       const bounds = { left: radius, right: Math.max(radius, renderedVideoWidth - radius),
         top: band.top + radius, bottom: Math.max(band.top + radius, band.bottom - radius) };
       const phase = Math.random() * Math.PI * 2;
-      const swayX = 16 + Math.random() * 17;
-      const swayY = 12 + Math.random() * 15;
+      const swayX = CONFIG.butterfly.minSwayXPx + Math.random() * (CONFIG.butterfly.maxSwayXPx - CONFIG.butterfly.minSwayXPx);
+      const swayY = CONFIG.butterfly.minSwayYPx + Math.random() * (CONFIG.butterfly.maxSwayYPx - CONFIG.butterfly.minSwayYPx);
       const x = parseFloat(anchor.style.left);
       const y = parseFloat(anchor.style.top);
       const state = { anchor, tile, bounds, phase, swayX, swayY,
-        x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * 1.7) * swayY,
+        x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY,
         vx: 0, vy: 0, goalX: x, goalY: y, elapsed: 0, nextTurn: 0,
-        speed: 44 + Math.random() * 38, lastTime: performance.now() };
+        speed: CONFIG.butterfly.minSpeed + Math.random() * (CONFIG.butterfly.maxSpeed - CONFIG.butterfly.minSpeed), lastTime: performance.now() };
       butterflyFlightState = state;
       const step = time => {
         butterflyFlightFrame = 0;
@@ -2002,36 +2429,37 @@
           return;
         }
         // Capped elapsed steps prevent a leap when a background tab resumes.
-        const dt = Math.min(.05, Math.max(0, (time - state.lastTime) / 1000));
+        const dt = Math.min(CONFIG.butterfly.maxStepMs / 1000, Math.max(0, (time - state.lastTime) / 1000));
         state.lastTime = time;
         state.elapsed += dt;
         const t = state.elapsed;
         if (t >= state.nextTurn) {
           // Mostly local wandering, with occasional longer exploratory arcs.
-          const travel = Math.random() < .2 ? 560 : 280;
+          const travel = Math.random() < CONFIG.butterfly.longArcChance ? CONFIG.butterfly.longHorizontalTravelPx : CONFIG.butterfly.horizontalTravelPx;
           state.goalX = clamp(state.x + (Math.random() * 2 - 1) * travel, bounds.left, bounds.right);
-          state.goalY = clamp(state.y + (Math.random() * 2 - 1) * 110, bounds.top, bounds.bottom);
-          state.nextTurn = t + 1.1 + Math.random() * 1.9;
+          state.goalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.verticalTravelPx, bounds.top, bounds.bottom);
+          state.nextTurn = t + (CONFIG.butterfly.minTurnMs + Math.random() * (CONFIG.butterfly.maxTurnMs - CONFIG.butterfly.minTurnMs)) / 1000;
         }
         const dx = state.goalX - state.x, dy = state.goalY - state.y;
         const distance = Math.max(1, Math.hypot(dx, dy));
         // Ease the heading and alternate hovering with short bursts of flight.
-        const pace = state.speed * (.25 + .75 * Math.pow(.5 + .5 * Math.sin(t * 1.8 + phase), 2)) * Math.min(1, distance / 45);
-        const steering = 1 - Math.exp(-dt * 2.4);
-        state.vx += (dx / distance * pace * 1.3 - state.vx) * steering;
+        const pace = state.speed * (CONFIG.butterfly.minPaceFraction + (1 - CONFIG.butterfly.minPaceFraction) * Math.pow(.5 + .5 * Math.sin(t * CONFIG.butterfly.hoverFrequency + phase), 2)) * Math.min(1, distance / CONFIG.butterfly.slowdownDistancePx);
+        const steering = 1 - Math.exp(-dt * CONFIG.butterfly.steering);
+        state.vx += (dx / distance * pace * CONFIG.butterfly.horizontalSpeedMultiplier - state.vx) * steering;
         state.vy += (dy / distance * pace - state.vy) * steering;
         state.x += state.vx * dt;
         state.y += state.vy * dt;
         // Unequal oscillation frequencies make little loops instead of a
         // straight bounce; a restrained 3D tilt suggests fluttering wings.
-        const flightX = clamp(state.x + Math.sin(t * 3.1 + phase) * swayX, bounds.left, bounds.right);
-        const flightY = clamp(state.y + Math.sin(t * 4.3 + phase * 1.7) * swayY, bounds.top, bounds.bottom);
+        const flightX = clamp(state.x + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * swayX, bounds.left, bounds.right);
+        const flightY = clamp(state.y + Math.sin(t * CONFIG.butterfly.swayYFrequency + phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY, bounds.top, bounds.bottom);
         anchor.style.left = `${flightX}px`;
         anchor.style.top = `${flightY}px`;
         anchor.dataset.worldX = (flightX - bounds.left) / Math.max(1, bounds.right - bounds.left);
         anchor.dataset.worldY = (flightY - bounds.top) / Math.max(1, bounds.bottom - bounds.top);
-        tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * .32 + Math.sin(t * 3.1 + phase) * 17, -36, 36)}deg`);
-        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * 17 + phase) * 23}deg`);
+        tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * CONFIG.butterfly.bankVelocityMultiplier + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * CONFIG.butterfly.bankSwayDeg, -CONFIG.butterfly.maxBankDeg, CONFIG.butterfly.maxBankDeg)}deg`);
+        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * CONFIG.butterfly.flutterFrequency + phase) * CONFIG.butterfly.flutterDeg}deg`);
+        updateDecoyVisibilityState();
         butterflyFlightFrame = requestAnimationFrame(step);
       };
       butterflyFlightFrame = requestAnimationFrame(step);
@@ -2057,13 +2485,13 @@
         if (levelType.flyingLetters) tile.classList.add("butterfly-letter");
         tile.dataset.index = index;
         tile.dataset.letter = letter;
-        tile.style.setProperty("--letter-scale", .7 + Math.random() * .3);
-        tile.style.setProperty("--letter-rotation", `${Math.random() * 50 - 25}deg`);
-        if (index === 0) {
+        tile.style.setProperty("--letter-scale", CONFIG.letters.minScale + Math.random() * (CONFIG.letters.maxScale - CONFIG.letters.minScale));
+        tile.style.setProperty("--letter-rotation", `${CONFIG.letters.minRotationDeg + Math.random() * (CONFIG.letters.maxRotationDeg - CONFIG.letters.minRotationDeg)}deg`);
+        if (index === 0 && CONFIG.letters.firstLetterVibrates) {
           tile.classList.add("first-letter");
           for (let step = 1; step <= 3; step++) {
-            tile.style.setProperty(`--jitter-x${step}`, `${Math.random() * 4 - 2}px`);
-            tile.style.setProperty(`--jitter-y${step}`, `${Math.random() * 4 - 2}px`);
+            tile.style.setProperty(`--jitter-x${step}`, `${Math.random() * CONFIG.letters.vibrationPx * 2 - CONFIG.letters.vibrationPx}px`);
+            tile.style.setProperty(`--jitter-y${step}`, `${Math.random() * CONFIG.letters.vibrationPx * 2 - CONFIG.letters.vibrationPx}px`);
           }
         }
         const glyph = document.createElement("span");
@@ -2102,7 +2530,7 @@
         const glyph = anchor.querySelector(".letter-glyph");
         let footprint = glyph.getBoundingClientRect();
         if (levelType.flyingLetters) {
-          const radius = Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + 5;
+          const radius = Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + CONFIG.butterfly.radiusPaddingPx;
           anchor.dataset.flightRadius = radius;
           footprint = { width: radius * 2, height: radius * 2 };
         }
@@ -2112,13 +2540,17 @@
           const decoy = glyph.textContent;
           glyph.textContent = tiles[index].dataset.letter;
           const correct = glyph.getBoundingClientRect();
+          if (levelType.flyingLetters) {
+            const radius = Math.max(Number(anchor.dataset.flightRadius), Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + CONFIG.butterfly.radiusPaddingPx);
+            anchor.dataset.flightRadius = radius;
+            footprint = { width: radius * 2, height: radius * 2 };
+          } else footprint = { width: Math.max(footprint.width, correct.width), height: Math.max(footprint.height, correct.height) };
           glyph.textContent = decoy;
-          footprint = { width: Math.max(footprint.width, correct.width), height: Math.max(footprint.height, correct.height) };
         }
         anchor.hidden = wasHidden;
         // Include rotation, the first letter's small vibration, and a margin
         // so the complete glyph remains clear of both UI rows and room edges.
-        const padding = levelType.flyingLetters || index === 0 ? 15 : 12;
+        const padding = levelType.flyingLetters ? CONFIG.butterfly.paddingPx : index === 0 ? CONFIG.letters.firstPaddingPx : CONFIG.letters.paddingPx;
         const minX = footprint.width / 2 + padding;
         const maxX = Math.max(minX, worldWidth - minX);
         const minY = band.top + footprint.height / 2 + padding;
@@ -2134,7 +2566,7 @@
       if (gameOver) return;
       if (tileIndex !== selectedCount || tile !== tiles[tileIndex] || anchors[tileIndex].hidden) return;
       if (anomalyActive || tile.dataset.decoy === "true") {
-        triggerJumpscare();
+        endGame(anomalyActive ? "anomaly" : "decoy");
         return;
       }
       const expectedLetter = currentWord[selectedCount];
@@ -2180,7 +2612,9 @@
       updateCameraControls();
       completedWordCount++;
       // Correct words use power, but only missed photos can spend the last slot.
-      if (batterySlotsRemaining > 1) drainBatterySlot();
+      const cost = Math.min(CONFIG.battery.wordCost, Math.max(0, batterySlotsRemaining - CONFIG.battery.wordReserve));
+      if (cost) drainBatterySlot(cost);
+      if (gameOver) return;
       if (completedWordCount >= words.length) {
         roomCompleted = true;
         stopCameraTimer();
@@ -2188,11 +2622,12 @@
         window.clearTimeout(handTimer);
         stopSpiderEncounter();
       }
-      if (!roomCompleted && !anomalyEnabled && completedWordCount >= 1) {
+      if (!roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && completedWordCount >= CONFIG.anomaly.afterWords) {
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
-      status.textContent = `CLUE ${wordIndex + 1}/${words.length}`;
+      if (!roomCompleted && !spiderActive && spiderTimer === null) scheduleSpiderCheck();
+      status.textContent = gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       message.classList.remove("show");
       refreshMessageBitmap();
       void message.offsetWidth;
@@ -2200,14 +2635,14 @@
       wordAdvanceTimer = window.setTimeout(() => {
         if (gameOver) return;
         if (roomCompleted) {
-          document.getElementById("gameOverTitle").textContent = "ROOM COMPLETE";
-          document.getElementById("retryText").textContent = "TAP TO PLAY AGAIN";
-          gameOverScreen.setAttribute("aria-label", "Room complete. Tap to play again.");
+          document.getElementById("gameOverTitle").textContent = CONFIG.text.roomComplete;
+          document.getElementById("retryText").textContent = CONFIG.text.playAgain;
+          gameOverScreen.setAttribute("aria-label", `${CONFIG.text.roomComplete}. ${CONFIG.text.playAgain}.`);
           gameOverScreen.classList.add("show");
           return;
         }
         startWord(wordIndex + 1);
-      }, 650);
+      }, CONFIG.letters.wordTransitionMs);
     }
 
     function stopCameraMomentum() {
@@ -2250,19 +2685,19 @@
 
       const width = viewport.getBoundingClientRect().width;
       const strongFlick = Math.abs(velocity) >= CAMERA_FLICK_SPEED &&
-        travel >= Math.max(48, width * 0.12);
+        travel >= Math.max(CONFIG.camera.flickMinTravelPx, width * CONFIG.camera.flickViewportFraction);
       const direction = Math.sign(velocity);
       // A deliberate, fast flick reaches the corresponding edge. Smaller
       // gestures coast a limited distance with the same slowing-down feel.
-      const coastDistance = Math.min(Math.abs(velocity) * 180,
-        travel * CAMERA_DRAG_GAIN * 1.75, width * 0.75);
+      const coastDistance = Math.min(Math.abs(velocity) * CONFIG.camera.coastVelocityMultiplier,
+        travel * CAMERA_DRAG_GAIN * CONFIG.camera.coastTravelMultiplier, width * CONFIG.camera.coastViewportFraction);
       const target = strongFlick ? (direction < 0 ? minOffset : 0) :
         clamp(offsetX + direction * coastDistance, minOffset, 0);
       const origin = offsetX;
       const distance = Math.abs(target - origin);
       if (distance < 0.5) return;
 
-      const duration = clamp(3 * distance / Math.abs(velocity), 240, 850);
+      const duration = clamp(CONFIG.camera.momentumDurationMultiplier * distance / Math.abs(velocity), CONFIG.camera.momentumMinMs, CONFIG.camera.momentumMaxMs);
       const started = performance.now();
       const step = time => {
         if (isDragging || handVisible || gameOver || document.hidden) {
@@ -2270,7 +2705,7 @@
           return;
         }
         const progress = clamp((time - started) / duration, 0, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
+        const eased = 1 - Math.pow(1 - progress, CONFIG.camera.momentumEasePower);
         offsetX = clamp(origin + (target - origin) * eased, minOffset, 0);
         if (progress === 1) offsetX = target;
         applyWorldOffset(false, true);
@@ -2343,7 +2778,7 @@
       recordPanMotion(event.clientX, event.timeStamp);
       const dragDistance = event.clientX - dragStartClientX;
       if (!movedDuringDrag) {
-        if (Math.abs(dragDistance) <= 6) return;
+        if (Math.abs(dragDistance) <= CONFIG.camera.dragThresholdPx) return;
         try { viewport.setPointerCapture(event.pointerId); } catch {}
         movedDuringDrag = true;
       }
@@ -2380,6 +2815,7 @@
     }
 
     async function loadSpiderAssets() {
+      if (!CONFIG.spider.enabled) return;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (/^https?:$/.test(location.protocol) && AudioContextClass) {
         // Fetch now, decode after READY has unlocked an audio context. Buffer
@@ -2409,6 +2845,7 @@
     }
 
     function unlockSpiderSound() {
+      if (!CONFIG.spider.enabled) return;
       if (spiderSoundReady || spiderSoundPreparing) return;
       if (spiderNativeAudio) {
         spiderNativeAudio.volume = 0;
@@ -2417,7 +2854,7 @@
         spiderSoundPreparing = Promise.resolve(played).then(() => {
           spiderNativeAudio.pause();
           spiderNativeAudio.currentTime = 0;
-          spiderNativeAudio.volume = 1;
+          spiderNativeAudio.volume = CONFIG.spider.volume;
           spiderSoundReady = true;
         }).catch(() => {}).finally(() => { spiderSoundPreparing = null; });
         return;
@@ -2437,8 +2874,8 @@
           // so the audible effect begins with the upward movement, keeping the file intact.
           const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
           let first = 0;
-          while (first < buffer.length && !channels.some(channel => Math.abs(channel[first]) > .001)) first++;
-          spiderSoundOffset = first < buffer.length ? Math.max(0, (first - 256) / buffer.sampleRate) : 0;
+          while (first < buffer.length && !channels.some(channel => Math.abs(channel[first]) > CONFIG.spider.silenceThreshold)) first++;
+          spiderSoundOffset = CONFIG.spider.skipLeadingSilence && first < buffer.length ? Math.max(0, (first - CONFIG.spider.soundPreRollSamples) / buffer.sampleRate) : 0;
         });
         spiderSoundPreparing = Promise.all([resumed, decoded]).then(() => {
           spiderSoundReady = true;
@@ -2468,9 +2905,13 @@
         resumeSpiderSound();
         const source = spiderAudioContext.createBufferSource();
         source.buffer = spiderAudioBuffer;
-        source.connect(spiderAudioContext.destination);
+        const gain = spiderAudioContext.createGain();
+        gain.gain.value = CONFIG.spider.volume;
+        source.connect(gain);
+        gain.connect(spiderAudioContext.destination);
         source.onended = () => {
           source.disconnect();
+          gain.disconnect();
           if (spiderAudioSource === source) spiderAudioSource = null;
         };
         spiderAudioSource = source;
@@ -2518,23 +2959,23 @@
     function scheduleSpiderCheck() {
       window.clearTimeout(spiderTimer);
       spiderTimer = null;
-      if (!gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+      if (!CONFIG.spider.enabled || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
       spiderTimer = window.setTimeout(() => {
         spiderTimer = null;
-        if (!gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+        if (!CONFIG.spider.enabled || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
         if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
         scheduleSpiderCheck();
       }, SPIDER_CHECK_MS);
     }
 
     function spawnSpiderOffscreen() {
-      if (!gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
+      if (!CONFIG.spider.enabled || !gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
       const width = spiderMeta.width * SPIDER_SCALE;
       const visible = currentVisibleWorldRange();
       const ranges = [];
       const lastX = renderedVideoWidth - width;
-      if (visible.left - 8 - width >= 0) ranges.push([0, Math.min(lastX, visible.left - 8 - width)]);
-      if (visible.right + 8 <= lastX) ranges.push([visible.right + 8, lastX]);
+      if (visible.left - CONFIG.spider.offscreenMarginPx - width >= 0) ranges.push([0, Math.min(lastX, visible.left - CONFIG.spider.offscreenMarginPx - width)]);
+      if (visible.right + CONFIG.spider.offscreenMarginPx <= lastX) ranges.push([visible.right + CONFIG.spider.offscreenMarginPx, lastX]);
       if (!ranges.length) return false;
       const range = ranges[Math.floor(Math.random() * ranges.length)];
       const x = range[0] + Math.random() * (range[1] - range[0]);
@@ -2565,7 +3006,7 @@
       spiderRetreating = true;
       playSpiderSound();
       const started = performance.now();
-      const distance = spiderMeta.height * SPIDER_SCALE + 4;
+      const distance = spiderMeta.height * SPIDER_SCALE + CONFIG.spider.retreatExtraPx;
       const step = time => {
         spiderRetreatFrame = 0;
         if (!spiderActive || gameOver || roomCompleted) return;
@@ -2598,9 +3039,9 @@
 
     function scheduleAnomalyCheck() {
       window.clearTimeout(anomalyTimer);
-      if (!anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
+      if (!CONFIG.anomaly.enabled || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
       anomalyTimer = window.setTimeout(async () => {
-        if (!anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
+        if (!CONFIG.anomaly.enabled || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
         if (Math.random() < ANOMALY_SPAWN_CHANCE) {
           const placed = await spawnAnomalyOffscreen();
           if (!placed) scheduleAnomalyCheck();
@@ -2624,7 +3065,7 @@
             let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
             for (let y = 0; y < canvas.height; y++) {
               for (let x = 0; x < canvas.width; x++) {
-                if (data[(y * canvas.width + x) * 4 + 3] > 8) {
+                if (data[(y * canvas.width + x) * 4 + 3] > CONFIG.anomaly.alphaThreshold) {
                   if (x < minX) minX = x;
                   if (x > maxX) maxX = x;
                   if (y < minY) minY = y;
@@ -2681,7 +3122,7 @@
       // outside the current viewport. If its authored location is visible now,
       // skip this checkpoint and try again on the next anomaly check.
       const visible = currentVisibleWorldRange();
-      const edgePad = 8;
+      const edgePad = CONFIG.anomaly.offscreenMarginPx;
       if (horizontalBoxesIntersect(
         { left: bbox.left, right: bbox.right },
         { left: visible.left - edgePad, right: visible.right + edgePad }
@@ -2721,9 +3162,17 @@
       if (!gameOver) scheduleAnomalyCheck();
     }
 
-    function triggerJumpscare() {
+    function endGame(reason = "other") {
       if (gameOver || roomCompleted) return;
+      const chance = (CONFIG.failures[reason] || CONFIG.failures.other).jumpscareChance || 0;
+      if (chance >= 1 || chance > 0 && Math.random() < chance) triggerJumpscare(reason);
+      else if (beginGameOver(reason)) showGameOver();
+    }
+
+    function beginGameOver(reason) {
+      if (gameOver || roomCompleted) return false;
       gameOver = true;
+      gameOverReason = Object.prototype.hasOwnProperty.call(CONFIG.failures, reason) ? reason : "other";
       stopButterflyFlight();
       stopSpiderEncounter();
       updateCameraControls();
@@ -2737,6 +3186,16 @@
       stopShutterEffect();
       // Stop competing room-video decoding once the full-screen scare owns playback.
       video.pause();
+      // The same cleanup applies when no video is selected by the failure roll.
+      handVisible = false;
+      handBlocker.className = "";
+      handBlocker.setAttribute("aria-hidden", "true");
+      viewport.classList.remove("hand-active");
+      return true;
+    }
+
+    function triggerJumpscare(reason = "other") {
+      if (!beginGameOver(reason)) return;
 
       // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
       // Put it into that exact panorama coordinate space at the CURRENT camera
@@ -2803,6 +3262,12 @@
       if (jumpscareAudioGain) jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
+      if (!roomCompleted) {
+        const failure = CONFIG.failures[gameOverReason] || CONFIG.failures.other;
+        document.getElementById("gameOverTitle").textContent = failure.title;
+        document.getElementById("retryText").textContent = CONFIG.text.retry;
+        gameOverScreen.setAttribute("aria-label", `${failure.title}. ${CONFIG.text.retry}.`);
+      }
       gameOverScreen.classList.add("show");
     }
 
@@ -2810,9 +3275,8 @@
       if (gameOver && jumpscareVideo.classList.contains("playing")) showGameOver();
     });
     jumpscareVideo.addEventListener("error", () => {
-      gameOver = true;
+      if (!gameOver) beginGameOver(gameplayStarted ? "other" : "video");
       loadingScreen.classList.add("hidden");
-      if (!gameplayStarted) document.getElementById("gameOverTitle").textContent = "VIDEO UNAVAILABLE";
       showGameOver();
     });
     gameOverScreen.addEventListener("pointerup", () => location.reload());
@@ -2822,10 +3286,10 @@
 
     function scheduleNextHandCheck() {
       window.clearTimeout(handTimer);
-      if (gameOver || roomCompleted) return;
-      const delay = 8000 + Math.random() * 4000; // 10 seconds ±2 seconds
+      if (!CONFIG.hand.enabled || gameOver || roomCompleted) return;
+      const delay = CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
       handTimer = window.setTimeout(() => {
-        if (!handVisible && Math.random() < 0.25) {
+        if (!handVisible && Math.random() < CONFIG.hand.spawnChance) {
           showHand();
         } else {
           scheduleNextHandCheck();
@@ -2834,7 +3298,7 @@
     }
 
     function showHand() {
-      if (handVisible || gameOver || roomCompleted) return;
+      if (!CONFIG.hand.enabled || handVisible || gameOver || roomCompleted) return;
       handVisible = true;
       updateCameraControls();
       finishPanGesture();
@@ -2850,7 +3314,7 @@
       window.setTimeout(() => {
         if (!handVisible) return;
         handBlocker.className = "active resting";
-      }, 520);
+      }, CONFIG.hand.enterMs);
     }
 
     function hideHand({ continueFromDrag = false } = {}) {
@@ -2863,8 +3327,8 @@
         // Continue smoothly from the exact dragged position. Do NOT reset the
         // transform to the resting position first, which caused a visible flicker.
         handBlocker.className = "active";
-        setOverlayImageStyles(handImage, handBitmap, { transition: "transform 280ms cubic-bezier(.55,.05,.82,.34)" });
-        const exitY = Math.max(viewport.clientHeight * 1.15, handImage.getBoundingClientRect().height * 1.10);
+        setOverlayImageStyles(handImage, handBitmap, { transition: `transform ${CONFIG.hand.dragExitMs}ms cubic-bezier(.55,.05,.82,.34)` });
+        const exitY = Math.max(viewport.clientHeight * CONFIG.hand.exitViewportMultiplier, handImage.getBoundingClientRect().height * CONFIG.hand.exitImageMultiplier);
 
         requestAnimationFrame(() => {
           setOverlayImageStyles(handImage, handBitmap, { transform: `translate(-50%, ${exitY}px)` });
@@ -2880,7 +3344,7 @@
         handBlocker.setAttribute("aria-hidden", "true");
         setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
         scheduleNextHandCheck();
-      }, 300);
+      }, CONFIG.hand.exitMs);
     }
 
     function handPointerDown(event) {
@@ -2901,11 +3365,11 @@
       event.stopPropagation();
       handCurrentY = event.clientY;
       const dy = Math.max(0, handCurrentY - handStartY);
-      if (dy > 4) handDragStarted = true;
+      if (dy > CONFIG.hand.dragThresholdPx) handDragStarted = true;
 
       // Follow only downward gestures; upward movement does not dismiss it.
       if (dy > 0) {
-        const maxDrag = viewport.clientHeight * 0.55;
+        const maxDrag = viewport.clientHeight * CONFIG.hand.maxDragFraction;
         const visualDy = Math.min(dy, maxDrag);
         setOverlayImageStyles(handImage, handBitmap, { transform: `translate(-50%, ${visualDy}px)` });
       }
@@ -2916,7 +3380,7 @@
       event.preventDefault();
       event.stopPropagation();
       const dy = event.clientY - handStartY;
-      const threshold = Math.max(70, viewport.clientHeight * 0.10);
+      const threshold = Math.max(CONFIG.hand.dismissMinPx, viewport.clientHeight * CONFIG.hand.dismissHeightFraction);
       handBlocker.classList.remove("dragging");
       try { handBlocker.releasePointerCapture(event.pointerId); } catch {}
       handPointerId = null;
@@ -2926,10 +3390,10 @@
         // directly off-screen without jumping back up first.
         hideHand({ continueFromDrag: true });
       } else {
-        setOverlayImageStyles(handImage, handBitmap, { transition: "transform 180ms ease-out", transform: "translate(-50%, 0)" });
+        setOverlayImageStyles(handImage, handBitmap, { transition: `transform ${CONFIG.hand.resetMs}ms ease-out`, transform: "translate(-50%, 0)" });
         window.setTimeout(() => {
           setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
-        }, 190);
+        }, CONFIG.hand.resetCleanupMs);
       }
     }
 
@@ -2968,6 +3432,7 @@
       updateAnomalyVisibilityState();
       refreshShutterBitmap();
       refreshMessageBitmap();
+      fitClueList();
     }
 
     function requestViewportLayout() {
@@ -3021,18 +3486,6 @@
     });
     viewport.addEventListener("dragstart", event => event.preventDefault());
 
-    // Loading screen: prepare the selected room background before revealing it.
-    document.querySelectorAll(".loading-letter").forEach((letter, index) => {
-      const jitter = () => (Math.random() * 4 - 2).toFixed(2) + "px";
-      letter.style.setProperty("--lx1", jitter());
-      letter.style.setProperty("--ly1", jitter());
-      letter.style.setProperty("--lx2", jitter());
-      letter.style.setProperty("--ly2", jitter());
-      letter.style.setProperty("--lx3", jitter());
-      letter.style.setProperty("--ly3", jitter());
-      letter.style.animationDelay = `${index * 37}ms`;
-    });
-
     function hideLoadingScreen() {
       // Kept for compatibility; the clue intro now controls the reveal.
       maybeShowClueIntro();
@@ -3074,7 +3527,7 @@
         };
         const done = () => finish(true);
         const failed = () => finish(false);
-        const timeout = window.setTimeout(failed, 1200);
+        const timeout = window.setTimeout(failed, CONFIG.loading.standbySeekTimeoutMs);
         jumpscareStandbySeekCancel = failed;
         jumpscareVideo.addEventListener("seeked", done);
         jumpscareVideo.addEventListener("error", failed);
@@ -3090,7 +3543,7 @@
       // changes means READY's audio permission and silent standby are preserved.
       jumpscareVideo.classList.add("priming");
       try {
-        const ready = await seekJumpscareStandbyFrame(Math.min(.001, jumpscareVideo.duration / 2));
+        const ready = await seekJumpscareStandbyFrame(Math.min(CONFIG.loading.standbySeekSeconds, jumpscareVideo.duration / 2));
         if (ready && !gameOver && !roomCompleted && cameraStartedAt !== null) {
           await seekJumpscareStandbyFrame(0);
         }
@@ -3173,9 +3626,9 @@
           // the separate buffer and play promises must also finish first.
           const checkDecoded = () => {
             if (jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) resolve();
-            else frameFallbackTimer = window.setTimeout(checkDecoded, 100);
+            else frameFallbackTimer = window.setTimeout(checkDecoded, CONFIG.loading.decodedFramePollMs);
           };
-          frameFallbackTimer = window.setTimeout(checkDecoded, 250);
+          frameFallbackTimer = window.setTimeout(checkDecoded, CONFIG.loading.decodedFrameFallbackMs);
         } else {
           frameFallback = () => requestAnimationFrame(() => requestAnimationFrame(resolve));
           jumpscareVideo.addEventListener("playing", frameFallback, { once: true });
@@ -3269,15 +3722,86 @@
       jumpscareMetadataReady = true;
       revealWhenMediaReady();
     });
-    resizeGameViewport();
-    loadSpiderAssets();
-    loadRandomLevel();
-    revealWhenMediaReady();
-    cameraRoom.textContent = ROOM_NAME;
-    updateBatteryUI();
-    updateCameraTimer();
 
-    loadWords();
+    function configureGamePresentation() {
+      const style = document.documentElement.style;
+      const cssSettings = {
+        "--letter-beige": CONFIG.ui.letterColor, "--tarantino-yellow": CONFIG.ui.foundColor,
+        "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
+        "--shutter-color": CONFIG.shutter.color, "--shutter-min": `${CONFIG.shutter.minSizePx}px`,
+        "--shutter-max": `${CONFIG.shutter.maxSizePx}px`, "--shutter-size-vh": CONFIG.shutter.heightVh,
+        "--shutter-bottom": `${CONFIG.shutter.bottomPercent}%`, "--shutter-ring": `${CONFIG.shutter.ringPx}px`,
+        "--shutter-padding": `${CONFIG.shutter.paddingPx}px`, "--shutter-held-scale": CONFIG.shutter.heldScale,
+        "--shutter-press-ms": `${CONFIG.shutter.pressMs}ms`, "--shutter-release-ms": `${CONFIG.shutter.releaseMs}ms`,
+        "--centre-flight-ms": `${CONFIG.camera.centreFlightMs}ms`, "--letter-blur": `${CONFIG.letters.blurPx}px`,
+        "--letter-fade-ms": `${CONFIG.letters.fadeInMs}ms`, "--letter-vibrate-ms": `${CONFIG.letters.vibrationMs}ms`,
+        "--hand-blur": `${CONFIG.hand.blurPx}px`, "--hand-enter-ms": `${CONFIG.hand.enterMs}ms`, "--hand-exit-ms": `${CONFIG.hand.exitMs}ms`,
+        "--clue-blur": `${CONFIG.ui.clueBlurPx}px`, "--clue-fade-ms": `${CONFIG.ui.clueFadeMs}ms`,
+        "--loader-fade-ms": `${CONFIG.ui.loaderFadeMs}ms`, "--loading-jitter-ms": `${CONFIG.ui.loadingJitterMs}ms`,
+        "--game-over-jitter-ms": `${CONFIG.ui.gameOverJitterMs}ms`, "--retry-jitter-ms": `${CONFIG.ui.retryJitterMs}ms`,
+        "--retry-jitter-delay": `${CONFIG.ui.retryJitterDelayMs}ms`, "--found-flash-ms": `${CONFIG.ui.foundFlashMs}ms`,
+        "--hud-pop-ms": `${CONFIG.ui.hudPopMs}ms`, "--hud-letter-gap": `${CONFIG.letters.hudGapPx}px`,
+        "--game-over-min": `${CONFIG.ui.gameOverMinFontPx}px`, "--game-over-max": `${CONFIG.ui.gameOverMaxFontPx}px`, "--game-over-vh": CONFIG.ui.gameOverFontVh,
+        "--retry-min": `${CONFIG.ui.retryMinFontPx}px`, "--retry-max": `${CONFIG.ui.retryMaxFontPx}px`, "--retry-vh": CONFIG.ui.retryFontVh
+      };
+      for (const [key, value] of Object.entries(cssSettings)) style.setProperty(key, String(value));
+      document.getElementById("clueTitle").textContent = CONFIG.text.clueTitle;
+      readyButton.textContent = CONFIG.text.ready;
+      messageText.textContent = CONFIG.text.found;
+      // Keep the local-first font rule (especially iOS), changing its source only
+      // when a different font file or local names were actually configured.
+      if (CONFIG.assets.letterFontFile !== CONFIG_DEFAULTS.assets.letterFontFile ||
+          JSON.stringify(CONFIG.assets.letterFontLocalNames) !== JSON.stringify(CONFIG_DEFAULTS.assets.letterFontLocalNames)) {
+        const rule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE);
+        if (rule) rule.style.setProperty("src", [...CONFIG.assets.letterFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
+          `url(${JSON.stringify(new URL(CONFIG.assets.letterFontFile, document.baseURI).href)}) format("truetype")`].join(", "));
+      }
+      if (BATTERY_SLOT_COUNT !== batterySlots.length) {
+        const svg = cameraBattery.querySelector("svg");
+        batterySlots.forEach(slot => slot.remove());
+        const gap = Math.min(2, 8 / BATTERY_SLOT_COUNT), width = (32 - gap * (BATTERY_SLOT_COUNT - 1)) / BATTERY_SLOT_COUNT;
+        batterySlots = Array.from({ length: BATTERY_SLOT_COUNT }, (_, index) => {
+          const slot = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+          slot.setAttribute("class", "battery-slot");
+          for (const [key, value] of Object.entries({ x: 4 + index * (width + gap), y: 5, width, height: 10 })) slot.setAttribute(key, value);
+          svg.appendChild(slot);
+          return slot;
+        });
+      }
+      batterySlots.forEach((slot, index) => slot.setAttribute("fill", CONFIG.battery.slotColors[Math.min(CONFIG.battery.slotColors.length - 1,
+        Math.floor(index / BATTERY_SLOT_COUNT * CONFIG.battery.slotColors.length))]));
+      // Loader jitter has its own settings rather than changing gameplay letters.
+      document.querySelectorAll(".loading-letter").forEach((letter, index) => {
+        for (let n = 1; n <= 3; n++) {
+          letter.style.setProperty(`--lx${n}`, `${Math.random() * CONFIG.ui.loadingJitterPx * 2 - CONFIG.ui.loadingJitterPx}px`);
+          letter.style.setProperty(`--ly${n}`, `${Math.random() * CONFIG.ui.loadingJitterPx * 2 - CONFIG.ui.loadingJitterPx}px`);
+        }
+        letter.style.animationDelay = `${index * CONFIG.ui.loadingLetterDelayMs}ms`;
+      });
+      document.fonts?.ready.then(requestViewportLayout);
+    }
+
+    async function initializeGame() {
+      await loadGameConfig();
+      refreshConfigBindings();
+      levelType = chooseLevelType();
+      ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
+      cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
+      batterySlotsRemaining = BATTERY_SLOT_COUNT;
+      levelBaseURL = new URL(LEVELS_DIRECTORY.replace(/\/?$/, "/"), document.baseURI);
+      configureGamePresentation();
+      cluePaper.src = CONFIG.assets.paperFile;
+      handImage.src = CONFIG.assets.handFile;
+      resizeGameViewport();
+      loadSpiderAssets();
+      loadRandomLevel();
+      revealWhenMediaReady();
+      cameraRoom.textContent = ROOM_NAME;
+      updateBatteryUI();
+      updateCameraTimer();
+      loadWords();
+    }
+    initializeGame();
   </script>
 </body>
 </html>
