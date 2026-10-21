@@ -39,7 +39,7 @@ decodedFramePollMs = 100
 
 # Level chances are weights in [0,1]; the game normalizes their sum. These defaults total 1.
 [levels.standard]
-chance = 0.63
+chance = 1.0
 wordCount = 3
 timeLimitMs = 120000
 decoyLetterChance = 0
@@ -47,7 +47,7 @@ flyingLetters = false
 
 # Fixed decoy letters correct only after being seen and panned fully out of view.
 [levels.decoy]
-chance = 0.18
+chance = 0.0
 wordCount = 2
 timeLimitMs = 60000
 decoyLetterChance = 0.1
@@ -55,7 +55,7 @@ flyingLetters = false
 
 # Original flying-letter type. timeLimitMs=30000 means 30 seconds.
 [levels.butterfly]
-chance = 0.09
+chance = 0.0
 wordCount = 1
 timeLimitMs = 30000
 decoyLetterChance = 0
@@ -63,7 +63,7 @@ flyingLetters = true
 
 # NEW: three flying words with decoys, two minutes. Each next letter appears only after capture.
 [levels.flyingDecoy]
-chance = 0.1
+chance = 0.0
 wordCount = 3
 timeLimitMs = 120000
 decoyLetterChance = 0.1
@@ -72,16 +72,16 @@ flyingLetters = true
 # 0 = skip jumpscare; 1 = always play; 0.5 = 50% chance. One roll per failure.
 [failures.timeout]
 title = "GAME OVER"
-jumpscareChance = 0.5
+jumpscareChance = 0.1
 
 # Battery exhaustion always ends the level, with or without a jumpscare.
 [failures.battery]
 title = "BATTERY DIED"
-jumpscareChance = 0.5
+jumpscareChance = 0.1
 
 # Photographing a letter while the monster anomaly is active.
 [failures.anomaly]
-title = "Anomaly Undetected"
+title = "ANOMALY UNDETECTED"
 jumpscareChance = 1
 
 # Photographing a wrong/decoy letter.
