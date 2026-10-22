@@ -1,0 +1,7 @@
+{
+  "version": 2,
+  "game": "room-word-hunt",
+  "completedRooms": 0,
+  "currentLevel": null,
+  "updatedAt": null
+}

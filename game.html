@@ -85,8 +85,8 @@
       will-change: transform, filter;
     }
 
-    #roomImage,
-    #roomVideo {
+    .room-image,
+    .room-video {
       position: absolute;
       top: 0;
       left: 0;
@@ -108,8 +108,8 @@
       will-change: transform;
     }
 
-    #roomImage,
-    #roomVideo {
+    .room-image,
+    .room-video {
       z-index: 1;
       user-select: none;
       pointer-events: none;
@@ -117,23 +117,23 @@
       transition: filter 420ms ease;
     }
 
-    #roomImage {
+    .room-image {
       display: none;
       max-width: none;
       -webkit-user-drag: none;
     }
 
-    #roomImage.snapping,
-    #roomVideo.snapping,
+    .room-image.snapping,
+    .room-video.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
     #spiderWorld.snapping,
-    #jumpscareVideo.snapping {
+    .jumpscare-video.snapping {
       transition: transform var(--centre-flight-ms, 420ms) cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
 
-    #portraitViewport.hand-active #roomImage,
-    #portraitViewport.hand-active #roomVideo {
+    #portraitViewport.hand-active .room-image,
+    #portraitViewport.hand-active .room-video {
       filter: blur(var(--hand-blur, 3px));
     }
 
@@ -234,7 +234,8 @@
     }
 
     #cameraBattery,
-    #cameraTimer {
+    #cameraTimer,
+    #status {
       position: absolute;
       top: max(5%, calc(env(safe-area-inset-top) + 12px));
       font-size: var(--ui-font-size, 18px);
@@ -295,19 +296,39 @@
       animation: hudPop var(--hud-pop-ms, 160ms) ease both;
     }
 
-    #status,
-    #cameraRoom {
+    #status {
+      left: 50%;
+      transform: translateX(-50%);
+      font-weight: 400;
+      white-space: nowrap;
+    }
+
+    .room-navigation {
+      appearance: none;
+      -webkit-appearance: none;
       position: absolute;
-      bottom: max(4.5%, calc(env(safe-area-inset-bottom) + 12px));
-      max-width: 34%;
+      bottom: max(3.3%, calc(env(safe-area-inset-bottom) + 4px));
+      min-width: 64px;
+      min-height: 44px;
+      padding: 8px;
+      border: 0;
+      background: transparent;
+      color: var(--camera-color, #fff);
+      -webkit-text-fill-color: var(--camera-color, #fff);
+      font: inherit;
       font-size: var(--ui-font-size, 18px);
       line-height: 1;
       white-space: nowrap;
-      font-weight: 400;
+      cursor: pointer;
+      pointer-events: auto;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
-
-    #status { left: max(4.5%, calc(var(--safe-left) + 10px)); }
-    #cameraRoom { right: max(4.5%, calc(var(--safe-right) + 10px)); }
+    #prevRoomButton { left: max(2.5%, calc(var(--safe-left) + 2px)); }
+    #nextRoomButton { right: max(2.5%, calc(var(--safe-right) + 2px)); }
+    .room-navigation:active { transform: scale(.95); }
+    .room-navigation:disabled { opacity: .45; cursor: default; }
+    .room-navigation:focus-visible { outline: 1px solid currentColor; outline-offset: 2px; }
 
     #snapButton {
       appearance: none;
@@ -429,6 +450,29 @@
       color: inherit;
       background: transparent;
       font: inherit;
+      cursor: pointer;
+    }
+
+    #localFileControls[hidden] { display: none; }
+    .clue-file-controls {
+      position: absolute;
+      left: 4%; right: 4%;
+      bottom: max(3%, calc(env(safe-area-inset-bottom) + 8px));
+      display: flex; align-items: flex-start; flex-wrap: wrap; gap: 6px 12px;
+      pointer-events: auto;
+    }
+    #localFileControls { pointer-events: auto; }
+    .progress-actions { display: flex; flex-wrap: wrap; gap: 6px; max-width: 100%; font: 12px Arial, Helvetica, sans-serif; }
+    .progress-actions button { padding: 8px; border: 1px solid currentColor; border-radius: 4px; background: transparent; color: var(--letter-beige); font: inherit; cursor: pointer; }
+    .progress-status { flex-basis: 100%; color: var(--letter-beige); font-size: 11px; line-height: 1.3; }
+    #gameOverScreen > .progress-actions { position: absolute; bottom: max(3%, calc(env(safe-area-inset-bottom) + 8px)); left: 4%; right: 4%; justify-content: center; }
+    #changeLocalFilesButton {
+      padding: 8px 10px;
+      border: 1px solid currentColor;
+      border-radius: 4px;
+      background: transparent;
+      color: var(--letter-beige);
+      font: 13px Arial, Helvetica, sans-serif;
       cursor: pointer;
     }
 
@@ -579,8 +623,8 @@
     }
 
     /* During the clue card, keep the prepared room soft and hide gameplay UI. */
-    #portraitViewport.clue-intro-active #roomImage,
-    #portraitViewport.clue-intro-active #roomVideo {
+    #portraitViewport.clue-intro-active .room-image,
+    #portraitViewport.clue-intro-active .room-video {
       filter: blur(var(--clue-blur, 5px));
     }
 
@@ -643,7 +687,7 @@
 
     #blackFlash { display: none; }
 
-    #jumpscareVideo {
+    .jumpscare-video {
       position: absolute;
       z-index: 150;
       top: 0;
@@ -661,12 +705,12 @@
       will-change: transform;
     }
 
-    #jumpscareVideo.playing {
+    .jumpscare-video.playing {
       display: block;
       opacity: 1;
     }
 
-    #jumpscareVideo.priming {
+    .jumpscare-video.priming {
       display: block;
       opacity: .001;
     }
@@ -822,15 +866,17 @@
           <span class="loading-letter">G</span>
         </div>
         <div id="wordLoadError" role="alert" hidden>
-          <h2>Couldn’t load words.txt</h2>
+          <h2 id="wordLoadTitle">Couldn’t load words.txt</h2>
           <p id="wordLoadReason"></p>
           <a id="wordLoadUrl" target="_blank" rel="noopener"></a>
-          <p>Retry, or choose your word list directly.</p>
+          <p id="wordLoadHelp">Retry, or choose your word list directly.</p>
           <div class="word-error-actions">
+            <button id="chooseGameFolderButton" type="button" hidden>Choose game folder</button>
             <button id="retryWordsButton" type="button">Retry</button>
             <button id="chooseWordsButton" type="button">Choose words.txt</button>
           </div>
           <input id="wordFileInput" type="file" accept=".txt,text/plain" hidden />
+          <input id="gameFolderInput" type="file" webkitdirectory multiple hidden />
         </div>
       </div>
 
@@ -846,11 +892,19 @@
           </div>
           <button id="readyButton" type="button">READY</button>
         </div>
+        <div class="clue-file-controls">
+          <div id="localFileControls" hidden><button id="changeLocalFilesButton" type="button">Change local files</button></div>
+          <div class="progress-actions">
+          <button type="button" class="export-progress">Save save.txt</button>
+          <button type="button" class="import-progress">Load save.txt</button>
+          <span class="progress-status" role="status"></span>
+        </div>
+        </div>
       </div>
 
       <div id="sceneEffects">
-        <img id="roomImage" alt="" draggable="false" />
-        <video id="roomVideo" autoplay muted loop playsinline></video>
+        <img id="roomImage" class="room-image" alt="" draggable="false" />
+        <video id="roomVideo" class="room-video" autoplay muted loop playsinline></video>
         <div id="letterWorld" aria-label="Current letter to photograph"></div>
         <div id="anomalyWorld" aria-hidden="true">
           <img id="anomalyImage" alt="" draggable="false" />
@@ -880,8 +934,9 @@
           <div id="wordDisplay" aria-live="polite"></div>
         </div>
         <time id="cameraTimer" aria-label="Room time remaining">01:00</time>
-        <div id="status">CLUE 1/3</div>
-        <div id="cameraRoom">ROOM 01</div>
+        <div id="status" aria-live="polite">1/3</div>
+        <button id="prevRoomButton" class="room-navigation" type="button" disabled>PREV</button>
+        <button id="nextRoomButton" class="room-navigation" type="button" disabled>NEXT</button>
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
           <span class="shutter-core" aria-hidden="true"></span>
         </button>
@@ -897,14 +952,20 @@
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
-      <video id="jumpscareVideo" preload="auto" muted playsinline></video>
+      <video id="jumpscareVideo" class="jumpscare-video" preload="auto" muted playsinline></video>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
+        <div class="progress-actions">
+          <button type="button" class="export-progress">Save save.txt</button>
+          <button type="button" class="import-progress">Load save.txt</button>
+          <span class="progress-status" role="status"></span>
+        </div>
       </div>
     </div>
   </div>
 
+  <input id="progressFileInput" type="file" accept=".txt,.json,text/plain,application/json" hidden />
   <script>
 
     // Optional config.txt is read before choosing a level or loading its assets.
@@ -930,7 +991,8 @@
       "Dudu Calligraphy",
       "DuduCalligraphy",
       "Dudu_Calligraphy"
-    ]
+    ],
+    "saveFile": "save.txt"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -942,7 +1004,9 @@
     "standbySeekTimeoutMs": 1200,
     "standbySeekSeconds": 0.001,
     "decodedFrameFallbackMs": 250,
-    "decodedFramePollMs": 100
+    "decodedFramePollMs": 100,
+    "saveTimeoutMs": 3000,
+    "saveHandleTimeoutMs": 1000
   },
   "levels": {
     "standard": {
@@ -950,28 +1014,32 @@
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0,
-      "flyingLetters": false
+      "flyingLetters": false,
+      "evadesCamera": false
     },
     "decoy": {
       "chance": 0.18,
-      "wordCount": 2,
+      "wordCount": 3,
       "timeLimitMs": 60000,
       "decoyLetterChance": 0.1,
-      "flyingLetters": false
+      "flyingLetters": false,
+      "evadesCamera": false
     },
     "butterfly": {
       "chance": 0.09,
-      "wordCount": 1,
+      "wordCount": 3,
       "timeLimitMs": 30000,
       "decoyLetterChance": 0,
-      "flyingLetters": true
+      "flyingLetters": true,
+      "evadesCamera": false
     },
     "flyingDecoy": {
       "chance": 0.1,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
-      "flyingLetters": true
+      "flyingLetters": true,
+      "evadesCamera": true
     }
   },
   "failures": {
@@ -1055,7 +1123,12 @@
     "hudMinFontPx": 9,
     "hudMaxFontPx": 40,
     "hudGlyphWidthRatio": 0.67,
-    "hudGapPx": 2
+    "hudGapPx": 2,
+    "vibrationByWord": [
+      "first",
+      "first",
+      "first"
+    ]
   },
   "butterfly": {
     "minSpeed": 44,
@@ -1085,7 +1158,18 @@
     "flutterDeg": 23,
     "maxStepMs": 50,
     "paddingPx": 15,
-    "radiusPaddingPx": 5
+    "radiusPaddingPx": 5,
+    "evadeApproachScreens": 0.9,
+    "evadeMaxSpeedMultiplier": 3.4,
+    "evadeSteeringMultiplier": 2.6,
+    "evadeRetargetMs": 180,
+    "evadeTravelPx": 420,
+    "evadeVerticalTravelPx": 120,
+    "evadeSwayMultiplier": 1.65,
+    "evadeFlutterMultiplier": 1.4,
+    "evadeDirectionDeadzoneFraction": 0.08,
+    "evadeEdgeMarginPx": 70,
+    "evadeBoundaryTurnMs": 900
   },
   "anomaly": {
     "enabled": true,
@@ -1179,29 +1263,42 @@
     "gameOverFontVh": 7,
     "retryMinFontPx": 20,
     "retryMaxFontPx": 30,
-    "retryFontVh": 3
+    "retryFontVh": 3,
+    "wordTopGapPx": 8
   },
   "text": {
-    "clueFormat": "CLUE {current}/{total}",
+    "clueFormat": "{current}/{total}",
     "roomFormat": "ROOM {number}",
     "clueTitle": "CLUES",
     "ready": "READY",
     "found": "FOUND",
-    "roomComplete": "ROOM COMPLETE",
+    "roomComplete": "LEVEL COMPLETE",
     "retry": "TAP TO RETRY",
-    "playAgain": "TAP TO PLAY AGAIN"
+    "playAgain": "TAP TO PLAY AGAIN",
+    "previousRoom": "PREV",
+    "nextRoom": "NEXT"
+  },
+  "rooms": {
+    "count": 3,
+    "shuffleLetterRooms": true,
+    "wrapNavigation": true
   }
 };
-    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true]};
+    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 8, true]};
     const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"]];
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
+    const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
+    let localFolderImport = null;
+    let folderImportBusy = false;
+    let gameInitializationStarted = false;
 
     function configLeaf(path, tree = CONFIG_DEFAULTS) {
       return path.split(".").reduce((value, key) => value && Object.prototype.hasOwnProperty.call(value, key) ? value[key] : undefined, tree);
     }
 
     function configValueIsValid(path, value, fallback) {
+      if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
       if (path.startsWith("assets.") && path !== "assets.letterFontLocalNames") {
         try {
           for (const file of Array.isArray(value) ? value : [value]) {
@@ -1263,10 +1360,27 @@
         for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
         warnings.push("All level chances were zero; default chances used.");
       }
+      // Read older configs without changing their vibration preference.
+      if (values.has("letters.firstLetterVibrates") && !values.has("letters.vibrationByWord")) {
+        resolved.letters.vibrationByWord = [resolved.letters.firstLetterVibrates ? "first" : "none"];
+      }
       return { resolved, warnings };
     }
 
     async function loadGameConfig() {
+      if (localFolderImport) {
+        try {
+          if (localFolderImport.configText === null) throw new Error("No config.txt in the selected folder; using built-in settings.");
+          const parsed = parseGameConfig(localFolderImport.configText);
+          Object.assign(CONFIG, parsed.resolved);
+          configLoadInfo = { status: "loaded", warnings: parsed.warnings, source: "local-folder" };
+          if (parsed.warnings.length) console.warn("Some config settings use defaults:", parsed.warnings);
+        } catch (error) {
+          configLoadInfo = { status: "defaults", warnings: [error.message], source: "local-folder" };
+          console.info("Using built-in game settings.", error.message);
+        }
+        return;
+      }
       // A missing/blocked config must never hold the loader indefinitely.
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 4000);
@@ -1360,8 +1474,8 @@
     const viewport = document.getElementById("portraitViewport");
     const sceneEffects = document.getElementById("sceneEffects");
     const captureEffects = document.getElementById("captureEffects");
-    const video = document.getElementById("roomVideo");
-    const roomImage = document.getElementById("roomImage");
+    let video = document.getElementById("roomVideo");
+    let roomImage = document.getElementById("roomImage");
     let roomMedia = video;
     const letterWorld = document.getElementById("letterWorld");
     const wordDisplay = document.getElementById("wordDisplay");
@@ -1372,7 +1486,8 @@
     const cameraTimer = document.getElementById("cameraTimer");
     const batteryPercent = document.getElementById("batteryPercent");
     let batterySlots = [...document.querySelectorAll(".battery-slot")];
-    const cameraRoom = document.getElementById("cameraRoom");
+    const prevRoomButton = document.getElementById("prevRoomButton");
+    const nextRoomButton = document.getElementById("nextRoomButton");
     const snapButton = document.getElementById("snapButton");
     const shutterBitmap = document.getElementById("shutterBitmap");
     const shutterBitmapContext = USE_ANDROID_BITMAPS ? shutterBitmap.getContext("2d") : null;
@@ -1387,9 +1502,14 @@
     const loadingScreen = document.getElementById("loadingScreen");
     const loadingWord = document.getElementById("loadingWord");
     const wordLoadError = document.getElementById("wordLoadError");
+    const wordLoadTitle = document.getElementById("wordLoadTitle");
+    const wordLoadHelp = document.getElementById("wordLoadHelp");
     const wordLoadReason = document.getElementById("wordLoadReason");
     const wordLoadUrl = document.getElementById("wordLoadUrl");
     const wordFileInput = document.getElementById("wordFileInput");
+    const gameFolderInput = document.getElementById("gameFolderInput");
+    const chooseGameFolderButton = document.getElementById("chooseGameFolderButton");
+    const localFileControls = document.getElementById("localFileControls");
     const clueIntro = document.getElementById("clueIntro");
     const cluePaper = document.getElementById("cluePaper");
     const cluePaperBitmap = document.getElementById("cluePaperBitmap");
@@ -1420,7 +1540,7 @@
     const spiderImage = document.getElementById("spiderImage");
     const spiderCanvasContext = spiderCanvas.getContext("2d");
     const blackFlash = document.getElementById("blackFlash");
-    const jumpscareVideo = document.getElementById("jumpscareVideo");
+    let jumpscareVideo = document.getElementById("jumpscareVideo");
     const gameOverScreen = document.getElementById("gameOverScreen");
     const body = document.body;
 
@@ -1483,6 +1603,13 @@
       messageText.style.opacity = "0";
     }
 
+    let levelRooms = [];
+    let activeRoomIndex = 0;
+    let levelRoomCount = CONFIG.rooms.count;
+    let roomsReady = false;
+    let wordLetterRooms = [];
+    let anomalyRoomIndex = -1;
+    let spiderRoomIndex = -1;
     let words = [];
     let wordsLoading = false;
     let wordLoadInfo = { status: "pending", url: new URL(WORDS_FILE, document.baseURI).href, count: 0, error: null };
@@ -1746,24 +1873,185 @@
       showGameOver();
     }
 
+    function makeLevelRoom(scene, index) {
+      const image = index === 0 ? roomImage : roomImage.cloneNode(false);
+      const backgroundVideo = index === 0 ? video : video.cloneNode(false);
+      const scare = index === 0 ? jumpscareVideo : jumpscareVideo.cloneNode(false);
+      if (index) {
+        image.id = `roomImage-${index}`;
+        backgroundVideo.id = `roomVideo-${index}`;
+        scare.id = `jumpscareVideo-${index}`;
+        sceneEffects.insertBefore(image, letterWorld);
+        sceneEffects.insertBefore(backgroundVideo, letterWorld);
+        viewport.insertBefore(scare, gameOverScreen);
+      }
+      image.style.display = backgroundVideo.style.display = "none";
+      scare.style.display = "";
+      const room = { scene, image, video: backgroundVideo, scare, media: image,
+        backdropReady: false, metadataReady: false, scareReady: false,
+        warmAttempted: false, preparing: null, audioUnlocked: false,
+        audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
+        deadlineWarmStarted: false };
+      scare.addEventListener("ended", () => {
+        if (scare === jumpscareVideo && gameOver && scare.classList.contains("playing")) showGameOver();
+      });
+      scare.addEventListener("error", () => {
+        if (gameOver || roomCompleted) return;
+        if (roomsReady && scare !== jumpscareVideo) return;
+        beginGameOver(gameplayStarted ? "other" : "video");
+        loadingScreen.classList.add("hidden");
+        showGameOver();
+      });
+      return room;
+    }
+
+    function waitForMedia(element, successEvent, timeoutMs) {
+      return new Promise((resolve, reject) => {
+        const cleanup = () => { clearTimeout(timer); element.removeEventListener(successEvent, done); element.removeEventListener("error", fail); };
+        const done = () => { cleanup(); resolve(); };
+        const fail = () => { cleanup(); reject(new Error(`Could not load ${element.currentSrc || element.src}`)); };
+        const timer = setTimeout(fail, timeoutMs);
+        element.addEventListener(successEvent, done, { once: true });
+        element.addEventListener("error", fail, { once: true });
+      });
+    }
+
+    async function preloadRoomBackdrop(room) {
+      if (room.scene.roomImage) {
+        try {
+          const loaded = waitForMedia(room.image, "load", CONFIG.loading.resourceTimeoutMs);
+          room.image.src = room.scene.roomImage;
+          await loaded;
+          if (!room.image.naturalWidth || !room.image.naturalHeight) throw new Error("Invalid room image.");
+          if (room.image.decode) await room.image.decode();
+          room.media = room.image;
+          room.backdropReady = true;
+          return;
+        } catch (error) {
+          if (!room.scene.roomVideo) throw error;
+        }
+      }
+      if (!room.scene.roomVideo) throw new Error("No usable room image or video.");
+      const loaded = waitForMedia(room.video, "loadeddata", CONFIG.loading.jumpscareDownloadTimeoutMs);
+      room.video.preload = "auto";
+      room.video.muted = true;
+      room.video.loop = true;
+      room.video.playsInline = true;
+      room.video.src = room.scene.roomVideo;
+      room.video.load();
+      await loaded;
+      room.media = room.video;
+      room.backdropReady = true;
+    }
+
+    function syncActiveScare(room) {
+      if (room !== levelRooms[activeRoomIndex]) return;
+      jumpscareReady = room.scareReady;
+      jumpscareWarmAttempted = room.warmAttempted;
+      jumpscarePreparing = room.preparing;
+      jumpscareMetadataReady = room.metadataReady;
+      jumpscareAudioUnlocked = room.audioUnlocked;
+      jumpscareAudioGain = room.audioGain;
+      jumpscareAudioSource = room.audioSource;
+    }
+
+    function activateRoom(index, { initial = false } = {}) {
+      const previous = levelRooms[activeRoomIndex];
+      if (!initial && previous) {
+        previous.cameraFraction = minOffset ? offsetX / minOffset : .5;
+        const oldLetter = currentRoomLetterIndex();
+        if (oldLetter >= 0 && tiles[oldLetter]?.dataset.decoySeen === "true") correctDecoy(oldLetter);
+        if (anomalyActive && anomalyRoomIndex === activeRoomIndex && anomalyHasBeenSeen) removeAnomalyAndRestartTimer();
+      }
+      stopButterflyFlight();
+      finishPanGesture();
+      finishShutterGesture();
+      finishLetterTransfer({ reveal: false });
+      stopShutterEffect();
+      for (const room of levelRooms) {
+        room.image.style.display = room.video.style.display = "none";
+        room.video.pause();
+      }
+      activeRoomIndex = index;
+      const room = levelRooms[index];
+      currentScene = room.scene;
+      roomImage = room.image; video = room.video; roomMedia = room.media; jumpscareVideo = room.scare;
+      ROOM_IMAGE_FILE = currentScene.roomImage; ROOM_VIDEO_FILE = currentScene.roomVideo;
+      ROOM_NAME = gameText(CONFIG.text.roomFormat, { number: String(currentRoomNumber).padStart(2, "0") });
+      jumpscareSourceURL = currentScene.jumpscare;
+      roomMediaReady = room.backdropReady;
+      syncActiveScare(room);
+      room.media.style.display = "block";
+      if (room.media === room.video) { const play = room.video.play(); if (play) play.catch(() => {}); }
+      updateLimits();
+      buildSnapPoints();
+      offsetX = clamp(room.cameraFraction * minOffset, minOffset, 0);
+      applyWorldOffset(false);
+      if (currentWord) relayoutScatteredLetters();
+      anomalyWorld.style.display = anomalyActive && anomalyRoomIndex !== index ? "none" : "";
+      spiderWorld.style.display = spiderActive && spiderRoomIndex !== index ? "none" : "";
+      if (anomalyActive && anomalyRoomIndex === index && anomalyMeta) {
+        anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
+        setOverlayImageStyles(anomalyImage, anomalyBitmap, { height: `${viewport.getBoundingClientRect().height}px`, width: `${renderedVideoWidth}px` });
+      }
+      if (spiderActive && spiderRoomIndex === index) layoutSpider();
+      updateAnomalyVisibilityState();
+      showCurrentLetter({ animate: !initial });
+      updateCameraControls();
+      if (!initial && progressState.currentLevel && !progressState.currentLevel.legacy) {
+        progressState.currentLevel.activeRoomIndex = activeRoomIndex;
+        progressState.updatedAt = new Date().toISOString();
+        saveProgress();
+      }
+    }
+
+    function switchRoom(direction) {
+      if (!gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady) return;
+      updateCameraTimer();
+      if (gameOver) return;
+      let next = activeRoomIndex + direction;
+      if (CONFIG.rooms.wrapNavigation) next = (next + levelRooms.length) % levelRooms.length;
+      else next = clamp(next, 0, levelRooms.length - 1);
+      if (next !== activeRoomIndex) activateRoom(next);
+    }
+
+    prevRoomButton.addEventListener("click", event => { event.stopPropagation(); switchRoom(-1); });
+    nextRoomButton.addEventListener("click", event => { event.stopPropagation(); switchRoom(1); });
+
     async function loadRandomLevel() {
       try {
         availableScenes = await discoverScenes();
-        currentScene = chooseScene(availableScenes);
-        if (!currentScene) throw new Error("No complete numbered pairs were found. Use levels/room_1.mp4 and levels/jumpscare_1.mp4, etc.");
-        ROOM_IMAGE_FILE = currentScene.roomImage;
-        ROOM_VIDEO_FILE = currentScene.roomVideo;
-        ROOM_NAME = gameText(CONFIG.text.roomFormat, { number: String(currentScene.number).padStart(2, "0") });
-        cameraRoom.textContent = ROOM_NAME;
-        console.info(`Found ${availableScenes.length} level pairs; selected room ${currentScene.number}.`);
-        // Load the room in parallel, but require every byte of the selected
-        // hosted scare before exposing READY. canplaythrough is only an estimate.
-        if (ROOM_IMAGE_FILE) roomImage.src = ROOM_IMAGE_FILE;
-        else useRoomVideo();
-        jumpscareSourceURL = currentScene.jumpscare;
-        jumpscareVideo.src = await preloadJumpscareFile(jumpscareSourceURL);
-        jumpscareVideo.load();
-        prepareJumpscarePlayback().catch(() => {});
+        if (availableScenes.length < levelRoomCount) throw new Error(`This level needs ${levelRoomCount} complete numbered room/jumpscare pairs; found ${availableScenes.length}.`);
+        let selected;
+        if (resumedLevel) {
+          selected = resumedLevel.sceneNumbers.map(number => availableScenes.find(scene => scene.number === number));
+          if (selected.some(scene => !scene)) throw new Error("A saved room scene is missing from levels/.");
+          if (resumedLevel.legacy) {
+            const extras = shuffleArray(availableScenes.filter(scene => !selected.includes(scene)));
+            selected.push(...extras.slice(0, levelRoomCount - selected.length));
+          }
+        } else selected = shuffleArray([...availableScenes]).slice(0, levelRoomCount);
+        levelRooms = selected.map(makeLevelRoom);
+        activeRoomIndex = resumedLevel?.activeRoomIndex || 0;
+        await Promise.all(levelRooms.map(async room => {
+          await Promise.all([
+            preloadRoomBackdrop(room),
+            (async () => {
+              room.scareURL = await preloadJumpscareFile(room.scene.jumpscare);
+              const metadata = waitForMedia(room.scare, "loadedmetadata", CONFIG.loading.jumpscareDownloadTimeoutMs);
+              room.scare.src = room.scareURL;
+              room.scare.load();
+              await metadata;
+              room.metadataReady = true;
+              await prepareJumpscarePlayback({}, room).catch(() => {});
+            })()
+          ]);
+        }));
+        if (gameOver) return;
+        roomsReady = true;
+        activateRoom(activeRoomIndex, { initial: true });
+        rememberCurrentRoom();
+        revealWhenMediaReady();
       } catch (error) { showLevelLoadError(error); }
     }
 
@@ -1779,13 +2067,11 @@
         }
         const clip = await response.blob();
         if (!clip.size) throw new Error("The selected jumpscare video is empty.");
-        if (jumpscareObjectURL) URL.revokeObjectURL(jumpscareObjectURL);
-        jumpscareObjectURL = URL.createObjectURL(clip);
-        return jumpscareObjectURL;
+        return URL.createObjectURL(clip);
       } finally { window.clearTimeout(timeout); }
     }
 
-    function acceptWordList(text, source, contentType = "") {
+    function parseWordList(text, contentType = "") {
       if (/text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(text)) {
         throw new Error("The server returned a web page instead of the word list.");
       }
@@ -1796,17 +2082,29 @@
         .map(line => line.replace(/[^a-z0-9]/g, ""))
         .filter(Boolean))];
       if (!loaded.length) throw new Error("The file contains no valid words.");
+      return loaded;
+    }
 
-      wordLoadInfo = { status: "loaded", url: source, count: loaded.length, error: null };
-      console.info(`Loaded ${loaded.length} words from ${source}`);
-      words = shuffleArray(loaded);
-      words = words.slice(0, Math.min(levelType.wordCount, words.length));
+    function acceptWordList(text, source, contentType = "", { preserveOrder = false } = {}) {
+      const loaded = parseWordList(text, contentType);
+      const eligible = loaded.filter(word => word.length === levelRoomCount);
+      const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length === levelRoomCount) : [];
+      const pool = preserveOrder ? eligible : [...seeded, ...shuffleArray(eligible.filter(word => !seeded.includes(word)))];
+      if (pool.length < levelType.wordCount) throw new Error(`words.txt needs at least ${levelType.wordCount} unique ${levelRoomCount}-letter words; found ${pool.length}.`);
+      words = pool.slice(0, levelType.wordCount);
+      wordLetterRooms = resumedLevel && !resumedLevel.legacy ? resumedLevel.letterRooms.map(order => [...order]) : words.map(() => {
+        const order = Array.from({ length: levelRoomCount }, (_, index) => index);
+        return CONFIG.rooms.shuffleLetterRooms ? shuffleArray(order) : order;
+      });
+      wordLoadInfo = { status: "loaded", url: source, count: eligible.length, error: null };
+      console.info(`Loaded ${eligible.length} matching ${levelRoomCount}-letter words from ${source}`);
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
       readyButton.disabled = false;
       startWord(0);
       populateClueList();
       wordsReadyForClue = true;
+      rememberCurrentRoom();
       maybeShowClueIntro();
     }
 
@@ -1820,10 +2118,134 @@
       loadingWord.hidden = true;
       wordLoadError.hidden = false;
       wordLoadReason.textContent = reason;
+      wordLoadTitle.textContent = "Couldn’t load words.txt";
+      wordLoadHelp.textContent = "Retry, or choose your word list directly.";
+      wordLoadUrl.hidden = false;
       wordLoadUrl.href = wordLoadInfo.url;
       wordLoadUrl.textContent = wordLoadInfo.url;
       console.warn("Could not load the word list.", wordLoadInfo);
     }
+
+    function showLocalFolderPrompt(reason = "") {
+      loadingScreen.classList.remove("hidden");
+      loadingWord.hidden = true;
+      wordLoadError.hidden = false;
+      wordLoadTitle.textContent = "Choose your game folder";
+      wordLoadReason.textContent = reason || "Select the folder containing config.txt and words.txt.";
+      wordLoadHelp.textContent = "Both files will be read together. A missing or invalid config uses the built-in settings.";
+      wordLoadUrl.hidden = true;
+      document.getElementById("retryWordsButton").hidden = true;
+      chooseGameFolderButton.hidden = false;
+      document.getElementById("chooseWordsButton").textContent = "Choose words.txt only";
+      if (!("webkitdirectory" in gameFolderInput)) chooseGameFolderButton.textContent = "Choose config and words";
+      readyButton.disabled = true;
+      wordLoadInfo = { ...wordLoadInfo, status: reason ? "error" : "waiting-for-folder", error: reason || null };
+    }
+
+    function rememberLocalFiles(data) {
+      // Cache imported settings, words and optional save text for reopening; never media.
+      // Storage may be blocked for file://, so it must remain optional.
+      let stored = false;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { window[store].setItem(LOCAL_FILES_CACHE_KEY, JSON.stringify(data)); stored = true; } catch {}
+      }
+      return stored;
+    }
+
+    function restoreLocalFiles() {
+      for (const store of ["sessionStorage", "localStorage"]) {
+       try {
+        const raw = window[store].getItem(LOCAL_FILES_CACHE_KEY);
+        if (!raw) continue;
+        const data = JSON.parse(raw);
+        if (data.version !== 1 || typeof data.wordsText !== "string" ||
+            typeof data.wordsSource !== "string" ||
+            !(data.configText === null || typeof data.configText === "string")) throw new Error("Invalid saved local files.");
+        parseWordList(data.wordsText);
+        return data;
+       } catch {
+        try { window[store].removeItem(LOCAL_FILES_CACHE_KEY); } catch {}
+       }
+      }
+      return null;
+    }
+
+    function selectedFolderPath(path) {
+      const normalized = decodeURIComponent(path.replace(/\\/g, "/"));
+      if (/^[a-z][a-z\d+.-]*:|^\//i.test(normalized)) throw new Error("The configured word list must be inside the selected folder.");
+      const parts = [];
+      for (const part of normalized.split("/")) {
+        if (!part || part === ".") continue;
+        if (part === "..") {
+          if (!parts.length) throw new Error("The configured word list is outside the selected folder.");
+          parts.pop();
+        } else parts.push(part);
+      }
+      return parts.join("/");
+    }
+
+    async function importGameFolder(files) {
+      if (location.protocol !== "file:" || folderImportBusy || wordsLoading || gameInitializationStarted || !files.length) return;
+      folderImportBusy = true;
+      chooseGameFolderButton.disabled = true;
+      document.getElementById("chooseWordsButton").disabled = true;
+      wordLoadReason.textContent = "Reading local files…";
+      try {
+        const entries = new Map();
+        let folderName = "Game folder";
+        for (const file of files) {
+          const path = file.webkitRelativePath;
+          if (path) {
+            const slash = path.indexOf("/");
+            folderName = path.slice(0, slash);
+            entries.set(path.slice(slash + 1), file);
+          } else entries.set(file.name, file);
+        }
+        const find = path => entries.get(path) || [...entries].find(([name]) => name.toLowerCase() === path.toLowerCase())?.[1];
+        const configFile = find(CONFIG_FILE);
+        let configText = null;
+        if (configFile) {
+          try { configText = await configFile.text(); }
+          catch (error) { console.warn("Could not read local config; using built-in settings.", error); }
+        }
+        let selectedConfig = CONFIG_DEFAULTS;
+        if (configText !== null) {
+          try { selectedConfig = parseGameConfig(configText).resolved; }
+          catch { /* The same built-in fallback as automatic config loading. */ }
+        }
+        const wordsPath = selectedFolderPath(selectedConfig.assets.wordsFile);
+        const wordsFile = find(wordsPath);
+        if (!wordsFile) throw new Error(`The selected folder does not contain ${wordsPath}. Choose the folder containing that file.`);
+        const wordsText = await wordsFile.text();
+        // Validate both before choosing a level or starting any scene loading.
+        parseWordList(wordsText, wordsFile.type);
+        let saveText = null;
+        try {
+          const saveFile = find(selectedFolderPath(selectedConfig.assets.saveFile));
+          if (saveFile) saveText = await saveFile.text();
+        } catch (error) { console.info("No readable local save.txt.", error.message); }
+        const data = { version: 1, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`, saveText };
+        rememberLocalFiles(data);
+        await initializeGame(data);
+      } catch (error) {
+        showLocalFolderPrompt(error.message);
+      } finally {
+        folderImportBusy = false;
+        chooseGameFolderButton.disabled = false;
+        document.getElementById("chooseWordsButton").disabled = false;
+        gameFolderInput.value = "";
+      }
+    }
+
+    chooseGameFolderButton.addEventListener("click", () => gameFolderInput.click());
+    gameFolderInput.addEventListener("change", () => importGameFolder([...gameFolderInput.files]));
+    document.getElementById("changeLocalFilesButton").addEventListener("click", () => {
+      if (gameplayStarted || gameplayStarting) return;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { window[store].removeItem(LOCAL_FILES_CACHE_KEY); } catch {}
+      }
+      location.reload();
+    });
 
     async function loadWords() {
       if (wordsLoading || gameplayStarted) return;
@@ -1856,12 +2278,19 @@
     document.getElementById("chooseWordsButton").addEventListener("click", () => wordFileInput.click());
     wordFileInput.addEventListener("change", async () => {
       const file = wordFileInput.files[0];
-      if (!file || wordsLoading || gameplayStarted) return;
+      if (!file || wordsLoading || folderImportBusy || gameplayStarted) return;
       wordsLoading = true;
       try {
-        acceptWordList(await file.text(), file.name, file.type);
+        const text = await file.text();
+        if (location.protocol === "file:" && !gameInitializationStarted) {
+          parseWordList(text, file.type);
+          const data = { version: 1, configText: null, wordsText: text, wordsSource: file.name };
+          rememberLocalFiles(data);
+          await initializeGame(data);
+        } else acceptWordList(text, file.name, file.type);
       } catch (error) {
-        showWordLoadError(error);
+        if (location.protocol === "file:" && !gameInitializationStarted) showLocalFolderPrompt(error.message);
+        else showWordLoadError(error);
       } finally {
         wordFileInput.value = "";
         wordsLoading = false;
@@ -1914,7 +2343,8 @@
       try {
         // Calling play here also unlocks decoding on browsers that require
         // a user gesture. Gameplay stays on the clue card until it is ready.
-        const jumpscarePreparation = prepareJumpscarePlayback({ unlockAudio: true });
+        // Start every play/unlock synchronously inside this one trusted READY tap.
+        const jumpscarePreparation = Promise.all(levelRooms.map(room => prepareJumpscarePlayback({ unlockAudio: true }, room)));
         // Unlock the optional encounter sound within the same trusted READY tap.
         unlockSpiderSound();
         await jumpscarePreparation;
@@ -1931,7 +2361,7 @@
       startCameraTimer();
       clueIntro.classList.add("dismiss");
       viewport.classList.remove("clue-intro-active");
-      if (anchors[selectedCount]) anchors[selectedCount].hidden = true;
+      anchors.forEach(anchor => { anchor.hidden = true; });
       showCurrentLetter();
       window.setTimeout(() => {
         clueIntro.classList.remove("show", "dismiss");
@@ -1978,6 +2408,7 @@
       viewport.style.setProperty("--frame-right-gap", `${Math.max(0, visibleLeft + (visible?.width || window.innerWidth) - right)}px`);
       viewport.style.setProperty("--ui-font-size", `${Math.min(CONFIG.ui.maxFontPx, Math.max(CONFIG.ui.minFontPx, height * CONFIG.ui.fontHeightFraction), width * CONFIG.ui.fontWidthFraction)}px`);
       viewport.style.setProperty("--battery-width", `${Math.min(CONFIG.ui.batteryMaxWidthPx, Math.max(CONFIG.ui.batteryMinWidthPx, height * CONFIG.ui.batteryHeightFraction), width * CONFIG.ui.batteryWidthFraction)}px`);
+      hud.style.top = `${status.getBoundingClientRect().bottom - viewport.getBoundingClientRect().top + CONFIG.ui.wordTopGapPx}px`;
       fitHudWord();
       const band = getSafeLetterBand();
       const baseSize = Math.min(CONFIG.letters.maxFontPx, Math.max(CONFIG.letters.minFontPx, height * CONFIG.letters.fontHeightFraction), Math.max(4, (band.bottom - band.top - 30) / 1.5));
@@ -2006,7 +2437,7 @@
       // aspect ratio from the original room video.
       jumpscareVideo.style.width = `${renderedVideoWidth}px`;
       jumpscareVideo.style.height = `${height}px`;
-      if (anomalyActive && anomalyMeta) {
+      if (anomalyActive && anomalyRoomIndex === activeRoomIndex && anomalyMeta) {
         anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
         setOverlayImageStyles(anomalyImage, anomalyBitmap, { height: `${height}px`, width: `${renderedVideoWidth}px` });
       }
@@ -2014,7 +2445,7 @@
       // Preserve the freely dragged camera position when the frame resizes.
       offsetX = clamp(offsetX, minOffset, 0);
       applyWorldOffset(false);
-      if (spiderActive) layoutSpider();
+      if (spiderActive && spiderRoomIndex === activeRoomIndex) layoutSpider();
     }
 
     function buildSnapPoints() {
@@ -2098,7 +2529,12 @@
     }
 
     function updateCameraControls() {
-      snapButton.disabled = !gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress;
+      const blocked = !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
+      snapButton.disabled = blocked || wordTransitionPending || captureInProgress;
+      prevRoomButton.disabled = blocked || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === 0;
+      nextRoomButton.disabled = blocked || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === levelRooms.length - 1;
+      prevRoomButton.setAttribute("aria-label", `Previous room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
+      nextRoomButton.setAttribute("aria-label", `Next room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
     }
 
     function updateCameraTimer() {
@@ -2111,7 +2547,8 @@
       cameraTimer.textContent = `${minutes}:${seconds}`;
       if (cameraStartedAt !== null && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= CONFIG.loading.deadlineWarmSeconds &&
           !jumpscareDeadlineWarmStarted && !gameOver && !roomCompleted && !document.hidden) {
-        warmJumpscareBeforeDeadline();
+        levelRooms.forEach(room => warmJumpscareBeforeDeadline(room));
+        jumpscareDeadlineWarmStarted = true;
       }
       if (cameraStartedAt !== null && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
         endGame("timeout");
@@ -2138,8 +2575,12 @@
       updateCameraTimer();
     }
 
-    function isCurrentLetterInFrame() {
-      const anchor = anchors[selectedCount];
+    function currentRoomLetterIndex() {
+      return anchors.findIndex((anchor, index) => Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected"));
+    }
+
+    function isCurrentLetterInFrame(index = currentRoomLetterIndex()) {
+      const anchor = anchors[index];
       if (!anchor || anchor.hidden) return false;
       const glyph = anchor.querySelector(".letter-glyph");
       const letterRect = glyph.getBoundingClientRect();
@@ -2159,24 +2600,23 @@
       return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : letter;
     }
 
-    function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
-      if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
-      const anchor = anchors[selectedCount];
-      const tile = tiles[selectedCount];
-      if (!anchor || anchor.hidden || tile.dataset.decoy !== "true") return;
-      if (isCurrentLetterInFrame()) {
-        tile.dataset.decoySeen = "true";
-        return;
-      }
-      if (!allowCorrection || tile.dataset.decoySeen !== "true") return;
-      const glyph = tile.querySelector(".letter-glyph");
-      const bounds = glyph.getBoundingClientRect();
-      const frame = viewport.getBoundingClientRect();
-      // Partial visibility is still looking at the letter.
-      if (bounds.right > frame.left && bounds.left < frame.right) return;
-      glyph.textContent = tile.dataset.letter;
+    function correctDecoy(index) {
+      const tile = tiles[index];
+      if (!tile || tile.dataset.decoy !== "true") return;
+      tile.querySelector(".letter-glyph").textContent = tile.dataset.letter;
       tile.setAttribute("aria-label", `Letter ${tile.dataset.letter}`);
       tile.dataset.decoy = "false";
+    }
+
+    function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
+      if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      const index = currentRoomLetterIndex(), anchor = anchors[index], tile = tiles[index];
+      if (!anchor || anchor.hidden || tile.dataset.decoy !== "true") return;
+      if (isCurrentLetterInFrame(index)) { tile.dataset.decoySeen = "true"; return; }
+      if (!allowCorrection || tile.dataset.decoySeen !== "true") return;
+      const bounds = tile.querySelector(".letter-glyph").getBoundingClientRect(), frame = viewport.getBoundingClientRect();
+      if (bounds.right > frame.left && bounds.left < frame.right) return;
+      correctDecoy(index);
     }
 
     function drawShutterBitmap() {
@@ -2237,8 +2677,9 @@
       shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
       if (letterIsVisible) {
-        const tile = tiles[selectedCount];
-        selectLetter(tile.dataset.letter, selectedCount, tile);
+        const index = currentRoomLetterIndex();
+        const tile = tiles[index];
+        selectLetter(tile.dataset.letter, index, tile);
       } else drainBatterySlot();
       if (!gameOver) playShutterEffect();
     }
@@ -2378,7 +2819,8 @@
 
     function showCurrentLetter({ animate = true } = {}) {
       anchors.forEach((anchor, index) => {
-        const shouldShow = !wordTransitionPending && !captureInProgress && index === selectedCount;
+        const shouldShow = !wordTransitionPending && !captureInProgress &&
+          Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected");
         if (!shouldShow) {
           anchor.hidden = true;
           anchor.classList.remove("appearing");
@@ -2392,7 +2834,7 @@
       });
       updateDecoyVisibilityState();
       if (levelType.flyingLetters && gameplayStarted && !gameOver && !roomCompleted &&
-          !wordTransitionPending && !captureInProgress && anchors[selectedCount] && !anchors[selectedCount].hidden) startButterflyFlight();
+          !wordTransitionPending && !captureInProgress && anchors[currentRoomLetterIndex()] && !anchors[currentRoomLetterIndex()].hidden) startButterflyFlight();
       else stopButterflyFlight();
     }
 
@@ -2403,10 +2845,12 @@
     }
 
     function startButterflyFlight() {
-      const anchor = anchors[selectedCount];
+      const visibleIndex = currentRoomLetterIndex();
+      const anchor = anchors[visibleIndex];
+      if (!anchor) return;
       if (butterflyFlightState?.anchor === anchor && butterflyFlightFrame) return;
       stopButterflyFlight();
-      const tile = tiles[selectedCount];
+      const tile = tiles[visibleIndex];
       const radius = Number(anchor.dataset.flightRadius) + CONFIG.butterfly.paddingPx;
       const band = getSafeLetterBand();
       const bounds = { left: radius, right: Math.max(radius, renderedVideoWidth - radius),
@@ -2420,11 +2864,16 @@
         x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY,
         vx: 0, vy: 0, goalX: x, goalY: y, elapsed: 0, nextTurn: 0,
         speed: CONFIG.butterfly.minSpeed + Math.random() * (CONFIG.butterfly.maxSpeed - CONFIG.butterfly.minSpeed), lastTime: performance.now() };
+      state.escapeDirection = 1;
+      state.evadeNextTurn = 0;
+      state.evadeGoalY = y;
+      state.escapeTurnUntil = 0;
+      state.cameraProximity = 0;
       butterflyFlightState = state;
       const step = time => {
         butterflyFlightFrame = 0;
         if (butterflyFlightState !== state || !gameplayStarted || gameOver || roomCompleted ||
-            captureInProgress || wordTransitionPending || anchor !== anchors[selectedCount] || anchor.hidden) {
+            captureInProgress || wordTransitionPending || anchor !== anchors[currentRoomLetterIndex()] || anchor.hidden) {
           stopButterflyFlight();
           return;
         }
@@ -2440,25 +2889,52 @@
           state.goalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.verticalTravelPx, bounds.top, bounds.bottom);
           state.nextTurn = t + (CONFIG.butterfly.minTurnMs + Math.random() * (CONFIG.butterfly.maxTurnMs - CONFIG.butterfly.minTurnMs)) / 1000;
         }
-        const dx = state.goalX - state.x, dy = state.goalY - state.y;
+        let targetX = state.goalX, targetY = state.goalY;
+        let intensity = 0;
+        if (levelType.evadesCamera) {
+          const viewWidth = viewport.getBoundingClientRect().width;
+          const center = -offsetX + viewWidth / 2;
+          const letterX = parseFloat(anchor.style.left);
+          const relative = letterX - center;
+          const proximity = clamp(1 - Math.abs(relative) / (viewWidth * CONFIG.butterfly.evadeApproachScreens), 0, 1);
+          state.cameraProximity = proximity;
+          intensity = proximity * proximity;
+          if (t >= state.escapeTurnUntil && Math.abs(relative) > viewWidth * CONFIG.butterfly.evadeDirectionDeadzoneFraction) state.escapeDirection = Math.sign(relative);
+          if (state.escapeDirection < 0 && state.x - bounds.left < CONFIG.butterfly.evadeEdgeMarginPx) {
+            state.escapeDirection = 1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
+          } else if (state.escapeDirection > 0 && bounds.right - state.x < CONFIG.butterfly.evadeEdgeMarginPx) {
+            state.escapeDirection = -1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
+          }
+          if (intensity > 0) {
+            if (t >= state.evadeNextTurn) {
+              state.evadeGoalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.evadeVerticalTravelPx, bounds.top, bounds.bottom);
+              state.evadeNextTurn = t + CONFIG.butterfly.evadeRetargetMs / 1000;
+            }
+            const escapeX = clamp(state.x + state.escapeDirection * CONFIG.butterfly.evadeTravelPx, bounds.left, bounds.right);
+            targetX += (escapeX - targetX) * intensity;
+            targetY += (state.evadeGoalY - targetY) * intensity;
+          }
+        }
+        const dx = targetX - state.x, dy = targetY - state.y;
         const distance = Math.max(1, Math.hypot(dx, dy));
         // Ease the heading and alternate hovering with short bursts of flight.
-        const pace = state.speed * (CONFIG.butterfly.minPaceFraction + (1 - CONFIG.butterfly.minPaceFraction) * Math.pow(.5 + .5 * Math.sin(t * CONFIG.butterfly.hoverFrequency + phase), 2)) * Math.min(1, distance / CONFIG.butterfly.slowdownDistancePx);
-        const steering = 1 - Math.exp(-dt * CONFIG.butterfly.steering);
+        const pace = state.speed * (CONFIG.butterfly.minPaceFraction + (1 - CONFIG.butterfly.minPaceFraction) * Math.pow(.5 + .5 * Math.sin(t * CONFIG.butterfly.hoverFrequency + phase), 2)) * Math.min(1, distance / CONFIG.butterfly.slowdownDistancePx) * (1 + intensity * (CONFIG.butterfly.evadeMaxSpeedMultiplier - 1));
+        const steering = 1 - Math.exp(-dt * CONFIG.butterfly.steering * (1 + intensity * (CONFIG.butterfly.evadeSteeringMultiplier - 1)));
         state.vx += (dx / distance * pace * CONFIG.butterfly.horizontalSpeedMultiplier - state.vx) * steering;
         state.vy += (dy / distance * pace - state.vy) * steering;
         state.x += state.vx * dt;
         state.y += state.vy * dt;
         // Unequal oscillation frequencies make little loops instead of a
         // straight bounce; a restrained 3D tilt suggests fluttering wings.
-        const flightX = clamp(state.x + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * swayX, bounds.left, bounds.right);
-        const flightY = clamp(state.y + Math.sin(t * CONFIG.butterfly.swayYFrequency + phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY, bounds.top, bounds.bottom);
+        const swayBoost = 1 + intensity * (CONFIG.butterfly.evadeSwayMultiplier - 1);
+        const flightX = clamp(state.x + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * swayX * swayBoost, bounds.left, bounds.right);
+        const flightY = clamp(state.y + Math.sin(t * CONFIG.butterfly.swayYFrequency + phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY * swayBoost, bounds.top, bounds.bottom);
         anchor.style.left = `${flightX}px`;
         anchor.style.top = `${flightY}px`;
         anchor.dataset.worldX = (flightX - bounds.left) / Math.max(1, bounds.right - bounds.left);
         anchor.dataset.worldY = (flightY - bounds.top) / Math.max(1, bounds.bottom - bounds.top);
         tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * CONFIG.butterfly.bankVelocityMultiplier + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * CONFIG.butterfly.bankSwayDeg, -CONFIG.butterfly.maxBankDeg, CONFIG.butterfly.maxBankDeg)}deg`);
-        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * CONFIG.butterfly.flutterFrequency + phase) * CONFIG.butterfly.flutterDeg}deg`);
+        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * CONFIG.butterfly.flutterFrequency * (1 + intensity * (CONFIG.butterfly.evadeFlutterMultiplier - 1)) + phase) * CONFIG.butterfly.flutterDeg}deg`);
         updateDecoyVisibilityState();
         butterflyFlightFrame = requestAnimationFrame(step);
       };
@@ -2475,6 +2951,7 @@
         const anchor = document.createElement("div");
         anchor.className = "letter-anchor";
         anchor.hidden = true;
+        anchor.dataset.roomIndex = wordLetterRooms[wordIndex][index];
         // Independent uniform coordinates, retained across viewport changes.
         // Y is a fraction of the safe band between the camera UI rows.
         anchor.dataset.worldX = Math.random();
@@ -2487,7 +2964,9 @@
         tile.dataset.letter = letter;
         tile.style.setProperty("--letter-scale", CONFIG.letters.minScale + Math.random() * (CONFIG.letters.maxScale - CONFIG.letters.minScale));
         tile.style.setProperty("--letter-rotation", `${CONFIG.letters.minRotationDeg + Math.random() * (CONFIG.letters.maxRotationDeg - CONFIG.letters.minRotationDeg)}deg`);
-        if (index === 0 && CONFIG.letters.firstLetterVibrates) {
+        const modes = CONFIG.letters.vibrationByWord;
+        const mode = modes[Math.min(wordIndex, modes.length - 1)];
+        if (mode === "all" || mode === "first" && index === 0) {
           tile.classList.add("first-letter");
           for (let step = 1; step <= 3; step++) {
             tile.style.setProperty(`--jitter-x${step}`, `${Math.random() * CONFIG.letters.vibrationPx * 2 - CONFIG.letters.vibrationPx}px`);
@@ -2513,10 +2992,10 @@
 
     function getSafeLetterBand() {
       const frame = viewport.getBoundingClientRect();
-      const top = Math.max(cameraBattery.getBoundingClientRect().bottom,
+      const top = Math.max(status.getBoundingClientRect().bottom, cameraBattery.getBoundingClientRect().bottom,
         hud.getBoundingClientRect().bottom, cameraTimer.getBoundingClientRect().bottom) - frame.top;
       const bottom = Math.min(snapButton.getBoundingClientRect().top,
-        status.getBoundingClientRect().top, cameraRoom.getBoundingClientRect().top) - frame.top;
+        prevRoomButton.getBoundingClientRect().top, nextRoomButton.getBoundingClientRect().top) - frame.top;
       return { top, bottom };
     }
 
@@ -2550,7 +3029,7 @@
         anchor.hidden = wasHidden;
         // Include rotation, the first letter's small vibration, and a margin
         // so the complete glyph remains clear of both UI rows and room edges.
-        const padding = levelType.flyingLetters ? CONFIG.butterfly.paddingPx : index === 0 ? CONFIG.letters.firstPaddingPx : CONFIG.letters.paddingPx;
+        const padding = levelType.flyingLetters ? CONFIG.butterfly.paddingPx : tiles[index].classList.contains("first-letter") ? Math.max(CONFIG.letters.firstPaddingPx, CONFIG.letters.vibrationPx) : CONFIG.letters.paddingPx;
         const minX = footprint.width / 2 + padding;
         const maxX = Math.max(minX, worldWidth - minX);
         const minY = band.top + footprint.height / 2 + padding;
@@ -2564,13 +3043,17 @@
       if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       updateCameraTimer();
       if (gameOver) return;
-      if (tileIndex !== selectedCount || tile !== tiles[tileIndex] || anchors[tileIndex].hidden) return;
-      if (anomalyActive || tile.dataset.decoy === "true") {
-        endGame(anomalyActive ? "anomaly" : "decoy");
+      if (tile !== tiles[tileIndex] || anchors[tileIndex].hidden || tile.classList.contains("selected")) return;
+      const localAnomaly = anomalyActive && anomalyRoomIndex === activeRoomIndex;
+      if (localAnomaly || tile.dataset.decoy === "true") {
+        endGame(localAnomaly ? "anomaly" : "decoy");
         return;
       }
       const expectedLetter = currentWord[selectedCount];
-      if (letter !== expectedLetter || tile.classList.contains("selected")) return;
+      if (letter !== expectedLetter) {
+        drainBatterySlot();
+        return;
+      }
 
       const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
       flyLetterToWord(anchors[tileIndex], hudSlot);
@@ -2617,6 +3100,7 @@
       if (gameOver) return;
       if (completedWordCount >= words.length) {
         roomCompleted = true;
+        recordRoomCompletion();
         stopCameraTimer();
         window.clearTimeout(anomalyTimer);
         window.clearTimeout(handTimer);
@@ -2981,6 +3465,8 @@
       const x = range[0] + Math.random() * (range[1] - range[0]);
       spiderWorldFraction = x / Math.max(1, lastX);
       spiderActive = true;
+      spiderRoomIndex = activeRoomIndex;
+      spiderWorld.style.display = "";
       spiderRetreating = false;
       spiderFrameIndex = 0;
       spiderActor.style.transform = "translateY(0px)";
@@ -2990,7 +3476,7 @@
     }
 
     function updateSpiderVisibilityState() {
-      if (!spiderActive || spiderRetreating || gameOver || roomCompleted) return;
+      if (!spiderActive || spiderRoomIndex !== activeRoomIndex || spiderRetreating || gameOver || roomCompleted) return;
       const moved = Math.abs(offsetX - spiderLastViewOffset) > .01;
       spiderLastViewOffset = offsetX;
       if (!moved) return;
@@ -3109,9 +3595,10 @@
 
     async function spawnAnomalyOffscreen() {
       if (anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (!meta || !meta.bbox || gameOver || roomCompleted) return false;
+      if (!meta || !meta.bbox || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -3128,6 +3615,8 @@
         { left: visible.left - edgePad, right: visible.right + edgePad }
       )) return false;
 
+      anomalyRoomIndex = activeRoomIndex;
+      anomalyWorld.style.display = "";
       anomalyMeta = meta;
       anomalyWorldBox = bbox;
       anomalyHasBeenSeen = false;
@@ -3142,7 +3631,7 @@
     }
 
     function updateAnomalyVisibilityState() {
-      if (!anomalyActive || !anomalyWorldBox || gameOver) return;
+      if (!anomalyActive || anomalyRoomIndex !== activeRoomIndex || !anomalyWorldBox || gameOver) return;
       const visible = currentVisibleWorldRange();
       const intersects = horizontalBoxesIntersect(anomalyWorldBox, visible);
       if (intersects) {
@@ -3271,18 +3760,10 @@
       gameOverScreen.classList.add("show");
     }
 
-    jumpscareVideo.addEventListener("ended", () => {
-      if (gameOver && jumpscareVideo.classList.contains("playing")) showGameOver();
-    });
-    jumpscareVideo.addEventListener("error", () => {
-      if (!gameOver) beginGameOver(gameplayStarted ? "other" : "video");
-      loadingScreen.classList.add("hidden");
-      showGameOver();
-    });
-    gameOverScreen.addEventListener("pointerup", () => location.reload());
-    gameOverScreen.addEventListener("keydown", event => {
-      if (event.key === "Enter" || event.key === " ") location.reload();
-    });
+
+
+    gameOverScreen.addEventListener("pointerup", retryOrContinue);
+    gameOverScreen.addEventListener("keydown", retryOrContinue);
 
     function scheduleNextHandCheck() {
       window.clearTimeout(handTimer);
@@ -3412,9 +3893,7 @@
       updateAnomalyVisibilityState();
     }
 
-    video.addEventListener("loadedmetadata", () => {
-      if (roomMedia === video) prepareRoomScene();
-    });
+
 
     function resizeGameViewport() {
       viewportLayoutFrame = 0;
@@ -3478,8 +3957,8 @@
           resumeSpiderSound();
         }
         updateCameraTimer();
-        if (jumpscarePreparing && !jumpscareReady) {
-          const resume = jumpscareVideo.play();
+        for (const room of levelRooms) if (room.preparing && !room.scareReady) {
+          const resume = room.scare.play();
           if (resume) resume.catch(() => {});
         }
       }
@@ -3496,7 +3975,7 @@
     let roomMediaReady = false;
 
     function revealWhenMediaReady() {
-      if (roomMediaReady && jumpscareMetadataReady && jumpscareWarmAttempted && !gameOver) {
+      if (roomsReady && levelRooms.every(room => room.backdropReady && room.metadataReady && room.warmAttempted) && !gameOver) {
         videosReadyForClue = true;
         maybeShowClueIntro();
       }
@@ -3509,69 +3988,60 @@
     }
 
     function cancelJumpscareStandbySeek() {
-      if (jumpscareStandbySeekCancel) jumpscareStandbySeekCancel();
-      jumpscareVideo.classList.remove("priming");
+      for (const room of levelRooms) {
+        if (room.standbySeekCancel) room.standbySeekCancel();
+        room.scare.classList.remove("priming");
+      }
     }
 
-    function seekJumpscareStandbyFrame(time) {
+    function seekJumpscareStandbyFrame(time, room) {
+      const clip = room.scare;
       return new Promise(resolve => {
         let settled = false;
         const finish = success => {
           if (settled) return;
-          settled = true;
-          window.clearTimeout(timeout);
-          jumpscareVideo.removeEventListener("seeked", done);
-          jumpscareVideo.removeEventListener("error", failed);
-          jumpscareStandbySeekCancel = null;
-          resolve(success);
+          settled = true; clearTimeout(timeout);
+          clip.removeEventListener("seeked", done); clip.removeEventListener("error", failed);
+          room.standbySeekCancel = null; resolve(success);
         };
-        const done = () => finish(true);
-        const failed = () => finish(false);
-        const timeout = window.setTimeout(failed, CONFIG.loading.standbySeekTimeoutMs);
-        jumpscareStandbySeekCancel = failed;
-        jumpscareVideo.addEventListener("seeked", done);
-        jumpscareVideo.addEventListener("error", failed);
-        try { jumpscareVideo.currentTime = time; } catch (error) { failed(); }
+        const done = () => finish(true), failed = () => finish(false);
+        const timeout = setTimeout(failed, CONFIG.loading.standbySeekTimeoutMs);
+        room.standbySeekCancel = failed;
+        clip.addEventListener("seeked", done); clip.addEventListener("error", failed);
+        try { clip.currentTime = time; } catch { failed(); }
       });
     }
 
-    async function warmJumpscareBeforeDeadline() {
-      jumpscareDeadlineWarmStarted = true;
-      if (!jumpscareReady || !jumpscareVideo.paused || !jumpscareVideo.duration) return;
-      // A paused hidden player can lose its decoder while the level runs.
-      // A tiny paused seek wakes it before zero; no play(), mute or volume
-      // changes means READY's audio permission and silent standby are preserved.
-      jumpscareVideo.classList.add("priming");
+    async function warmJumpscareBeforeDeadline(room = levelRooms[activeRoomIndex]) {
+      if (!room || room.deadlineWarmStarted) return;
+      room.deadlineWarmStarted = true;
+      const clip = room.scare;
+      if (!room.scareReady || !clip.paused || !clip.duration) return;
+      clip.classList.add("priming");
       try {
-        const ready = await seekJumpscareStandbyFrame(Math.min(CONFIG.loading.standbySeekSeconds, jumpscareVideo.duration / 2));
-        if (ready && !gameOver && !roomCompleted && cameraStartedAt !== null) {
-          await seekJumpscareStandbyFrame(0);
-        }
-      } finally {
-        jumpscareVideo.classList.remove("priming");
-      }
+        const ready = await seekJumpscareStandbyFrame(Math.min(CONFIG.loading.standbySeekSeconds, clip.duration / 2), room);
+        if (ready && !gameOver && !roomCompleted && cameraStartedAt !== null) await seekJumpscareStandbyFrame(0, room);
+      } finally { clip.classList.remove("priming"); }
     }
 
     // Keep desktop audio in the native media player. Routing file:// media
     // through Web Audio can produce CORS silence even when video playback works.
     // Touch devices use gain zero to unlock sound without an audible warm-up.
-    function unlockJumpscareAudio() {
+    function unlockJumpscareAudio(room) {
+      const clip = room.scare;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const needsAudioGraph = location.protocol !== "file:" && window.matchMedia("(pointer: coarse)").matches;
-      if (!needsAudioGraph || !AudioContextClass) {
-        jumpscareVideo.volume = 0;
-        return Promise.resolve();
+      if (!needsAudioGraph || !AudioContextClass) { clip.volume = 0; return Promise.resolve(); }
+      if (!jumpscareAudioContext) jumpscareAudioContext = new AudioContextClass();
+      if (!room.audioSource) {
+        room.audioGain = jumpscareAudioContext.createGain();
+        room.audioGain.gain.value = 0;
+        room.audioSource = jumpscareAudioContext.createMediaElementSource(clip);
+        room.audioSource.connect(room.audioGain);
+        room.audioGain.connect(jumpscareAudioContext.destination);
       }
-      if (!jumpscareAudioContext) {
-        jumpscareAudioContext = new AudioContextClass();
-        jumpscareAudioGain = jumpscareAudioContext.createGain();
-        jumpscareAudioGain.gain.value = 0;
-        jumpscareAudioSource = jumpscareAudioContext.createMediaElementSource(jumpscareVideo);
-        jumpscareAudioSource.connect(jumpscareAudioGain);
-        jumpscareAudioGain.connect(jumpscareAudioContext.destination);
-      }
-      jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
-      // Call resume here, synchronously inside READY's click handler.
+      room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
+      syncActiveScare(room);
       return jumpscareAudioContext.resume().then(() => {
         if (jumpscareAudioContext.state !== "running") throw new Error("Jumpscare audio is not ready.");
       });
@@ -3585,10 +4055,11 @@
       }
     }, true);
 
-    function prepareJumpscarePlayback({ unlockAudio = false } = {}) {
-      if (jumpscareReady && (!unlockAudio || jumpscareAudioUnlocked)) return Promise.resolve();
-      if (jumpscarePreparing) return jumpscarePreparing;
-      const audioReady = unlockAudio ? unlockJumpscareAudio() : Promise.resolve();
+    function prepareJumpscarePlayback({ unlockAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
+      const jumpscareVideo = room.scare;
+      if (room.scareReady && (!unlockAudio || room.audioUnlocked)) return Promise.resolve();
+      if (room.preparing) return room.preparing;
+      const audioReady = unlockAudio ? unlockJumpscareAudio(room) : Promise.resolve();
       jumpscareVideo.classList.add("priming");
       // Unlock the same video from READY. Desktop uses volume zero during
       // warm-up; mobile uses its gain node, since system volume is user-owned.
@@ -3655,8 +4126,8 @@
               jumpscareVideo.currentTime = 0;
             });
           }
-          jumpscareReady = true;
-          if (unlockAudio) jumpscareAudioUnlocked = true;
+          room.scareReady = true;
+          if (unlockAudio) room.audioUnlocked = true;
         } finally {
           cleanupBuffer();
           cleanupFrameError();
@@ -3669,58 +4140,270 @@
           jumpscareVideo.classList.remove("priming");
         }
       })();
-      jumpscarePreparing = prepare.finally(() => {
-        jumpscarePreparing = null;
-        jumpscareWarmAttempted = true;
+      room.preparing = prepare.finally(() => {
+        room.preparing = null;
+        room.warmAttempted = true;
+        syncActiveScare(room);
         revealWhenMediaReady();
       });
-      return jumpscarePreparing;
+      return room.preparing;
     }
 
-    const markRoomVideoReady = () => {
-      if (roomMedia !== video) return;
-      roomMediaReady = true;
-      revealWhenMediaReady();
-    };
-    video.addEventListener("loadeddata", markRoomVideoReady, { once: true });
-    video.addEventListener("canplay", markRoomVideoReady, { once: true });
-    video.addEventListener("error", () => {
-      if (roomMedia === video) showLevelLoadError(new Error(`Could not load ${ROOM_VIDEO_FILE}`));
-    }, { once: true });
 
-    function useRoomVideo() {
-      if (!ROOM_VIDEO_FILE) {
-        showLevelLoadError(new Error(`Could not decode ${ROOM_IMAGE_FILE}; no matching room video is available.`));
-        return;
-      }
-      roomMedia = video;
-      roomImage.style.display = "none";
-      video.style.display = "block";
-      video.preload = "auto";
-      video.src = ROOM_VIDEO_FILE;
-      video.load();
-      const playPromise = video.play();
-      if (playPromise && typeof playPromise.catch === "function") playPromise.catch(() => {});
+
+    const PROGRESS_STORAGE_KEY = `room-word-hunt/progress/v1:${new URL(".", document.baseURI).href}`;
+    let progressState = emptyProgress();
+    let resumedLevel = null;
+    let currentRoomNumber = 1;
+    let completionRecorded = false;
+    let progressStorageAvailable = true;
+    let progressSaveHandle = null;
+    let progressWriteQueue = Promise.resolve();
+    let progressMessage = "";
+
+    function emptyProgress() {
+      return { version: 2, game: "room-word-hunt", completedRooms: 0, currentLevel: null, updatedAt: null };
     }
 
-    roomImage.addEventListener("load", () => {
-      if (!roomImage.naturalWidth || !roomImage.naturalHeight) {
-        useRoomVideo();
-        return;
+    function validateProgress(value) {
+      if (!value || ![1, 2].includes(value.version) || value.game !== "room-word-hunt" ||
+          !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
+      if (value.updatedAt !== null && (typeof value.updatedAt !== "string" || !Number.isFinite(Date.parse(value.updatedAt)))) throw new Error("Invalid save date.");
+      const clean = { version: 2, game: "room-word-hunt", completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
+      if (value.currentLevel === null) return clean;
+      const level = value.currentLevel;
+      if (!level || level.roomNumber !== value.completedRooms + 1 || !Object.prototype.hasOwnProperty.call(CONFIG_DEFAULTS.levels, level.levelType) ||
+          !Array.isArray(level.words) || level.words.length < 1 || level.words.length > 20 ||
+          !level.words.every(word => typeof word === "string" && word.length <= 1024 && /^[a-z0-9]+$/.test(word)) ||
+          new Set(level.words).size !== level.words.length) throw new Error("Invalid unfinished level in save.txt.");
+      const fallback = CONFIG.levels[level.levelType], rules = {};
+      for (const key of ["timeLimitMs", "decoyLetterChance", "flyingLetters", "evadesCamera"]) {
+        const v = level.rules?.[key] === undefined ? fallback[key] : level.rules[key];
+        if (!configValueIsValid(`levels.${level.levelType}.${key}`, v, CONFIG_DEFAULTS.levels[level.levelType][key])) throw new Error(`Invalid saved level rule: ${key}`);
+        rules[key] = v;
       }
-      roomMedia = roomImage;
-      video.pause();
-      video.style.display = "none";
-      roomImage.style.display = "block";
-      prepareRoomScene();
-      roomMediaReady = true;
-      revealWhenMediaReady();
-    }, { once: true });
-    roomImage.addEventListener("error", useRoomVideo, { once: true });
+      if (value.version === 1) {
+        if (!Number.isSafeInteger(level.sceneNumber) || level.sceneNumber < 1) throw new Error("Invalid saved scene.");
+        rules.wordCount = fallback.wordCount; rules.roomCount = CONFIG.rooms.count;
+        clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [level.sceneNumber], activeRoomIndex: 0,
+          levelType: level.levelType, words: [...level.words], letterRooms: [], rules, legacy: true };
+        return clean;
+      }
+      const count = level.rules?.roomCount;
+      if (!configValueIsValid("rooms.count", count, CONFIG_DEFAULTS.rooms.count) ||
+          !Array.isArray(level.sceneNumbers) || level.sceneNumbers.length !== count ||
+          !level.sceneNumbers.every(number => Number.isSafeInteger(number) && number > 0) || new Set(level.sceneNumbers).size !== count ||
+          !Number.isInteger(level.activeRoomIndex) || level.activeRoomIndex < 0 || level.activeRoomIndex >= count ||
+          level.words.some(word => word.length !== count) ||
+          !Array.isArray(level.letterRooms) || level.letterRooms.length !== level.words.length ||
+          !level.letterRooms.every(order => Array.isArray(order) && order.length === count && new Set(order).size === count && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
+      rules.roomCount = count; rules.wordCount = level.words.length;
+      clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [...level.sceneNumbers], activeRoomIndex: level.activeRoomIndex,
+        levelType: level.levelType, words: [...level.words], letterRooms: level.letterRooms.map(order => [...order]), rules };
+      return clean;
+    }
 
-    jumpscareVideo.addEventListener("loadedmetadata", () => {
-      jumpscareMetadataReady = true;
-      revealWhenMediaReady();
+    function parseProgress(text) {
+      if (typeof text !== "string" || text.length > 262144) throw new Error("Invalid save.txt size.");
+      return validateProgress(JSON.parse(text.replace(/^\uFEFF/, "")));
+    }
+
+    function progressTime(state) { return Date.parse(state.updatedAt) || 0; }
+
+    function savedBrowserProgress() {
+      let newest = null;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try {
+          const raw = window[store].getItem(PROGRESS_STORAGE_KEY);
+          if (!raw) continue;
+          const candidate = parseProgress(raw);
+          if (!newest || progressTime(candidate) > progressTime(newest)) newest = candidate;
+        } catch (error) { console.info("Could not read saved browser progress.", error.message); }
+      }
+      return newest;
+    }
+
+    function saveProgress() {
+      const text = JSON.stringify(progressState, null, 2);
+      let stored = false;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { window[store].setItem(PROGRESS_STORAGE_KEY, text); if (store === "localStorage") stored = true; }
+        catch (error) { console.info("Progress storage unavailable.", error.message); }
+      }
+      progressStorageAvailable = stored;
+      queueSaveFile(text);
+      updateProgressStatus();
+    }
+
+    function rememberCurrentRoom() {
+      if (roomCompleted || gameOver || !roomsReady || !wordsReadyForClue || progressState.currentLevel && !progressState.currentLevel.legacy) return;
+      progressState.currentLevel = { roomNumber: currentRoomNumber, sceneNumbers: levelRooms.map(room => room.scene.number),
+        activeRoomIndex, levelType: levelType.name, words: [...words], letterRooms: wordLetterRooms.map(order => [...order]), rules: {
+          wordCount: words.length, roomCount: levelRoomCount, timeLimitMs: ROOM_TIME_LIMIT_MS, decoyLetterChance: levelType.decoyLetterChance,
+          flyingLetters: Boolean(levelType.flyingLetters), evadesCamera: Boolean(levelType.evadesCamera)
+        } };
+      progressState.updatedAt = new Date().toISOString();
+      saveProgress();
+    }
+
+    function recordRoomCompletion() {
+      if (completionRecorded) return;
+      completionRecorded = true;
+      progressState.completedRooms = currentRoomNumber;
+      progressState.currentLevel = null;
+      progressState.updatedAt = new Date().toISOString();
+      saveProgress();
+    }
+
+    // IndexedDB can remember an explicitly chosen writable save file. Never
+    // request permission during startup or during horror/gameplay events.
+    function saveHandleStore(mode, value) {
+      return new Promise(resolve => {
+        let settled = false;
+        const finish = result => { if (!settled) { settled = true; clearTimeout(timer); resolve(result); } };
+        const timer = setTimeout(() => finish(null), CONFIG.loading.saveHandleTimeoutMs);
+        try {
+          const open = indexedDB.open("room-word-hunt-save-handles", 1);
+          open.onupgradeneeded = () => { if (!open.result.objectStoreNames.contains("files")) open.result.createObjectStore("files"); };
+          open.onerror = open.onblocked = () => finish(null);
+          open.onsuccess = () => {
+            const db = open.result;
+            if (settled) { db.close(); return; }
+            let tx, request;
+            try {
+              tx = db.transaction("files", mode === "put" ? "readwrite" : "readonly");
+              const store = tx.objectStore("files");
+              request = mode === "put" ? store.put(value, PROGRESS_STORAGE_KEY) : store.get(PROGRESS_STORAGE_KEY);
+            } catch { db.close(); finish(null); return; }
+            let result = null;
+            request.onsuccess = () => { result = mode === "put" ? true : request.result || null; };
+            tx.oncomplete = () => { db.close(); finish(result); };
+            tx.onerror = tx.onabort = () => { db.close(); finish(null); };
+          };
+        } catch { finish(null); }
+      });
+    }
+
+    async function initializeProgress() {
+      let selected = savedBrowserProgress();
+      const consider = text => {
+        try {
+          const candidate = parseProgress(text);
+          if (!selected || progressTime(candidate) > progressTime(selected)) selected = candidate;
+        } catch (error) { console.info("Ignoring unavailable/invalid save.txt.", error.message); }
+      };
+      if (localFolderImport) {
+        if (typeof localFolderImport.saveText === "string") consider(localFolderImport.saveText);
+      } else {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), CONFIG.loading.saveTimeoutMs);
+        try {
+          const response = await fetch(new URL(CONFIG.assets.saveFile, document.baseURI), { cache: "no-store", signal: controller.signal });
+          if (response.ok) consider(await response.text());
+        } catch (error) { console.info("No readable save.txt; using browser progress.", error.message); }
+        finally { clearTimeout(timer); }
+      }
+      if ("showSaveFilePicker" in window) {
+        const handle = await saveHandleStore("get");
+        try {
+          if (handle?.kind === "file" && await handle.queryPermission({ mode: "readwrite" }) === "granted") {
+            progressSaveHandle = handle;
+            consider(await (await handle.getFile()).text());
+          }
+        } catch (error) { console.info("Save file access needs to be renewed.", error.message); }
+      }
+      progressState = selected || emptyProgress();
+      resumedLevel = progressState.currentLevel;
+      currentRoomNumber = progressState.completedRooms + 1;
+      if (!resumedLevel?.legacy) saveProgress();
+    }
+
+    function queueSaveFile(text) {
+      if (!progressSaveHandle) return progressWriteQueue;
+      const handle = progressSaveHandle;
+      progressWriteQueue = progressWriteQueue.catch(() => {}).then(async () => {
+        try {
+          if (await handle.queryPermission({ mode: "readwrite" }) !== "granted") throw new Error("Save permission expired.");
+          const writable = await handle.createWritable();
+          try { await writable.write(text); await writable.close(); }
+          catch (error) { if (writable.abort) await writable.abort().catch(() => {}); throw error; }
+          progressMessage = "save.txt updated";
+        } catch (error) {
+          progressMessage = "Use Save save.txt to reconnect your file.";
+          console.warn("Could not update save.txt.", error.message);
+        }
+        updateProgressStatus();
+      });
+      return progressWriteQueue;
+    }
+
+    function updateProgressStatus() {
+      const text = progressMessage || (progressStorageAvailable ? "Progress saved in this browser" : "Export save.txt to keep your progress");
+      document.querySelectorAll(".progress-status").forEach(node => { node.textContent = text; });
+    }
+
+    function downloadProgress() {
+      const url = URL.createObjectURL(new Blob([JSON.stringify(progressState, null, 2) + "\n"], { type: "text/plain;charset=utf-8" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = CONFIG.assets.saveFile.split(/[\\/]/).pop();
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      progressMessage = "save.txt exported";
+      updateProgressStatus();
+    }
+
+    async function exportProgress(event) {
+      event.stopPropagation();
+      if ("showSaveFilePicker" in window && window.isSecureContext) {
+        try {
+          let handle = progressSaveHandle;
+          if (handle && await handle.queryPermission({ mode: "readwrite" }) !== "granted") {
+            if (await handle.requestPermission({ mode: "readwrite" }) !== "granted") return;
+          }
+          if (!handle) handle = await window.showSaveFilePicker({ suggestedName: CONFIG.assets.saveFile.split(/[\\/]/).pop(),
+            types: [{ description: "Game progress", accept: { "text/plain": [".txt"] } }] });
+          progressSaveHandle = handle;
+          await saveHandleStore("put", handle);
+          await queueSaveFile(JSON.stringify(progressState, null, 2));
+          return;
+        } catch (error) {
+          if (error.name === "AbortError") return;
+          console.info("Using a downloadable save.txt.", error.message);
+        }
+      }
+      downloadProgress();
+    }
+
+    function retryOrContinue(event) {
+      if (event.target.closest?.("button, input, .progress-actions")) return;
+      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+      // Reuse this exact unfinished room; completed rooms already cleared it.
+      saveProgress();
+      location.reload();
+    }
+
+    document.querySelectorAll(".export-progress").forEach(button => button.addEventListener("click", exportProgress));
+    document.querySelectorAll(".import-progress").forEach(button => button.addEventListener("click", event => {
+      event.stopPropagation(); document.getElementById("progressFileInput").click();
+    }));
+    document.getElementById("progressFileInput").addEventListener("change", async event => {
+      const file = event.target.files[0];
+      if (!file) return;
+      try {
+        const imported = parseProgress(await file.text());
+        imported.updatedAt = new Date().toISOString();
+        const text = JSON.stringify(imported, null, 2);
+        let stored = false;
+        for (const store of ["localStorage", "sessionStorage"]) {
+          try { window[store].setItem(PROGRESS_STORAGE_KEY, text); if (window[store].getItem(PROGRESS_STORAGE_KEY) === text) stored = true; } catch {}
+        }
+        if (!stored) throw new Error("Browser storage is blocked. Enable storage to load your save.");
+        progressState = imported;
+        saveProgress();
+        location.reload();
+      } catch (error) { progressMessage = error.message; updateProgressStatus(); }
+      finally { event.target.value = ""; }
     });
 
     function configureGamePresentation() {
@@ -3745,6 +4428,8 @@
         "--retry-min": `${CONFIG.ui.retryMinFontPx}px`, "--retry-max": `${CONFIG.ui.retryMaxFontPx}px`, "--retry-vh": CONFIG.ui.retryFontVh
       };
       for (const [key, value] of Object.entries(cssSettings)) style.setProperty(key, String(value));
+      prevRoomButton.textContent = CONFIG.text.previousRoom;
+      nextRoomButton.textContent = CONFIG.text.nextRoom;
       document.getElementById("clueTitle").textContent = CONFIG.text.clueTitle;
       readyButton.textContent = CONFIG.text.ready;
       messageText.textContent = CONFIG.text.found;
@@ -3781,10 +4466,22 @@
       document.fonts?.ready.then(requestViewportLayout);
     }
 
-    async function initializeGame() {
+    async function initializeGame(importedFiles = null) {
+      if (gameInitializationStarted) return;
+      if (location.protocol === "file:") {
+        localFolderImport = importedFiles || restoreLocalFiles();
+        if (!localFolderImport) {
+          showLocalFolderPrompt();
+          return;
+        }
+        localFileControls.hidden = false;
+      }
+      gameInitializationStarted = true;
       await loadGameConfig();
       refreshConfigBindings();
-      levelType = chooseLevelType();
+      await initializeProgress();
+      levelType = resumedLevel ? { name: resumedLevel.levelType, ...resumedLevel.rules } : chooseLevelType();
+      levelRoomCount = resumedLevel?.rules.roomCount || CONFIG.rooms.count;
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       batterySlotsRemaining = BATTERY_SLOT_COUNT;
@@ -3796,10 +4493,12 @@
       loadSpiderAssets();
       loadRandomLevel();
       revealWhenMediaReady();
-      cameraRoom.textContent = ROOM_NAME;
       updateBatteryUI();
       updateCameraTimer();
-      loadWords();
+      if (resumedLevel && !resumedLevel.legacy) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
+      else if (resumedLevel?.legacy && resumedLevel.words.length >= levelType.wordCount && resumedLevel.words.every(word => word.length === levelRoomCount)) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
+      else if (localFolderImport) acceptWordList(localFolderImport.wordsText, localFolderImport.wordsSource);
+      else loadWords();
     }
     initializeGame();
   </script>

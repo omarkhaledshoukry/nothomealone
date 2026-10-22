@@ -1,3 +1,5 @@
+# Progress resumes the same room set, ordered words and letter-to-room assignments.
+# Save save.txt links a writable file where supported, otherwise exports a backup.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -7,12 +9,22 @@
 # Missing/unreadable/empty/HTML/malformed/duplicate-key files use all built-in defaults.
 # Invalid min/max pairs use the default pair; all-zero level chances use default level chances.
 # Settings load once, before level selection. No config file is required to play.
-# Runtime values (current camera position, collected letters, remaining time) are managed by the game.
-# Direct file:// opening may block text fetches; use the hosted game/local web server to apply config.
+# Runtime values (camera position, collected letters, remaining time) are managed by the game.
+# Direct local opening: choose the game folder. Use Change local files after editing these settings.
 # Defaults: standard 63%, decoy 18%, butterfly 9%, flyingDecoy 10%.
+
+# Each level uses this many distinct scenes and words with exactly this many letters.
+# The default requires at least 3 complete room_N / jumpscare_N pairs in levels/.
+# Word count is set separately for each level type; all default to three words.
+[rooms]
+count = 3
+shuffleLetterRooms = true
+wrapNavigation = true
 
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
+# Optional progress file; browser progress is saved automatically.
+saveFile = "save.txt"
 wordsFile = "words.txt"
 levelsDirectory = "levels/"
 levelIndexFile = "index.json"
@@ -26,6 +38,8 @@ letterFontLocalNames = ["Dudu Calligraphy", "DuduCalligraphy", "Dudu_Calligraphy
 
 # Milliseconds unless the key ends in Seconds. Built-in config fetch deadline: 4 seconds.
 [loading]
+saveTimeoutMs = 3000
+saveHandleTimeoutMs = 1000
 wordsTimeoutMs = 15000
 resourceTimeoutMs = 6000
 jumpscareDownloadTimeoutMs = 60000
@@ -39,6 +53,7 @@ decodedFramePollMs = 100
 
 # Level chances are weights in [0,1]; the game normalizes their sum. These defaults total 1.
 [levels.standard]
+evadesCamera = false
 chance = 1.0
 wordCount = 3
 timeLimitMs = 120000
@@ -47,22 +62,25 @@ flyingLetters = false
 
 # Fixed decoy letters correct only after being seen and panned fully out of view.
 [levels.decoy]
+evadesCamera = false
 chance = 0.0
-wordCount = 2
+wordCount = 3
 timeLimitMs = 60000
 decoyLetterChance = 0.1
 flyingLetters = false
 
 # Original flying-letter type. timeLimitMs=30000 means 30 seconds.
 [levels.butterfly]
-chance = 0.0
-wordCount = 1
+evadesCamera = false
+chance = 0.00
+wordCount = 3
 timeLimitMs = 30000
 decoyLetterChance = 0
 flyingLetters = true
 
-# NEW: three flying words with decoys, two minutes. Each next letter appears only after capture.
+# Three flying words with decoys, two minutes. Each room has one uncaptured letter of the current word.
 [levels.flyingDecoy]
+evadesCamera = true
 chance = 0.0
 wordCount = 3
 timeLimitMs = 120000
@@ -72,16 +90,16 @@ flyingLetters = true
 # 0 = skip jumpscare; 1 = always play; 0.5 = 50% chance. One roll per failure.
 [failures.timeout]
 title = "GAME OVER"
-jumpscareChance = 0.1
+jumpscareChance = 0.5
 
 # Battery exhaustion always ends the level, with or without a jumpscare.
 [failures.battery]
-title = "BATTERY DIED"
-jumpscareChance = 0.1
+title = "Battery Died"
+jumpscareChance = 0.5
 
 # Photographing a letter while the monster anomaly is active.
 [failures.anomaly]
-title = "ANOMALY UNDETECTED"
+title = "Anomaly Undetected"
 jumpscareChance = 1
 
 # Photographing a wrong/decoy letter.
@@ -131,10 +149,15 @@ timerRefreshMs = 250
 
 # Uniform random scale and rotation; positive padding keeps letters clear of the UI. Time values in milliseconds.
 [letters]
+# One entry per word, in order: "first", "all" or "none".
+# Example: ["first", "all", "all"] vibrates only the first letter of word 1,
+# then every letter of words 2 and 3. The last entry repeats for extra words.
+vibrationByWord = ["all", "all", "all"]
 minScale = 0.7
 maxScale = 1
 minRotationDeg = -25
 maxRotationDeg = 25
+# Legacy fallback, used only when vibrationByWord is omitted.
 firstLetterVibrates = true
 vibrationPx = 2
 vibrationMs = 400
@@ -157,6 +180,18 @@ hudGapPx = 2
 
 # Flying motion applies to both butterfly and flyingDecoy. Speeds are CSS pixels/second; travel/sway in CSS pixels.
 [butterfly]
+# Escape tuning: only active when the level has evadesCamera=true. Far-away flight keeps its normal motion.
+evadeApproachScreens = 0.9
+evadeMaxSpeedMultiplier = 3.4
+evadeSteeringMultiplier = 2.6
+evadeRetargetMs = 180
+evadeTravelPx = 420
+evadeVerticalTravelPx = 120
+evadeSwayMultiplier = 1.65
+evadeFlutterMultiplier = 1.4
+evadeDirectionDeadzoneFraction = 0.08
+evadeEdgeMarginPx = 70
+evadeBoundaryTurnMs = 900
 minSpeed = 44
 maxSpeed = 82
 horizontalSpeedMultiplier = 1.3
@@ -254,6 +289,7 @@ color = "#ffffff"
 
 # Responsive font sizes and effects. Vh values are a percentage of the visible height, including mobile toolbar resizing.
 [ui]
+wordTopGapPx = 8
 viewportAspectRatio = 0.625
 minFontPx = 14
 maxFontPx = 21
@@ -287,12 +323,14 @@ retryFontVh = 3
 
 # Plain text only. Available placeholders: clueFormat {current}/{total}; roomFormat {number}.
 [text]
-clueFormat = "CLUE {current}/{total}"
+previousRoom = "PREV"
+nextRoom = "NEXT"
+clueFormat = "{current}/{total}"
 roomFormat = "ROOM {number}"
 clueTitle = "CLUES"
 ready = "READY"
 found = "FOUND"
-roomComplete = "ROOM COMPLETE"
+roomComplete = "LEVEL COMPLETE"
 retry = "TAP TO RETRY"
 playAgain = "TAP TO PLAY AGAIN"
 
