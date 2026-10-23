@@ -11,18 +11,27 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Defaults: standard 63%, decoy 18%, butterfly 9%, flyingDecoy 10%.
+# Your supplied settings are preserved: standard levels only, four rooms, three words, all letters jitter.
 
-# Each level uses this many distinct scenes and words with exactly this many letters.
-# The default requires at least 3 complete room_N / jumpscare_N pairs in levels/.
+# Each level uses this many distinct rooms; word lengths may be this number or fewer.
+# Requires at least count complete room_N / jumpscare_N pairs in levels/.
+# Short words use a subset of rooms; the other rooms contain no letter for that word.
 # Word count is set separately for each level type; all default to three words.
 [rooms]
-count = 3
+count = 4
 shuffleLetterRooms = true
 wrapNavigation = true
 
+[language]
+# "en" selects words.txt and the Dudu font; "ar" selects words_ar.txt and Arabic typography.
+# Progress is kept separately for each language in the browser.
+code = "ar"
+
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
+arabicWordsFile = "words_ar.txt"
+arabicFontFile = "NotoNaskhArabic-Regular.ttf"
+arabicFontLocalNames = ["Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Geeza Pro"]
 # Optional progress file; browser progress is saved automatically.
 saveFile = "save.txt"
 wordsFile = "words.txt"

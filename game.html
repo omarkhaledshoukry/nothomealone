@@ -6,6 +6,14 @@
   <meta name="color-scheme" content="only light" />
   <title>Room Word Hunt</title>
   <style>
+    @font-face {
+      font-family: "Game Arabic";
+      src: local("Noto Naskh Arabic"), local("Amiri"), local("Traditional Arabic"), local("Geeza Pro"),
+        url("./NotoNaskhArabic-Regular.ttf") format("truetype");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
     :root {
       color-scheme: light;
       color-scheme: only light;
@@ -850,6 +858,36 @@
       25%, 68% { opacity: 1; transform: scale(1); }
       100% { opacity: 0; transform: scale(1.08); }
     }
+
+    :root[data-game-language="ar"] .letter-glyph,
+    :root[data-game-language="ar"] .captured-letter {
+      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.5;
+      direction: rtl;
+    }
+    :root[data-game-language="ar"] #clueList {
+      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      direction: rtl;
+      text-align: right;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.55;
+    }
+    :root[data-game-language="ar"] #wordDisplay {
+      direction: rtl;
+      gap: 4px;
+      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-size: var(--hud-letter-size, 40px);
+      line-height: 1.6;
+      letter-spacing: 0;
+      text-transform: none;
+      white-space: nowrap;
+    }
+    .arabic-hud-prefix { color: #fff; direction: rtl; unicode-bidi: isolate; }
+    .arabic-hud-remaining { color: rgba(255,255,255,.58); direction: rtl; unicode-bidi: isolate; }
+
   </style>
 </head>
 <body>
@@ -992,7 +1030,15 @@
       "DuduCalligraphy",
       "Dudu_Calligraphy"
     ],
-    "saveFile": "save.txt"
+    "saveFile": "save.txt",
+    "arabicWordsFile": "words_ar.txt",
+    "arabicFontFile": "NotoNaskhArabic-Regular.ttf",
+    "arabicFontLocalNames": [
+      "Noto Naskh Arabic",
+      "Amiri",
+      "Traditional Arabic",
+      "Geeza Pro"
+    ]
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -1010,7 +1056,7 @@
   },
   "levels": {
     "standard": {
-      "chance": 0.63,
+      "chance": 1.0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0,
@@ -1018,7 +1064,7 @@
       "evadesCamera": false
     },
     "decoy": {
-      "chance": 0.18,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 60000,
       "decoyLetterChance": 0.1,
@@ -1026,7 +1072,7 @@
       "evadesCamera": false
     },
     "butterfly": {
-      "chance": 0.09,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 30000,
       "decoyLetterChance": 0,
@@ -1034,7 +1080,7 @@
       "evadesCamera": false
     },
     "flyingDecoy": {
-      "chance": 0.1,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
@@ -1125,9 +1171,9 @@
     "hudGlyphWidthRatio": 0.67,
     "hudGapPx": 2,
     "vibrationByWord": [
-      "first",
-      "first",
-      "first"
+      "all",
+      "all",
+      "all"
     ]
   },
   "butterfly": {
@@ -1279,9 +1325,12 @@
     "nextRoom": "NEXT"
   },
   "rooms": {
-    "count": 3,
+    "count": 4,
     "shuffleLetterRooms": true,
     "wrapNavigation": true
+  },
+  "language": {
+    "code": "en"
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 8, true]};
@@ -1298,6 +1347,7 @@
     }
 
     function configValueIsValid(path, value, fallback) {
+      if (path === "language.code") return value === "en" || value === "ar";
       if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
       if (path.startsWith("assets.") && path !== "assets.letterFontLocalNames") {
         try {
@@ -1401,7 +1451,24 @@
       return template.replace(/\{(\w+)\}/g, (match, key) => values[key] === undefined ? match : String(values[key]));
     }
 
-    let WORDS_FILE = CONFIG.assets.wordsFile;
+    function wordsFileFor(config = CONFIG) {
+      return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
+    }
+    function isArabic() { return CONFIG.language.code === "ar"; }
+    function normalizeGameWord(value, language = CONFIG.language.code) {
+      let word = String(value).trim().normalize("NFKC");
+      if (language === "ar") {
+        word = word.replace(/[\u0610-\u061a\u0640\u064b-\u065f\u0670\u06d6-\u06ed\u200c-\u200f\u202a-\u202e\u2066-\u2069\u061c]/g, "")
+          .replace(/\u0671/g, "ا").replace(/ک/g, "ك").replace(/ی/g, "ي");
+        return /^[\u0621-\u063a\u0641-\u064a]+$/.test(word) ? word : "";
+      }
+      return word.toLowerCase().replace(/[^a-z0-9]/g, "");
+    }
+    function validSavedWord(word, language) {
+      return typeof word === "string" && word.length > 0 && word.length <= 1024 && normalizeGameWord(word, language) === word;
+    }
+
+    let WORDS_FILE = wordsFileFor();
     let WORDS_TIMEOUT_MS = CONFIG.loading.wordsTimeoutMs;
     let LEVELS_DIRECTORY = CONFIG.assets.levelsDirectory;
     // Directory listings / levels/index.json support any numbering, including gaps.
@@ -1432,7 +1499,7 @@
     let BATTERY_SLOT_COUNT = CONFIG.battery.slotCount;
     const LEVEL_TYPES = {};
     function refreshConfigBindings() {
-      WORDS_FILE = CONFIG.assets.wordsFile;
+      WORDS_FILE = wordsFileFor();
       WORDS_TIMEOUT_MS = CONFIG.loading.wordsTimeoutMs;
       LEVELS_DIRECTORY = CONFIG.assets.levelsDirectory;
       LEVEL_PROBE_GAP = CONFIG.loading.levelProbeGap;
@@ -1610,6 +1677,7 @@
     let wordLetterRooms = [];
     let anomalyRoomIndex = -1;
     let spiderRoomIndex = -1;
+    let languageFontReady = true;
     let words = [];
     let wordsLoading = false;
     let wordLoadInfo = { status: "pending", url: new URL(WORDS_FILE, document.baseURI).href, count: 0, error: null };
@@ -2071,15 +2139,15 @@
       } finally { window.clearTimeout(timeout); }
     }
 
-    function parseWordList(text, contentType = "") {
+    function parseWordList(text, contentType = "", language = CONFIG.language.code) {
       if (/text\/html|application\/xhtml\+xml/i.test(contentType) || /^\s*</.test(text)) {
         throw new Error("The server returned a web page instead of the word list.");
       }
       const loaded = [...new Set(text
         .split(/\r\n?|\n/)
-        .map(line => line.trim().toLowerCase())
+        .map(line => line.trim())
         .filter(line => line && !line.startsWith("#"))
-        .map(line => line.replace(/[^a-z0-9]/g, ""))
+        .map(line => normalizeGameWord(line, language))
         .filter(Boolean))];
       if (!loaded.length) throw new Error("The file contains no valid words.");
       return loaded;
@@ -2087,17 +2155,18 @@
 
     function acceptWordList(text, source, contentType = "", { preserveOrder = false } = {}) {
       const loaded = parseWordList(text, contentType);
-      const eligible = loaded.filter(word => word.length === levelRoomCount);
-      const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length === levelRoomCount) : [];
+      const eligible = loaded.filter(word => word.length > 0 && word.length <= levelRoomCount);
+      const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length > 0 && word.length <= levelRoomCount) : [];
       const pool = preserveOrder ? eligible : [...seeded, ...shuffleArray(eligible.filter(word => !seeded.includes(word)))];
-      if (pool.length < levelType.wordCount) throw new Error(`words.txt needs at least ${levelType.wordCount} unique ${levelRoomCount}-letter words; found ${pool.length}.`);
+      if (pool.length < levelType.wordCount) throw new Error(`${WORDS_FILE} needs at least ${levelType.wordCount} unique words of ${levelRoomCount} letters or fewer; found ${pool.length}.`);
       words = pool.slice(0, levelType.wordCount);
-      wordLetterRooms = resumedLevel && !resumedLevel.legacy ? resumedLevel.letterRooms.map(order => [...order]) : words.map(() => {
+      wordLetterRooms = resumedLevel && !resumedLevel.legacy ? resumedLevel.letterRooms.map(order => [...order]) : words.map(word => {
         const order = Array.from({ length: levelRoomCount }, (_, index) => index);
-        return CONFIG.rooms.shuffleLetterRooms ? shuffleArray(order) : order;
+        if (CONFIG.rooms.shuffleLetterRooms) shuffleArray(order);
+        return order.slice(0, word.length);
       });
       wordLoadInfo = { status: "loaded", url: source, count: eligible.length, error: null };
-      console.info(`Loaded ${eligible.length} matching ${levelRoomCount}-letter words from ${source}`);
+      console.info(`Loaded ${eligible.length} matching words of up to ${levelRoomCount} letters from ${source}`);
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
       readyButton.disabled = false;
@@ -2118,7 +2187,7 @@
       loadingWord.hidden = true;
       wordLoadError.hidden = false;
       wordLoadReason.textContent = reason;
-      wordLoadTitle.textContent = "Couldn’t load words.txt";
+      wordLoadTitle.textContent = `Couldn’t load ${WORDS_FILE}`;
       wordLoadHelp.textContent = "Retry, or choose your word list directly.";
       wordLoadUrl.hidden = false;
       wordLoadUrl.href = wordLoadInfo.url;
@@ -2131,12 +2200,12 @@
       loadingWord.hidden = true;
       wordLoadError.hidden = false;
       wordLoadTitle.textContent = "Choose your game folder";
-      wordLoadReason.textContent = reason || "Select the folder containing config.txt and words.txt.";
+      wordLoadReason.textContent = reason || "Select the folder containing config.txt and your English or Arabic word list.";
       wordLoadHelp.textContent = "Both files will be read together. A missing or invalid config uses the built-in settings.";
       wordLoadUrl.hidden = true;
       document.getElementById("retryWordsButton").hidden = true;
       chooseGameFolderButton.hidden = false;
-      document.getElementById("chooseWordsButton").textContent = "Choose words.txt only";
+      document.getElementById("chooseWordsButton").textContent = "Choose word list only";
       if (!("webkitdirectory" in gameFolderInput)) chooseGameFolderButton.textContent = "Choose config and words";
       readyButton.disabled = true;
       wordLoadInfo = { ...wordLoadInfo, status: reason ? "error" : "waiting-for-folder", error: reason || null };
@@ -2158,10 +2227,12 @@
         const raw = window[store].getItem(LOCAL_FILES_CACHE_KEY);
         if (!raw) continue;
         const data = JSON.parse(raw);
-        if (data.version !== 1 || typeof data.wordsText !== "string" ||
+        if (![1, 2].includes(data.version) || typeof data.wordsText !== "string" ||
             typeof data.wordsSource !== "string" ||
             !(data.configText === null || typeof data.configText === "string")) throw new Error("Invalid saved local files.");
-        parseWordList(data.wordsText);
+        let cachedLanguage = "en";
+        try { cachedLanguage = parseGameConfig(data.configText || 'language.code="en"').resolved.language.code; } catch {}
+        parseWordList(data.wordsText, "", cachedLanguage);
         return data;
        } catch {
         try { window[store].removeItem(LOCAL_FILES_CACHE_KEY); } catch {}
@@ -2213,18 +2284,18 @@
           try { selectedConfig = parseGameConfig(configText).resolved; }
           catch { /* The same built-in fallback as automatic config loading. */ }
         }
-        const wordsPath = selectedFolderPath(selectedConfig.assets.wordsFile);
+        const wordsPath = selectedFolderPath(wordsFileFor(selectedConfig));
         const wordsFile = find(wordsPath);
         if (!wordsFile) throw new Error(`The selected folder does not contain ${wordsPath}. Choose the folder containing that file.`);
         const wordsText = await wordsFile.text();
         // Validate both before choosing a level or starting any scene loading.
-        parseWordList(wordsText, wordsFile.type);
+        parseWordList(wordsText, wordsFile.type, selectedConfig.language.code);
         let saveText = null;
         try {
           const saveFile = find(selectedFolderPath(selectedConfig.assets.saveFile));
           if (saveFile) saveText = await saveFile.text();
         } catch (error) { console.info("No readable local save.txt.", error.message); }
-        const data = { version: 1, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`, saveText };
+        const data = { version: 2, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`, saveText };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -2258,14 +2329,14 @@
       const timeout = window.setTimeout(() => controller.abort(), WORDS_TIMEOUT_MS);
       try {
         const response = await fetch(wordLoadInfo.url, { cache: "no-store", signal: controller.signal });
-        if (!response.ok) throw new Error(`The server returned HTTP ${response.status} for words.txt.`);
+        if (!response.ok) throw new Error(`The server returned HTTP ${response.status} for ${WORDS_FILE}.`);
         const text = await response.text();
         acceptWordList(text, response.url, response.headers.get("content-type") || "");
       } catch (error) {
         if (error instanceof TypeError) {
           error = new Error(location.protocol === "file:"
-            ? "This browser blocked automatic loading from a local HTML file. Choose words.txt below, or open the hosted game."
-            : "The browser could not read words.txt. Check the file address below and your connection.");
+            ? `This browser blocked automatic loading from a local HTML file. Choose ${WORDS_FILE} below, or open the hosted game.`
+            : `The browser could not read ${WORDS_FILE}. Check the file address below and your connection.`);
         }
         showWordLoadError(error);
       } finally {
@@ -2283,8 +2354,9 @@
       try {
         const text = await file.text();
         if (location.protocol === "file:" && !gameInitializationStarted) {
-          parseWordList(text, file.type);
-          const data = { version: 1, configText: null, wordsText: text, wordsSource: file.name };
+          const language = /[ء-ي]/.test(text) ? "ar" : "en";
+          parseWordList(text, file.type, language);
+          const data = { version: 2, language, configText: `language.code=${JSON.stringify(language)}`, wordsText: text, wordsSource: file.name };
           rememberLocalFiles(data);
           await initializeGame(data);
         } else acceptWordList(text, file.name, file.type);
@@ -2316,14 +2388,14 @@
       clueList.replaceChildren();
       words.forEach(word => {
         const item = document.createElement("li");
-        item.textContent = word.toUpperCase();
+        item.textContent = isArabic() ? word : word.toUpperCase();
         clueList.appendChild(item);
       });
       fitClueList();
     }
 
     function maybeShowClueIntro() {
-      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue) return;
+      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue || !languageFontReady) return;
       fitClueList();
       clueIntroShown = true;
       viewport.classList.add("clue-intro-active");
@@ -2511,6 +2583,17 @@
 
     function createHudWord() {
       wordDisplay.replaceChildren();
+      wordDisplay.lang = CONFIG.language.code;
+      wordDisplay.dir = isArabic() ? "rtl" : "ltr";
+      if (isArabic()) {
+        const prefix = document.createElement("span"), remaining = document.createElement("span");
+        prefix.className = "arabic-hud-prefix";
+        remaining.className = "arabic-hud-remaining";
+        wordDisplay.append(prefix, remaining);
+        renderArabicHud();
+        fitHudWord();
+        return;
+      }
       [...currentWord].forEach((letter, index) => {
         const slot = document.createElement("span");
         slot.className = "hud-letter";
@@ -2521,8 +2604,35 @@
       fitHudWord();
     }
 
+    function renderArabicHud(count = selectedCount) {
+      // One text node is essential: separate flex letters interrupt Arabic shaping.
+      wordDisplay.querySelector(".arabic-hud-prefix").textContent = currentWord.slice(0, count);
+      wordDisplay.querySelector(".arabic-hud-remaining").textContent = "·".repeat(Math.max(0, currentWord.length - count));
+      wordDisplay.setAttribute("aria-label", `${currentWord.slice(0, count)} ${count}/${currentWord.length}`);
+    }
+
+    function arabicHudCaptureTarget(index) {
+      const prefix = wordDisplay.querySelector(".arabic-hud-prefix");
+      const range = document.createRange();
+      range.setStart(prefix.firstChild, index);
+      range.setEnd(prefix.firstChild, index + 1);
+      const rect = range.getBoundingClientRect();
+      return rect.height ? rect : prefix.getBoundingClientRect();
+    }
+
     function fitHudWord() {
       const width = wordDisplay.getBoundingClientRect().width;
+      if (isArabic()) {
+        const measure = document.createElement("canvas").getContext("2d");
+        const maximum = CONFIG.letters.hudMaxFontPx;
+        measure.font = `${maximum}px "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
+        let widest = 1;
+        for (let count = 0; count <= currentWord.length; count++) {
+          widest = Math.max(widest, measure.measureText(currentWord.slice(0, count)).width + measure.measureText("·".repeat(currentWord.length - count)).width + CONFIG.letters.hudGapPx * 2);
+        }
+        wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, Math.min(maximum, maximum * width / widest))}px`);
+        return;
+      }
       const size = Math.min(CONFIG.letters.hudMaxFontPx, (width - Math.max(0, currentWord.length - 1) * CONFIG.letters.hudGapPx) /
         Math.max(1, currentWord.length * CONFIG.letters.hudGlyphWidthRatio));
       wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, size)}px`);
@@ -2596,7 +2706,8 @@
     function chooseLetterGlyph(letter, word) {
       if (!levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
       // A decoy must be absent from the entire clue, not just the current slot.
-      const candidates = [..."abcdefghijklmnopqrstuvwxyz"].filter(candidate => !word.includes(candidate));
+      const alphabet = isArabic() ? "ابتثجحخدذرزسشصضطظعغفقكلمنهويءأإآؤئةى" : "abcdefghijklmnopqrstuvwxyz";
+      const candidates = [...alphabet].filter(candidate => !word.includes(candidate));
       return candidates.length ? candidates[Math.floor(Math.random() * candidates.length)] : letter;
     }
 
@@ -2730,7 +2841,7 @@
     function flyLetterToWord(anchor, hudSlot) {
       const glyph = anchor.querySelector(".letter-glyph");
       const start = glyph.getBoundingClientRect();
-      const target = hudSlot.getBoundingClientRect();
+      const target = typeof hudSlot.getBoundingClientRect === "function" ? hudSlot.getBoundingClientRect() : hudSlot;
       const frame = viewport.getBoundingClientRect();
       const style = getComputedStyle(glyph);
       const flight = document.createElement("span");
@@ -3055,15 +3166,21 @@
         return;
       }
 
-      const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
+      let hudSlot;
+      if (isArabic()) {
+        renderArabicHud(selectedCount + 1);
+        hudSlot = arabicHudCaptureTarget(selectedCount);
+      } else hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
       flyLetterToWord(anchors[tileIndex], hudSlot);
       tile.classList.add("selected");
       const anchor = anchors[tileIndex];
       anchor.classList.add("collected");
 
       selectionHistory.push(tileIndex);
-      hudSlot.textContent = expectedLetter.toUpperCase();
-      hudSlot.classList.add("found");
+      if (!isArabic()) {
+        hudSlot.textContent = expectedLetter.toUpperCase();
+        hudSlot.classList.add("found");
+      }
       selectedCount++;
 
       if (selectedCount === currentWord.length) completeWord();
@@ -3083,9 +3200,12 @@
       anchor.classList.remove("collected");
       tile.classList.remove("selected");
 
-      const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
-      hudSlot.textContent = "·";
-      hudSlot.classList.remove("found");
+      if (isArabic()) renderArabicHud();
+      else {
+        const hudSlot = wordDisplay.querySelector(`[data-index="${selectedCount}"]`);
+        hudSlot.textContent = "·";
+        hudSlot.classList.remove("found");
+      }
       showCurrentLetter();
     }
 
@@ -4151,7 +4271,8 @@
 
 
 
-    const PROGRESS_STORAGE_KEY = `room-word-hunt/progress/v1:${new URL(".", document.baseURI).href}`;
+    const PROGRESS_STORAGE_BASE_KEY = `room-word-hunt/progress/v1:${new URL(".", document.baseURI).href}`;
+    let PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY;
     let progressState = emptyProgress();
     let resumedLevel = null;
     let currentRoomNumber = 1;
@@ -4162,19 +4283,21 @@
     let progressMessage = "";
 
     function emptyProgress() {
-      return { version: 2, game: "room-word-hunt", completedRooms: 0, currentLevel: null, updatedAt: null };
+      return { version: 3, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, currentLevel: null, updatedAt: null };
     }
 
     function validateProgress(value) {
-      if (!value || ![1, 2].includes(value.version) || value.game !== "room-word-hunt" ||
+      if (!value || ![1, 2, 3].includes(value.version) || value.game !== "room-word-hunt" ||
           !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
       if (value.updatedAt !== null && (typeof value.updatedAt !== "string" || !Number.isFinite(Date.parse(value.updatedAt)))) throw new Error("Invalid save date.");
-      const clean = { version: 2, game: "room-word-hunt", completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
+      const language = value.version === 3 ? value.language : "en";
+      if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
+      const clean = { version: 3, game: "room-word-hunt", language, completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
       if (value.currentLevel === null) return clean;
       const level = value.currentLevel;
       if (!level || level.roomNumber !== value.completedRooms + 1 || !Object.prototype.hasOwnProperty.call(CONFIG_DEFAULTS.levels, level.levelType) ||
           !Array.isArray(level.words) || level.words.length < 1 || level.words.length > 20 ||
-          !level.words.every(word => typeof word === "string" && word.length <= 1024 && /^[a-z0-9]+$/.test(word)) ||
+          !level.words.every(word => validSavedWord(word, language)) ||
           new Set(level.words).size !== level.words.length) throw new Error("Invalid unfinished level in save.txt.");
       const fallback = CONFIG.levels[level.levelType], rules = {};
       for (const key of ["timeLimitMs", "decoyLetterChance", "flyingLetters", "evadesCamera"]) {
@@ -4194,9 +4317,9 @@
           !Array.isArray(level.sceneNumbers) || level.sceneNumbers.length !== count ||
           !level.sceneNumbers.every(number => Number.isSafeInteger(number) && number > 0) || new Set(level.sceneNumbers).size !== count ||
           !Number.isInteger(level.activeRoomIndex) || level.activeRoomIndex < 0 || level.activeRoomIndex >= count ||
-          level.words.some(word => word.length !== count) ||
+          level.words.some(word => word.length < 1 || word.length > count) ||
           !Array.isArray(level.letterRooms) || level.letterRooms.length !== level.words.length ||
-          !level.letterRooms.every(order => Array.isArray(order) && order.length === count && new Set(order).size === count && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
+          !level.letterRooms.every((order, wordIndex) => Array.isArray(order) && order.length === level.words[wordIndex].length && new Set(order).size === order.length && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
       rules.roomCount = count; rules.wordCount = level.words.length;
       clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [...level.sceneNumbers], activeRoomIndex: level.activeRoomIndex,
         levelType: level.levelType, words: [...level.words], letterRooms: level.letterRooms.map(order => [...order]), rules };
@@ -4217,6 +4340,7 @@
           const raw = window[store].getItem(PROGRESS_STORAGE_KEY);
           if (!raw) continue;
           const candidate = parseProgress(raw);
+          if (candidate.language !== CONFIG.language.code) continue;
           if (!newest || progressTime(candidate) > progressTime(newest)) newest = candidate;
         } catch (error) { console.info("Could not read saved browser progress.", error.message); }
       }
@@ -4289,6 +4413,7 @@
       const consider = text => {
         try {
           const candidate = parseProgress(text);
+          if (candidate.language !== CONFIG.language.code) return;
           if (!selected || progressTime(candidate) > progressTime(selected)) selected = candidate;
         } catch (error) { console.info("Ignoring unavailable/invalid save.txt.", error.message); }
       };
@@ -4392,6 +4517,7 @@
       if (!file) return;
       try {
         const imported = parseProgress(await file.text());
+        if (imported.language !== CONFIG.language.code) throw new Error(`This save uses ${imported.language}. Set language.code to "${imported.language}" in config.txt first.`);
         imported.updatedAt = new Date().toISOString();
         const text = JSON.stringify(imported, null, 2);
         let stored = false;
@@ -4428,6 +4554,19 @@
         "--retry-min": `${CONFIG.ui.retryMinFontPx}px`, "--retry-max": `${CONFIG.ui.retryMaxFontPx}px`, "--retry-vh": CONFIG.ui.retryFontVh
       };
       for (const [key, value] of Object.entries(cssSettings)) style.setProperty(key, String(value));
+      document.documentElement.dataset.gameLanguage = CONFIG.language.code;
+      clueList.lang = CONFIG.language.code;
+      clueList.dir = isArabic() ? "rtl" : "ltr";
+      const arabicRule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.includes("Game Arabic"));
+      if (arabicRule) arabicRule.style.setProperty("src", [...CONFIG.assets.arabicFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
+        `url(${JSON.stringify(new URL(CONFIG.assets.arabicFontFile, document.baseURI).href)}) format("truetype")`].join(", "));
+      if (isArabic() && document.fonts) {
+        languageFontReady = false;
+        let deadline;
+        Promise.race([document.fonts.load('40px "Game Arabic"', "العربية"), new Promise(resolve => { deadline = setTimeout(resolve, CONFIG.loading.resourceTimeoutMs); })])
+          .catch(error => console.info("Using the system Arabic font.", error.message))
+          .finally(() => { clearTimeout(deadline); languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
+      }
       prevRoomButton.textContent = CONFIG.text.previousRoom;
       nextRoomButton.textContent = CONFIG.text.nextRoom;
       document.getElementById("clueTitle").textContent = CONFIG.text.clueTitle;
@@ -4437,7 +4576,7 @@
       // when a different font file or local names were actually configured.
       if (CONFIG.assets.letterFontFile !== CONFIG_DEFAULTS.assets.letterFontFile ||
           JSON.stringify(CONFIG.assets.letterFontLocalNames) !== JSON.stringify(CONFIG_DEFAULTS.assets.letterFontLocalNames)) {
-        const rule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE);
+        const rule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.includes("Dudu"));
         if (rule) rule.style.setProperty("src", [...CONFIG.assets.letterFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
           `url(${JSON.stringify(new URL(CONFIG.assets.letterFontFile, document.baseURI).href)}) format("truetype")`].join(", "));
       }
@@ -4479,6 +4618,8 @@
       gameInitializationStarted = true;
       await loadGameConfig();
       refreshConfigBindings();
+      // Separate language profiles preserve English retries when switching to Arabic.
+      PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
       await initializeProgress();
       levelType = resumedLevel ? { name: resumedLevel.levelType, ...resumedLevel.rules } : chooseLevelType();
       levelRoomCount = resumedLevel?.rules.roomCount || CONFIG.rooms.count;
@@ -4496,7 +4637,7 @@
       updateBatteryUI();
       updateCameraTimer();
       if (resumedLevel && !resumedLevel.legacy) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
-      else if (resumedLevel?.legacy && resumedLevel.words.length >= levelType.wordCount && resumedLevel.words.every(word => word.length === levelRoomCount)) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
+      else if (resumedLevel?.legacy && resumedLevel.words.length >= levelType.wordCount && resumedLevel.words.every(word => word.length > 0 && word.length <= levelRoomCount)) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
       else if (localFolderImport) acceptWordList(localFolderImport.wordsText, localFolderImport.wordsSource);
       else loadWords();
     }
