@@ -11,19 +11,20 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Your supplied settings are preserved: standard levels only, four rooms, three words, all letters jitter.
+# New levels: 50% original standard mode, 50% single-puzzle mode. Other supplied settings are preserved.
 
-# Each level uses this many distinct rooms; word lengths may be this number or fewer.
+# Standard levels use this many distinct rooms; word lengths may be this number or fewer.
+# Puzzle levels treat count as a minimum and add rooms to fit the chosen answer (up to 32 rooms).
 # Requires at least count complete room_N / jumpscare_N pairs in levels/.
 # Short words use a subset of rooms; the other rooms contain no letter for that word.
-# Word count is set separately for each level type; all default to three words.
+# Word count is set separately for each level type. Puzzle levels always contain exactly one puzzle.
 [rooms]
 count = 4
 shuffleLetterRooms = true
 wrapNavigation = true
 
 [language]
-# "en" selects words.txt and the Dudu font; "ar" selects words_ar.txt and Arabic typography.
+# "en" selects English words/puzzles and Dudu; "ar" selects words_ar.txt, puzzles_ar.txt and Arabic typography.
 # Progress is kept separately for each language in the browser.
 code = "en"
 
@@ -35,6 +36,8 @@ arabicFontLocalNames = ["Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Gee
 # Optional progress file; browser progress is saved automatically.
 saveFile = "save.txt"
 wordsFile = "words.txt"
+puzzlesFile = "puzzles.txt"
+arabicPuzzlesFile = "puzzles_ar.txt"
 levelsDirectory = "levels/"
 levelIndexFile = "index.json"
 paperFile = "note.png"
@@ -63,11 +66,33 @@ decodedFramePollMs = 100
 # Level chances are weights in [0,1]; the game normalizes their sum. These defaults total 1.
 [levels.standard]
 evadesCamera = false
-chance = 1.0
+chance = 0.5
 wordCount = 3
 timeLimitMs = 120000
 decoyLetterChance = 0
 flyingLetters = false
+
+# One riddle and one answer, collected in order across the rooms. Word count is fixed at 1.
+# Only answers within the configured range and available complete scene pairs can be selected.
+[levels.puzzle]
+chance = 0.5
+wordCount = 1
+timeLimitMs = 120000
+decoyLetterChance = 0
+flyingLetters = false
+evadesCamera = false
+
+# Each non-comment line in puzzles.txt: Short puzzle text [answer]
+# Answers are single words. language.code selects puzzles.txt or puzzles_ar.txt.
+# A saved unfinished puzzle keeps its original riddle, answer and rooms even after file edits.
+[puzzles]
+minAnswerLength = 3
+maxAnswerLength = 10
+hintFadeMs = 140
+hintBlurPx = 5
+minFontPx = 18
+maxFontPx = 27
+fontHeightFraction = 0.033
 
 # Fixed decoy letters correct only after being seen and panned fully out of view.
 [levels.decoy]
@@ -332,6 +357,8 @@ retryFontVh = 3
 
 # Plain text only. Available placeholders: clueFormat {current}/{total}; roomFormat {number}.
 [text]
+hint = "HINT"
+puzzleTitle = "PUZZLE"
 previousRoom = "PREV"
 nextRoom = "NEXT"
 clueFormat = "{current}/{total}"
