@@ -888,6 +888,28 @@
     .arabic-hud-prefix { color: #fff; direction: rtl; unicode-bidi: isolate; }
     .arabic-hud-remaining { color: rgba(255,255,255,.58); direction: rtl; unicode-bidi: isolate; }
 
+    /* Suppress browser-painted tap/selection feedback on every game surface,
+       including the clickable viewport and full-screen retry target. */
+    #portraitViewport,
+    #portraitViewport * {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #portraitViewport button:focus,
+    #portraitViewport [role="button"]:focus {
+      outline: none;
+    }
+
+    /* This class also preserves keyboard focus on older Android browsers
+       that do not support :focus-visible. Pointer input removes the class. */
+    #portraitViewport.keyboard-controls button:focus,
+    #portraitViewport.keyboard-controls [role="button"]:focus {
+      outline: 2px solid var(--camera-color, #fff);
+      outline-offset: 3px;
+    }
   </style>
 </head>
 <body>
@@ -1539,6 +1561,13 @@
     const USE_ANDROID_BITMAPS = /Android/i.test(navigator.userAgent);
 
     const viewport = document.getElementById("portraitViewport");
+    const usePointerControls = () => viewport.classList.remove("keyboard-controls");
+    document.addEventListener("pointerdown", usePointerControls, true);
+    document.addEventListener("mousedown", usePointerControls, true);
+    document.addEventListener("touchstart", usePointerControls, { capture: true, passive: true });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Tab") viewport.classList.add("keyboard-controls");
+    }, true);
     const sceneEffects = document.getElementById("sceneEffects");
     const captureEffects = document.getElementById("captureEffects");
     let video = document.getElementById("roomVideo");
