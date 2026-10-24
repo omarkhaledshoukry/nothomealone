@@ -66,7 +66,7 @@ decodedFramePollMs = 100
 # Level chances are weights in [0,1]; the game normalizes their sum. These defaults total 1.
 [levels.standard]
 evadesCamera = false
-chance = 0.5
+chance = 0.3
 wordCount = 3
 timeLimitMs = 120000
 decoyLetterChance = 0
@@ -75,9 +75,9 @@ flyingLetters = false
 # One riddle and one answer, collected in order across the rooms. Word count is fixed at 1.
 # Only answers within the configured range and available complete scene pairs can be selected.
 [levels.puzzle]
-chance = 0.5
+chance = 0.3
 wordCount = 1
-timeLimitMs = 120000
+timeLimitMs = 60000
 decoyLetterChance = 0
 flyingLetters = false
 evadesCamera = false
@@ -87,7 +87,7 @@ evadesCamera = false
 # A saved unfinished puzzle keeps its original riddle, answer and rooms even after file edits.
 [puzzles]
 minAnswerLength = 3
-maxAnswerLength = 10
+maxAnswerLength = 6
 hintFadeMs = 140
 hintBlurPx = 5
 minFontPx = 18
@@ -97,17 +97,17 @@ fontHeightFraction = 0.033
 # Fixed decoy letters correct only after being seen and panned fully out of view.
 [levels.decoy]
 evadesCamera = false
-chance = 0.0
-wordCount = 3
-timeLimitMs = 60000
+chance = 0.2
+wordCount = 2
+timeLimitMs = 90000
 decoyLetterChance = 0.1
 flyingLetters = false
 
 # Original flying-letter type. timeLimitMs=30000 means 30 seconds.
 [levels.butterfly]
 evadesCamera = false
-chance = 0.00
-wordCount = 3
+chance = 0.2
+wordCount = 1
 timeLimitMs = 30000
 decoyLetterChance = 0
 flyingLetters = true
