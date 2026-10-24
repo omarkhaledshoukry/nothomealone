@@ -94,7 +94,8 @@
     }
 
     .room-image,
-    .room-video {
+    .room-video,
+    .room-video-cover {
       position: absolute;
       top: 0;
       left: 0;
@@ -117,7 +118,8 @@
     }
 
     .room-image,
-    .room-video {
+    .room-video,
+    .room-video-cover {
       z-index: 1;
       user-select: none;
       pointer-events: none;
@@ -131,8 +133,14 @@
       -webkit-user-drag: none;
     }
 
+    .room-video-cover {
+      display: none;
+      max-width: none;
+    }
+
     .room-image.snapping,
     .room-video.snapping,
+    .room-video-cover.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
     #spiderWorld.snapping,
@@ -141,7 +149,8 @@
     }
 
     #portraitViewport.hand-active .room-image,
-    #portraitViewport.hand-active .room-video {
+    #portraitViewport.hand-active .room-video,
+    #portraitViewport.hand-active .room-video-cover {
       filter: blur(var(--hand-blur, 3px));
     }
 
@@ -632,7 +641,8 @@
 
     /* During the clue card, keep the prepared room soft and hide gameplay UI. */
     #portraitViewport.clue-intro-active .room-image,
-    #portraitViewport.clue-intro-active .room-video {
+    #portraitViewport.clue-intro-active .room-video,
+    #portraitViewport.clue-intro-active .room-video-cover {
       filter: blur(var(--clue-blur, 5px));
     }
 
@@ -1994,9 +2004,14 @@
         sceneEffects.insertBefore(backgroundVideo, letterWorld);
         viewport.insertBefore(scare, gameOverScreen);
       }
+      const videoCover = document.createElement("canvas");
+      videoCover.className = "room-video-cover";
+      videoCover.setAttribute("aria-hidden", "true");
+      sceneEffects.insertBefore(videoCover, letterWorld);
       image.style.display = backgroundVideo.style.display = "none";
       scare.style.display = "";
-      const room = { scene, image, video: backgroundVideo, scare, media: image,
+      const room = { scene, image, video: backgroundVideo, videoCover, scare, media: image,
+        videoCoverReady: false, videoFrameCancel: null, videoRun: 0,
         backdropReady: false, metadataReady: false, scareReady: false,
         warmAttempted: false, preparing: null, audioUnlocked: false,
         audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
@@ -2025,6 +2040,89 @@
       });
     }
 
+    function cacheRoomVideoFrame(room) {
+      const clip = room.video, cover = room.videoCover;
+      if (clip.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !clip.videoWidth || !clip.videoHeight) return false;
+      try {
+        const context = cover.getContext("2d");
+        if (!context) return false;
+        if (!room.videoCoverReady) {
+          // A temporary still only needs the current display resolution.
+          // Keep one bounded bitmap per room instead of full-resolution copies.
+          const scale = Math.min(1, viewport.clientHeight / clip.videoHeight);
+          cover.width = Math.max(1, Math.round(clip.videoWidth * scale));
+          cover.height = Math.max(1, Math.round(clip.videoHeight * scale));
+        }
+        context.drawImage(clip, 0, 0, cover.width, cover.height);
+        room.videoCoverReady = true;
+        return true;
+      } catch { return false; }
+    }
+
+    function waitForRoomVideoFrame(room, onFrame = () => {}, timeoutMs = CONFIG.loading.resourceTimeoutMs) {
+      room.videoFrameCancel?.();
+      const clip = room.video, startTime = clip.currentTime;
+      return new Promise(resolve => {
+        let settled = false, presented = false, frameRequest = null, paintRequest = null, fallbackTimer;
+        const finish = ready => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout); clearTimeout(fallbackTimer);
+          if (frameRequest !== null) clip.cancelVideoFrameCallback?.(frameRequest);
+          if (paintRequest !== null) cancelAnimationFrame(paintRequest);
+          clip.removeEventListener("error", cancel);
+          if (room.videoFrameCancel === cancel) room.videoFrameCancel = null;
+          resolve(ready);
+        };
+        const cancel = () => finish(false);
+        const frameReady = () => {
+          if (settled || presented || clip.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+          presented = true;
+          if (paintRequest !== null) cancelAnimationFrame(paintRequest);
+          onFrame();
+          // Keep the still above the video while its visible layer is painted.
+          paintRequest = requestAnimationFrame(() => {
+            paintRequest = requestAnimationFrame(() => finish(true));
+          });
+        };
+        const checkLegacyFrame = () => {
+          if (settled || presented) return;
+          if (!clip.paused && clip.currentTime !== startTime && clip.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) frameReady();
+          else paintRequest = requestAnimationFrame(checkLegacyFrame);
+        };
+        const timeout = timeoutMs > 0 ? setTimeout(cancel, timeoutMs) : null;
+        room.videoFrameCancel = cancel;
+        clip.addEventListener("error", cancel, { once: true });
+        if (typeof clip.requestVideoFrameCallback === "function") {
+          frameRequest = clip.requestVideoFrameCallback(() => {
+            frameRequest = null;
+            frameReady();
+          });
+          // Some browsers suppress compositor callbacks beneath an opaque cover.
+          fallbackTimer = setTimeout(checkLegacyFrame, CONFIG.loading.decodedFrameFallbackMs);
+        } else checkLegacyFrame();
+      });
+    }
+
+    function showRoomVideo(room) {
+      const run = ++room.videoRun;
+      room.videoCover.style.display = room.videoCoverReady ? "block" : "none";
+      room.video.style.opacity = room.videoCoverReady ? ".001" : "0";
+      const isCurrent = () => run === room.videoRun && levelRooms[activeRoomIndex] === room && !gameOver;
+      const frameReady = waitForRoomVideoFrame(room, () => {
+        if (isCurrent()) room.video.style.opacity = "1";
+      }, 0); // Keep covering a slow/stalled active video until it really presents a frame.
+      frameReady.then(ready => {
+        if (ready && isCurrent()) room.videoCover.style.display = "none";
+      });
+      const play = room.video.play();
+      if (play) play.catch(() => {
+        if (run === room.videoRun) room.videoFrameCancel?.();
+        // Keep the cached room visible if autoplay is blocked. READY or a
+        // subsequent navigation tap can retry within a real user gesture.
+      });
+    }
+
     async function preloadRoomBackdrop(room) {
       if (room.scene.roomImage) {
         try {
@@ -2043,12 +2141,28 @@
       if (!room.scene.roomVideo) throw new Error("No usable room image or video.");
       const loaded = waitForMedia(room.video, "loadeddata", CONFIG.loading.jumpscareDownloadTimeoutMs);
       room.video.preload = "auto";
+      room.video.autoplay = false;
       room.video.muted = true;
       room.video.loop = true;
       room.video.playsInline = true;
       room.video.src = room.scene.roomVideo;
       room.video.load();
       await loaded;
+      // loadeddata prepares media data, not necessarily the first displayed
+      // video layer. Warm it behind the loader and cache an actual frame.
+      room.video.style.display = "block";
+      room.video.style.opacity = ".001";
+      const frameReady = waitForRoomVideoFrame(room);
+      const cancelWarmup = room.videoFrameCancel;
+      try {
+        const play = room.video.play();
+        if (play) play.catch(cancelWarmup);
+        await frameReady;
+      } catch { room.videoFrameCancel?.(); }
+      cacheRoomVideoFrame(room);
+      room.video.pause();
+      room.video.style.display = "none";
+      room.video.style.opacity = "1";
       room.media = room.video;
       room.backdropReady = true;
     }
@@ -2077,7 +2191,11 @@
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
+      if (!initial && previous && previous.media === previous.video) cacheRoomVideoFrame(previous);
       for (const room of levelRooms) {
+        room.videoRun++;
+        room.videoFrameCancel?.();
+        room.videoCover.style.display = "none";
         room.image.style.display = room.video.style.display = "none";
         room.video.pause();
       }
@@ -2091,11 +2209,11 @@
       roomMediaReady = room.backdropReady;
       syncActiveScare(room);
       room.media.style.display = "block";
-      if (room.media === room.video) { const play = room.video.play(); if (play) play.catch(() => {}); }
       updateLimits();
       buildSnapPoints();
       offsetX = clamp(room.cameraFraction * minOffset, minOffset, 0);
       applyWorldOffset(false);
+      if (room.media === room.video) showRoomVideo(room);
       if (currentWord) relayoutScatteredLetters();
       anomalyWorld.style.display = anomalyActive && anomalyRoomIndex !== index ? "none" : "";
       spiderWorld.style.display = spiderActive && spiderRoomIndex !== index ? "none" : "";
@@ -2453,6 +2571,8 @@
       if (!wordsReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       gameplayStarting = true;
       readyButton.disabled = true;
+      const activeRoom = levelRooms[activeRoomIndex];
+      if (activeRoom && activeRoom.media === activeRoom.video && activeRoom.video.paused) showRoomVideo(activeRoom);
       try {
         // Calling play here also unlocks decoding on browsers that require
         // a user gesture. Gameplay stays on the clue card until it is ready.
@@ -2540,6 +2660,11 @@
       renderedVideoWidth = dimensions.width * (height / dimensions.height);
       minOffset = Math.min(0, width - renderedVideoWidth);
 
+      const cover = levelRooms[activeRoomIndex]?.videoCover;
+      if (cover) {
+        cover.style.width = `${renderedVideoWidth}px`;
+        cover.style.height = `${height}px`;
+      }
       letterWorld.style.width = `${renderedVideoWidth}px`;
       letterWorld.style.height = `${height}px`;
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
@@ -2587,6 +2712,8 @@
       lastAppliedWorldOffset = offsetX;
       roomImage.classList.toggle("snapping", animate);
       video.classList.toggle("snapping", animate);
+      const videoCover = levelRooms[activeRoomIndex]?.videoCover;
+      videoCover?.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
       spiderWorld.classList.toggle("snapping", animate);
@@ -2594,6 +2721,7 @@
       const transform = `translateX(${offsetX}px)`;
       roomImage.style.transform = transform;
       video.style.transform = transform;
+      if (videoCover) videoCover.style.transform = transform;
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
       spiderWorld.style.transform = transform;
@@ -3835,6 +3963,8 @@
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
       // Stop competing room-video decoding once the full-screen scare owns playback.
+      const room = levelRooms[activeRoomIndex];
+      if (room) { room.videoRun++; room.videoFrameCancel?.(); }
       video.pause();
       // The same cleanup applies when no video is selected by the failure roll.
       handVisible = false;
