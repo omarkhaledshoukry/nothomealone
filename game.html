@@ -888,14 +888,26 @@
     .arabic-hud-prefix { color: #fff; direction: rtl; unicode-bidi: isolate; }
     .arabic-hud-remaining { color: rgba(255,255,255,.58); direction: rtl; unicode-bidi: isolate; }
 
-    /* Suppress browser-painted tap/selection feedback on every game surface,
-       including the clickable viewport and full-screen retry target. */
+    /* Include the outer page too: older Android browsers can highlight a
+       touch target's ancestor while the visible room is being replaced. */
+    html,
+    body,
+    #game,
     #portraitViewport,
     #portraitViewport * {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       -webkit-touch-callout: none;
       -webkit-user-select: none;
       user-select: none;
+    }
+
+    /* Native edge glow is separate from tap highlighting. Camera movement
+       uses transforms, so the page and game frame never need overscroll. */
+    html,
+    body,
+    #game,
+    #portraitViewport {
+      overscroll-behavior: none;
     }
 
     #portraitViewport button:focus,
