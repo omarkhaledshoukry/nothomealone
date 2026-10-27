@@ -51,7 +51,7 @@ wrapNavigation = true
 [language]
 # "en" selects English words/puzzles and Dudu; "ar" selects words_ar.txt, puzzles_ar.txt and Arabic typography.
 # Progress is kept separately for each language in the browser.
-code = "ar"
+code = "en"
 
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
@@ -132,7 +132,7 @@ minAnswerLength = 3
 maxAnswerLength = 10
 hintFadeMs = 140
 hintBlurPx = 5
-minFontPx = 18
+minFontPx = 27
 maxFontPx = 27
 fontHeightFraction = 0.033
 
