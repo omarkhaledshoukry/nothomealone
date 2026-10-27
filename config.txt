@@ -51,7 +51,7 @@ wrapNavigation = true
 [language]
 # "en" selects English words/puzzles and Dudu; "ar" selects words_ar.txt, puzzles_ar.txt and Arabic typography.
 # Progress is kept separately for each language in the browser.
-code = "ar"
+code = "en"
 
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
@@ -108,7 +108,7 @@ flyingLetters = false
 startLevel = 1
 chance = 0.9
 wordCount = 1
-timeLimitMs = 60000
+timeLimitMs = 120000
 decoyLetterChance = 0
 flyingLetters = false
 evadesCamera = false
@@ -132,8 +132,19 @@ minAnswerLength = 3
 maxAnswerLength = 10
 hintFadeMs = 140
 hintBlurPx = 5
-minFontPx = 27
+
+# Paper riddle text sizes, independent for each language (UI and scene letters are unchanged).
+# Starting size = viewport height * fontHeightFraction, limited by minFontPx/maxFontPx.
+# Long riddles may shrink further to fit the paper. These apply to both riddle level types.
+# Older shared [puzzles] font settings remain supported when language settings are absent.
+[puzzles.en]
+minFontPx = 18
 maxFontPx = 27
+fontHeightFraction = 0.033
+
+[puzzles.ar]
+minFontPx = 32
+maxFontPx = 40
 fontHeightFraction = 0.033
 
 # Fixed decoy letters correct only after being seen and panned fully out of view.
@@ -209,6 +220,23 @@ missCost = 1
 wordCost = 1
 wordReserve = 1
 slotColors = ["#e0bd38", "#a6d33c", "#78d936", "#52d52f"]
+
+# Keyboard shortcuts while playing. Mouse/touch controls remain available.
+# Hold A/D to pan within the current room. Left/Right switches to the previous/next room once per press.
+# Up or Space takes one photo per press. Holding a room or shutter key never repeats the action.
+# Down dismisses the hand. Use standard KeyboardEvent.code names, independent of keyboard language.
+# [] disables an individual action. Room keys also respect rooms.wrapNavigation.
+# Avoid assigning one key to different actions. enabled=false disables all added shortcuts.
+# Speed is measured in viewport widths per second. Focused HINT keeps its Space/Enter hold behavior.
+[keyboard]
+enabled = true
+leftKeys = ["KeyA"]
+rightKeys = ["KeyD"]
+previousRoomKeys = ["ArrowLeft"]
+nextRoomKeys = ["ArrowRight"]
+shutterKeys = ["ArrowUp", "Space"]
+dismissHandKeys = ["ArrowDown"]
+panSpeedScreensPerSecond = 1.2
 
 # Drag/inertia settings use CSS pixels and milliseconds. Speed thresholds are CSS pixels per millisecond.
 [camera]

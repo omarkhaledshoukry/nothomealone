@@ -1470,7 +1470,17 @@
     "hintBlurPx": 5,
     "minFontPx": 18,
     "maxFontPx": 27,
-    "fontHeightFraction": 0.033
+    "fontHeightFraction": 0.033,
+    "en": {
+      "minFontPx": 18,
+      "maxFontPx": 27,
+      "fontHeightFraction": 0.033
+    },
+    "ar": {
+      "minFontPx": 18,
+      "maxFontPx": 27,
+      "fontHeightFraction": 0.033
+    }
   },
   "milestones": {
     "enabled": true,
@@ -1510,10 +1520,33 @@
         0
       ]
     }
+  },
+  "keyboard": {
+    "enabled": true,
+    "leftKeys": [
+      "KeyA"
+    ],
+    "rightKeys": [
+      "KeyD"
+    ],
+    "previousRoomKeys": [
+      "ArrowLeft"
+    ],
+    "nextRoomKeys": [
+      "ArrowRight"
+    ],
+    "shutterKeys": [
+      "ArrowUp",
+      "Space"
+    ],
+    "dismissHandKeys": [
+      "ArrowDown"
+    ],
+    "panSpeedScreensPerSecond": 1.2
   }
 };
-    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true]};
-    const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"]];
+    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10]};
+    const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"], ["puzzles.en", "minFontPx", "maxFontPx"], ["puzzles.ar", "minFontPx", "maxFontPx"]];
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
     const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
@@ -1521,12 +1554,17 @@
     let folderImportBusy = false;
     let gameInitializationStarted = false;
 
+    const KEYBOARD_BINDINGS = ["leftKeys", "rightKeys", "previousRoomKeys", "nextRoomKeys", "shutterKeys", "dismissHandKeys"];
+    const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
+
     function configLeaf(path, tree = CONFIG_DEFAULTS) {
       return path.split(".").reduce((value, key) => value && Object.prototype.hasOwnProperty.call(value, key) ? value[key] : undefined, tree);
     }
 
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
+      if (/^keyboard\.(leftKeys|rightKeys|previousRoomKeys|nextRoomKeys|shutterKeys|dismissHandKeys)$/.test(path)) return Array.isArray(value) && value.length <= 16 &&
+        new Set(value).size === value.length && value.every(code => typeof code === "string" && KEYBOARD_CODE_PATTERN.test(code));
       if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
       if (/^milestones\.(words|puzzles)\.mode$/.test(path)) return ["stage", "cumulative"].includes(value);
       if (/^milestones\.(words|puzzles|rooms)\.startLevels$/.test(path)) return Array.isArray(value) && value.length === 3 && value[0] === 1 &&
@@ -1587,11 +1625,31 @@
         const parts = path.split("."), key = parts.pop();
         configLeaf(parts.join("."), resolved)[key] = value;
       }
+      // Older config files used one shared paper size. Language-specific values
+      // take precedence without changing the other language's settings.
+      for (const language of ["en", "ar"]) for (const key of ["minFontPx", "maxFontPx", "fontHeightFraction"]) {
+        if (values.has(`puzzles.${key}`) && !values.has(`puzzles.${language}.${key}`)) {
+          resolved.puzzles[language][key] = resolved.puzzles[key];
+        }
+      }
       for (const [sectionName, minKey, maxKey] of CONFIG_RANGE_PAIRS) {
-        if (resolved[sectionName][minKey] <= resolved[sectionName][maxKey]) continue;
-        resolved[sectionName][minKey] = CONFIG_DEFAULTS[sectionName][minKey];
-        resolved[sectionName][maxKey] = CONFIG_DEFAULTS[sectionName][maxKey];
+        const section = configLeaf(sectionName, resolved), defaults = configLeaf(sectionName);
+        if (section[minKey] <= section[maxKey]) continue;
+        section[minKey] = defaults[minKey];
+        section[maxKey] = defaults[maxKey];
         warnings.push(`Default range used for ${sectionName}.${minKey}/${maxKey}`);
+      }
+      // Do not let a newly added default room shortcut replace an existing
+      // custom action when reading a config from before room keys were added.
+      for (const name of ["previousRoomKeys", "nextRoomKeys"]) {
+        if (values.has(`keyboard.${name}`)) continue;
+        resolved.keyboard[name] = resolved.keyboard[name].filter(code =>
+          !["leftKeys", "rightKeys", "shutterKeys", "dismissHandKeys"].some(other => resolved.keyboard[other].includes(code)));
+      }
+      const boundKeys = KEYBOARD_BINDINGS.flatMap(name => resolved.keyboard[name]);
+      if (new Set(boundKeys).size !== boundKeys.length) {
+        for (const name of KEYBOARD_BINDINGS) resolved.keyboard[name] = [...CONFIG_DEFAULTS.keyboard[name]];
+        warnings.push("Keyboard actions share a key; default key bindings used.");
       }
       if (Object.values(resolved.levels).every(level => level.chance === 0)) {
         for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
@@ -1967,8 +2025,12 @@
     let panDirectionTravel = 0;
     let cameraMomentumFrame = 0;
     let panPointerId = null;
+    const keyboardHeldCodes = new Set();
+    let keyboardPanFrame = 0;
+    let keyboardPanTime = null;
 
     let handVisible = false;
+    let handDismissing = false;
     let handTimer = null;
     let handPointerId = null;
     let handStartY = 0;
@@ -2385,6 +2447,7 @@
         if (anomalyActive && anomalyRoomIndex === activeRoomIndex && anomalyHasBeenSeen) removeAnomalyAndRestartTimer();
       }
       stopButterflyFlight();
+      stopKeyboardInput();
       finishPanGesture();
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
@@ -2822,8 +2885,9 @@
     function fitClueList() {
       if (!cluePaper.naturalHeight) return;
       if (isPuzzleLevel()) {
-        let size = Math.min(CONFIG.puzzles.maxFontPx, Math.max(CONFIG.puzzles.minFontPx,
-          viewport.getBoundingClientRect().height * CONFIG.puzzles.fontHeightFraction));
+        const font = CONFIG.puzzles[CONFIG.language.code];
+        let size = Math.min(font.maxFontPx, Math.max(font.minFontPx,
+          viewport.getBoundingClientRect().height * font.fontHeightFraction));
         puzzleText.style.fontSize = `${size}px`;
         const text = document.getElementById("cluePaperText"), title = document.getElementById("clueTitle");
         const available = Math.max(1, text.clientHeight - title.offsetHeight - parseFloat(getComputedStyle(title).marginBottom));
@@ -3206,6 +3270,7 @@
 
     function updateCameraControls() {
       const blocked = !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
+      if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = blocked || hintActive || wordTransitionPending || captureInProgress;
       prevRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === 0;
       nextRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === levelRooms.length - 1;
@@ -3455,6 +3520,7 @@
     snapButton.addEventListener("pointerdown", event => {
       if (snapButton.disabled || event.isPrimary === false || event.button !== 0) return;
       event.stopPropagation();
+      stopKeyboardInput();
       finishPanGesture();
       finishShutterGesture();
       shutterPointerId = event.pointerId;
@@ -3819,6 +3885,118 @@
       }, CONFIG.letters.wordTransitionMs);
     }
 
+    function keyboardEventCode(event) {
+      if (event.code) return event.code;
+      const aliases = { " ": "Space", Spacebar: "Space", Left: "ArrowLeft", Right: "ArrowRight", Up: "ArrowUp", Down: "ArrowDown" };
+      if (aliases[event.key]) return aliases[event.key];
+      if (/^[a-z]$/i.test(event.key)) return `Key${event.key.toUpperCase()}`;
+      if (/^[0-9]$/.test(event.key)) return `Digit${event.key}`;
+      return event.key;
+    }
+
+    function keyboardAction(code) {
+      return KEYBOARD_BINDINGS.find(name => CONFIG.keyboard[name].includes(code));
+    }
+
+    function keyboardInputIsAvailable() {
+      return CONFIG.keyboard.enabled && gameplayStarted && roomsReady && !hintActive &&
+        !gameOver && !roomCompleted && !document.hidden;
+    }
+
+    function keyboardPanDirection() {
+      const held = name => CONFIG.keyboard[name].some(code => keyboardHeldCodes.has(code));
+      return Number(held("rightKeys")) - Number(held("leftKeys"));
+    }
+
+    function stopKeyboardInput() {
+      if (keyboardPanFrame) cancelAnimationFrame(keyboardPanFrame);
+      keyboardPanFrame = 0;
+      keyboardPanTime = null;
+      keyboardHeldCodes.clear();
+    }
+
+    function startKeyboardPan() {
+      if (keyboardPanFrame || !keyboardPanDirection()) return;
+      keyboardPanTime = performance.now();
+      const step = time => {
+        keyboardPanFrame = 0;
+        if (!keyboardInputIsAvailable() || handVisible || isDragging) {
+          stopKeyboardInput();
+          return;
+        }
+        const direction = keyboardPanDirection();
+        if (!direction) { keyboardPanTime = null; return; }
+        const elapsed = clamp(time - keyboardPanTime, 0, 50);
+        keyboardPanTime = time;
+        // Looking right moves the panorama left. Use viewport-relative speed
+        // so the same bindings feel consistent across different screen sizes.
+        offsetX = clamp(offsetX - direction * viewport.getBoundingClientRect().width *
+          CONFIG.keyboard.panSpeedScreensPerSecond * elapsed / 1000, minOffset, 0);
+        applyWorldOffset(false, true);
+        updateAnomalyVisibilityState();
+        keyboardPanFrame = requestAnimationFrame(step);
+      };
+      keyboardPanFrame = requestAnimationFrame(step);
+    }
+
+    function keyboardDown(event) {
+      if (event.defaultPrevented) return;
+      if (event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select")) {
+        stopKeyboardInput();
+        return;
+      }
+      const code = keyboardEventCode(event), action = keyboardAction(code);
+      if (!action || !keyboardInputIsAvailable()) return;
+      // Keep native activation for buttons reached using Tab. A focused HINT
+      // already handles Space/Enter itself before this bubbling listener.
+      if (viewport.classList.contains("keyboard-controls") && ["Space", "Enter"].includes(code) &&
+          event.target?.closest?.("button") && event.target.closest("button") !== snapButton) return;
+      event.preventDefault();
+      // Discrete actions fire once per press, including room navigation.
+      // OS repeat must never drain batteries or skip through rooms.
+      if (event.repeat || keyboardHeldCodes.has(code)) return;
+      keyboardHeldCodes.add(code);
+      if (action === "dismissHandKeys") {
+        if (handVisible) hideHand({ continueFromDrag: handDragStarted });
+        return;
+      }
+      if (handVisible) return;
+      if (action === "previousRoomKeys" || action === "nextRoomKeys") {
+        const held = [...keyboardHeldCodes];
+        switchRoom(action === "previousRoomKeys" ? -1 : 1);
+        // Room activation clears old input. Keep the navigation key latched
+        // until release, and continue any A/D pan the player is still holding.
+        if (keyboardInputIsAvailable() && !handVisible) {
+          for (const heldCode of held) keyboardHeldCodes.add(heldCode);
+          startKeyboardPan();
+        }
+        return;
+      }
+      if (action === "shutterKeys") {
+        snapCamera();
+        return;
+      }
+      finishPanGesture();
+      finishShutterGesture();
+      stopShutterEffect();
+      startKeyboardPan();
+    }
+
+    function keyboardUp(event) {
+      const code = keyboardEventCode(event);
+      if (!keyboardHeldCodes.delete(code)) return;
+      event.preventDefault();
+      if (!keyboardPanDirection()) {
+        if (keyboardPanFrame) cancelAnimationFrame(keyboardPanFrame);
+        keyboardPanFrame = 0;
+        keyboardPanTime = null;
+      } else startKeyboardPan();
+    }
+
+    window.addEventListener("keydown", keyboardDown);
+    window.addEventListener("keyup", keyboardUp);
+
     function stopCameraMomentum() {
       if (cameraMomentumFrame) cancelAnimationFrame(cameraMomentumFrame);
       cameraMomentumFrame = 0;
@@ -3919,6 +4097,7 @@
       if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
       if (event.isPrimary === false) return;
       if (event.button !== undefined && event.button !== 0) return;
+      stopKeyboardInput();
       // The shutter keeps its native click/tap. Never capture its press as
       // a camera drag, including when a previous flick is still coasting.
       if (event.target.closest?.("button, [role='button']")) {
@@ -4373,6 +4552,7 @@
       video.muted = true;
       // The same cleanup applies when no video is selected by the failure roll.
       handVisible = false;
+      handDismissing = false;
       handBlocker.className = "";
       handBlocker.setAttribute("aria-hidden", "true");
       viewport.classList.remove("hand-active");
@@ -4480,6 +4660,7 @@
     function showHand() {
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || handVisible || gameOver || roomCompleted) return;
       handVisible = true;
+      handDismissing = false;
       updateCameraControls();
       finishPanGesture();
       finishShutterGesture();
@@ -4492,16 +4673,21 @@
       // Ensure the animation restarts cleanly every time.
       void handImage.offsetWidth;
       window.setTimeout(() => {
-        if (!handVisible) return;
+        if (!handVisible || handDismissing) return;
         handBlocker.className = "active resting";
       }, CONFIG.hand.enterMs);
     }
 
     function hideHand({ continueFromDrag = false } = {}) {
-      if (!handVisible) return;
+      if (!handVisible || handDismissing) return;
+      handDismissing = true;
       viewport.classList.remove("hand-active");
+      const pointerId = handPointerId;
       handPointerId = null;
       handDragStarted = false;
+      if (pointerId !== null) {
+        try { if (handBlocker.hasPointerCapture(pointerId)) handBlocker.releasePointerCapture(pointerId); } catch {}
+      }
 
       if (continueFromDrag) {
         // Continue smoothly from the exact dragged position. Do NOT reset the
@@ -4519,6 +4705,7 @@
 
       window.setTimeout(() => {
         handVisible = false;
+        handDismissing = false;
         updateCameraControls();
         handBlocker.className = "";
         handBlocker.setAttribute("aria-hidden", "true");
@@ -4528,7 +4715,7 @@
     }
 
     function handPointerDown(event) {
-      if (!handVisible || (event.button !== undefined && event.button !== 0)) return;
+      if (!handVisible || handDismissing || (event.button !== undefined && event.button !== 0)) return;
       event.preventDefault();
       event.stopPropagation();
       handPointerId = event.pointerId;
@@ -4624,6 +4811,8 @@
     document.fonts?.ready.then(requestViewportLayout);
 
     window.addEventListener("keydown", event => {
+      if (event.defaultPrevented || event.ctrlKey || event.altKey || event.metaKey || event.isComposing ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select")) return;
       if (event.key === "Backspace" || event.key === "Back") {
         event.preventDefault();
         undoLastLetter();
@@ -4641,6 +4830,7 @@
       if (event.target === viewport && !viewport.hasPointerCapture(event.pointerId)) pointerCancel(event);
     });
     function interruptCameraInput() {
+      stopKeyboardInput();
       hidePuzzleHint({ immediate: true });
       finishPanGesture();
       finishShutterGesture();
