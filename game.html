@@ -7,6 +7,13 @@
   <title>Room Word Hunt</title>
   <style>
     @font-face {
+      font-family: "Game Arabic Paper";
+      src: url("./Arabic-Font.otf") format("opentype");
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
       font-family: "Game Arabic";
       src: local("Noto Naskh Arabic"), local("Amiri"), local("Traditional Arabic"), local("Geeza Pro"),
         url("./NotoNaskhArabic-Regular.ttf") format("truetype");
@@ -621,6 +628,7 @@
       text-decoration: underline;
       text-underline-offset: .12em;
     }
+    #clueTitle.riddle-title { text-transform: none; }
 
     #clueList {
       margin: 0;
@@ -637,7 +645,7 @@
 
     #puzzleText {
       margin: 0;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       font-size: var(--puzzle-font-size, 25px);
       line-height: 1.3;
       overflow-wrap: anywhere;
@@ -646,7 +654,7 @@
     }
     #puzzleText[hidden], #clueList[hidden] { display: none; }
     :root[data-game-language="ar"] #puzzleText {
-      font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
       direction: rtl;
       text-align: right;
     }
@@ -906,8 +914,7 @@
       100% { opacity: 0; transform: scale(1.08); }
     }
 
-    :root[data-game-language="ar"] .letter-glyph,
-    :root[data-game-language="ar"] .captured-letter {
+    :root[data-game-language="ar"] .letter-glyph {
       font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       text-transform: none;
       letter-spacing: 0;
@@ -915,7 +922,7 @@
       direction: rtl;
     }
     :root[data-game-language="ar"] #clueList {
-      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       direction: rtl;
       text-align: right;
       text-transform: none;
@@ -932,7 +939,17 @@
       text-transform: none;
       white-space: nowrap;
     }
-    .arabic-hud-prefix { color: #fff; direction: rtl; unicode-bidi: isolate; }
+    .arabic-hud-prefix {
+      color: #fff; direction: rtl; unicode-bidi: isolate;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+    }
+    :root[data-game-language="ar"] .captured-letter {
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      text-transform: none;
+      letter-spacing: 0;
+      line-height: 1.5;
+      direction: rtl;
+    }
     .arabic-hud-remaining { color: rgba(255,255,255,.58); direction: rtl; unicode-bidi: isolate; }
 
     /* Include the outer page too: older Android browsers can highlight a
@@ -1122,7 +1139,8 @@
       "Geeza Pro"
     ],
     "puzzlesFile": "puzzles.txt",
-    "arabicPuzzlesFile": "puzzles_ar.txt"
+    "arabicPuzzlesFile": "puzzles_ar.txt",
+    "arabicPaperFontFile": "Arabic-Font.otf"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -1140,44 +1158,58 @@
   },
   "levels": {
     "standard": {
-      "chance": 0.5,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0,
       "flyingLetters": false,
-      "evadesCamera": false
+      "evadesCamera": false,
+      "startLevel": 1
     },
     "decoy": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 60000,
       "decoyLetterChance": 0.1,
       "flyingLetters": false,
-      "evadesCamera": false
+      "evadesCamera": false,
+      "startLevel": 1
     },
     "butterfly": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 30000,
       "decoyLetterChance": 0,
       "flyingLetters": true,
-      "evadesCamera": false
+      "evadesCamera": false,
+      "startLevel": 1
     },
     "flyingDecoy": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
       "flyingLetters": true,
-      "evadesCamera": true
+      "evadesCamera": true,
+      "startLevel": 1
     },
     "puzzle": {
-      "chance": 0.5,
+      "chance": 0.9,
       "wordCount": 1,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0,
       "flyingLetters": false,
-      "evadesCamera": false
+      "evadesCamera": false,
+      "startLevel": 1
+    },
+    "flyingPuzzle": {
+      "chance": 0.1,
+      "wordCount": 1,
+      "timeLimitMs": 120000,
+      "decoyLetterChance": 0.1,
+      "flyingLetters": true,
+      "evadesCamera": true,
+      "startLevel": 11
     }
   },
   "failures": {
@@ -1266,7 +1298,8 @@
       "all",
       "all",
       "all"
-    ]
+    ],
+    "decoyStartLevel": 1
   },
   "butterfly": {
     "minSpeed": 44,
@@ -1312,10 +1345,12 @@
   "anomaly": {
     "enabled": true,
     "afterWords": 1,
+    "riddleAfterWords": 0,
     "checkMs": 15000,
     "spawnChance": 0.5,
     "offscreenMarginPx": 8,
-    "alphaThreshold": 8
+    "alphaThreshold": 8,
+    "startLevel": 1
   },
   "spider": {
     "enabled": true,
@@ -1332,7 +1367,8 @@
     "volume": 1,
     "skipLeadingSilence": true,
     "silenceThreshold": 0.001,
-    "soundPreRollSamples": 256
+    "soundPreRollSamples": 256,
+    "startLevel": 1
   },
   "hand": {
     "enabled": true,
@@ -1350,7 +1386,8 @@
     "dismissHeightFraction": 0.1,
     "exitViewportMultiplier": 1.15,
     "exitImageMultiplier": 1.1,
-    "blurPx": 3
+    "blurPx": 3,
+    "startLevel": 1
   },
   "shutter": {
     "durationMs": 240,
@@ -1416,7 +1453,7 @@
     "previousRoom": "PREV",
     "nextRoom": "NEXT",
     "hint": "HINT",
-    "puzzleTitle": "PUZZLE"
+    "puzzleTitle": "Riddle"
   },
   "rooms": {
     "count": 4,
@@ -1434,9 +1471,48 @@
     "minFontPx": 18,
     "maxFontPx": 27,
     "fontHeightFraction": 0.033
+  },
+  "milestones": {
+    "enabled": true,
+    "words": {
+      "startLevels": [
+        1,
+        10,
+        20
+      ],
+      "poolEnds": [
+        0,
+        0
+      ],
+      "mode": "stage"
+    },
+    "puzzles": {
+      "startLevels": [
+        1,
+        10,
+        20
+      ],
+      "poolEnds": [
+        0,
+        0
+      ],
+      "mode": "stage"
+    },
+    "rooms": {
+      "startLevels": [
+        1,
+        10,
+        20
+      ],
+      "maxSceneNumbers": [
+        5,
+        10,
+        0
+      ]
+    }
   }
 };
-    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150]};
+    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true]};
     const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"]];
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
@@ -1452,6 +1528,14 @@
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
       if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
+      if (/^milestones\.(words|puzzles)\.mode$/.test(path)) return ["stage", "cumulative"].includes(value);
+      if (/^milestones\.(words|puzzles|rooms)\.startLevels$/.test(path)) return Array.isArray(value) && value.length === 3 && value[0] === 1 &&
+        value.every((level, index) => Number.isSafeInteger(level) && level >= 1 && level <= 1000000001 && (!index || level >= value[index - 1]));
+      if (/^milestones\.(words|puzzles)\.poolEnds$/.test(path)) return Array.isArray(value) && value.length === 2 &&
+        (value.every(end => end === 0) || value.every(end => Number.isSafeInteger(end) && end > 0 && end <= 2000000000) && value[0] < value[1]);
+      if (path === "milestones.rooms.maxSceneNumbers") return Array.isArray(value) && value.length === 3 &&
+        value.every((number, index) => Number.isSafeInteger(number) && number >= 0 && number <= 2000000000 &&
+          (!index || (number || Infinity) >= (value[index - 1] || Infinity)));
       if (path.startsWith("assets.") && path !== "assets.letterFontLocalNames") {
         try {
           for (const file of Array.isArray(value) ? value : [value]) {
@@ -1557,7 +1641,40 @@
     function wordsFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
-    function isPuzzleLevel() { return levelType.name === "puzzle"; }
+    function isPuzzleType(name) { return name === "puzzle" || name === "flyingPuzzle"; }
+    function isPuzzleLevel() { return isPuzzleType(levelType.name); }
+    function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
+    function progressionLevel() { return Math.max(1, currentRoomNumber); }
+    function levelIsUnlocked(startLevel) { return !CONFIG.milestones.enabled || progressionLevel() >= startLevel; }
+    function milestoneStage(startLevels) {
+      let stage = 0;
+      for (let index = 1; index < startLevels.length; index++) if (progressionLevel() >= startLevels[index]) stage = index;
+      return stage;
+    }
+    const milestoneSelectionInfo = { words: null, puzzles: null, rooms: null };
+    function contentMilestonePool(entries, kind) {
+      const settings = CONFIG.milestones[kind];
+      if (!CONFIG.milestones.enabled) {
+        milestoneSelectionInfo[kind] = { level: progressionLevel(), stage: 0, first: 1, last: entries.length, total: entries.length };
+        return entries;
+      }
+      const total = entries.length, automatic = settings.poolEnds.every(end => end === 0);
+      const ends = automatic ? [Math.ceil(total / 3), Math.ceil(total * 2 / 3)] : settings.poolEnds.map(end => Math.min(end, total));
+      const bounds = [0, ...ends, total];
+      let stage = milestoneStage(settings.startLevels);
+      // A one- or two-entry custom file keeps using its last non-empty pool.
+      if (automatic && settings.mode === "stage") while (stage > 0 && bounds[stage] === bounds[stage + 1]) stage--;
+      const first = settings.mode === "cumulative" ? 0 : bounds[stage], last = bounds[stage + 1];
+      milestoneSelectionInfo[kind] = { level: progressionLevel(), stage: stage + 1, first: first + 1, last, total };
+      return entries.slice(first, last);
+    }
+    function roomMilestonePool(scenes) {
+      const settings = CONFIG.milestones.rooms;
+      const stage = milestoneStage(settings.startLevels), maxNumber = CONFIG.milestones.enabled ? settings.maxSceneNumbers[stage] : 0;
+      const allowed = maxNumber ? scenes.filter(scene => scene.number <= maxNumber) : scenes;
+      milestoneSelectionInfo.rooms = { level: progressionLevel(), stage: stage + 1, maxSceneNumber: maxNumber, count: allowed.length };
+      return allowed;
+    }
     function puzzlesFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicPuzzlesFile : config.assets.puzzlesFile;
     }
@@ -1632,14 +1749,18 @@
       for (const [name, values] of Object.entries(CONFIG.levels)) LEVEL_TYPES[name] = { name, ...values };
     }
     function chooseLevelType() {
-      const types = Object.values(LEVEL_TYPES);
+      const types = Object.values(LEVEL_TYPES).filter(level => level.chance > 0 && levelIsUnlocked(level.startLevel));
+      if (!types.length) {
+        console.warn("No weighted level type is unlocked; using the built-in regular riddle fallback.");
+        return { name: "puzzle", ...CONFIG_DEFAULTS.levels.puzzle };
+      }
       const total = types.reduce((sum, level) => sum + level.chance, 0);
       let roll = Math.random() * total;
       for (const type of types) {
         roll -= type.chance;
         if (type.chance > 0 && roll < 0) return type;
       }
-      return types.find(type => type.chance > 0) || LEVEL_TYPES.standard;
+      return types[types.length - 1];
     }
     refreshConfigBindings();
     let levelType = LEVEL_TYPES.standard;
@@ -2328,6 +2449,13 @@
       levelLoading = true;
       try {
         availableScenes = await discoverScenes();
+        // Retry/resume must retain its original scene set even after config edits.
+        if (!resumedLevel) availableScenes = roomMilestonePool(availableScenes);
+        if (!resumedLevel && CONFIG.milestones.enabled && availableScenes.length < levelRoomCount) {
+          wordLoadInfo.url = new URL(levelDataFile(), document.baseURI).href;
+          showWordLoadError(new Error(`The scene milestone at level ${progressionLevel()} allows ${availableScenes.length} complete room/jumpscare pairs, but rooms.count requires ${levelRoomCount}. Raise milestones.rooms.maxSceneNumbers, lower rooms.count, or add the matching scene files, then reload.`));
+          return;
+        }
         if (availableScenes.length < levelRoomCount) throw new Error(`This level needs ${levelRoomCount} complete numbered room/jumpscare pairs; found ${availableScenes.length}.`);
         if (isPuzzleLevel()) {
           try { await preparePuzzleForLevel(); }
@@ -2441,10 +2569,11 @@
           if (!response.ok) throw new Error(`The server returned HTTP ${response.status} for ${file}.`);
           text = await response.text(); type = response.headers.get("content-type") || ""; source = response.url;
         }
-        const eligible = parsePuzzleList(text, type).filter(puzzle =>
+        const scoped = contentMilestonePool(parsePuzzleList(text, type), "puzzles");
+        const eligible = scoped.filter(puzzle =>
           puzzle.answer.length >= CONFIG.puzzles.minAnswerLength && puzzle.answer.length <= CONFIG.puzzles.maxAnswerLength &&
           puzzle.answer.length <= availableScenes.length);
-        if (!eligible.length) throw new Error(`No puzzle answer fits ${CONFIG.puzzles.minAnswerLength}–${CONFIG.puzzles.maxAnswerLength} letters and the ${availableScenes.length} available room/jumpscare pairs.`);
+        if (!eligible.length) throw new Error(`No riddle in the current file pool fits ${CONFIG.puzzles.minAnswerLength}–${CONFIG.puzzles.maxAnswerLength} letters and the ${availableScenes.length} room/jumpscare pairs unlocked at level ${progressionLevel()}. Check your content and scene milestones.`);
         currentPuzzle = { ...eligible[Math.floor(Math.random() * eligible.length)] };
         levelRoomCount = Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
         acceptWordList(currentPuzzle.answer, source, "text/plain");
@@ -2454,7 +2583,8 @@
 
     function acceptWordList(text, source, contentType = "", { preserveOrder = false } = {}) {
       const loaded = parseWordList(text, contentType);
-      const eligible = loaded.filter(word => word.length > 0 && word.length <= levelRoomCount);
+      const scoped = isPuzzleLevel() || resumedLevel ? loaded : contentMilestonePool(loaded, "words");
+      const eligible = scoped.filter(word => word.length > 0 && word.length <= levelRoomCount);
       const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length > 0 && word.length <= levelRoomCount) : [];
       const pool = preserveOrder ? eligible : [...seeded, ...shuffleArray(eligible.filter(word => !seeded.includes(word)))];
       if (pool.length < levelType.wordCount) throw new Error(`${WORDS_FILE} needs at least ${levelType.wordCount} unique words of ${levelRoomCount} letters or fewer; found ${pool.length}.`);
@@ -2588,12 +2718,13 @@
         }
         const wordsPath = selectedFolderPath(wordsFileFor(selectedConfig));
         const wordsFile = find(wordsPath);
-        const needsWords = Object.entries(selectedConfig.levels).some(([name, level]) => name !== "puzzle" && level.chance > 0);
+        const needsWords = Object.entries(selectedConfig.levels).some(([name, level]) => !isPuzzleType(name) && level.chance > 0);
         if (!wordsFile && needsWords) throw new Error(`The selected folder does not contain ${wordsPath}. Choose the folder containing that file.`);
         const wordsText = wordsFile ? await wordsFile.text() : "";
         if (wordsFile) parseWordList(wordsText, wordsFile.type, selectedConfig.language.code);
         const puzzlesPath = selectedFolderPath(puzzlesFileFor(selectedConfig)), puzzlesFile = find(puzzlesPath);
-        if (!puzzlesFile && selectedConfig.levels.puzzle.chance > 0) throw new Error(`The selected folder does not contain ${puzzlesPath}. Add it beside config.txt, then choose the folder again.`);
+        const needsPuzzles = Object.entries(selectedConfig.levels).some(([name, level]) => isPuzzleType(name) && level.chance > 0);
+        if (!puzzlesFile && needsPuzzles) throw new Error(`The selected folder does not contain ${puzzlesPath}. Add it beside config.txt, then choose the folder again.`);
         const puzzlesText = puzzlesFile ? await puzzlesFile.text() : null;
         if (puzzlesFile) parsePuzzleList(puzzlesText, puzzlesFile.type, selectedConfig.language.code);
         let saveText = null;
@@ -2666,7 +2797,7 @@
           const language = /[ء-ي]/.test(puzzleAnswer || text) ? "ar" : "en";
           if (puzzleAnswer) parsePuzzleList(text, file.type, language);
           else parseWordList(text, file.type, language);
-          const data = { version: 3, language, configText: `language.code=${JSON.stringify(language)}\nlevels.standard.chance=${puzzleAnswer ? 0 : 1}\nlevels.puzzle.chance=${puzzleAnswer ? 1 : 0}`,
+          const data = { version: 3, language, configText: `language.code=${JSON.stringify(language)}\nlevels.standard.chance=${puzzleAnswer ? 0 : 1}\nlevels.puzzle.chance=${puzzleAnswer ? 1 : 0}\nlevels.flyingPuzzle.chance=0`,
             wordsText: puzzleAnswer ? "" : text, wordsSource: file.name, puzzlesText: puzzleAnswer ? text : null, puzzlesSource: file.name };
           rememberLocalFiles(data);
           await initializeGame(data);
@@ -2722,7 +2853,9 @@
       puzzleText.hidden = !isPuzzleLevel();
       puzzleText.textContent = isPuzzleLevel() ? currentPuzzle.prompt : "";
       puzzleText.lang = CONFIG.language.code;
-      document.getElementById("clueTitle").textContent = isPuzzleLevel() ? CONFIG.text.puzzleTitle : CONFIG.text.clueTitle;
+      const title = document.getElementById("clueTitle");
+      title.textContent = isPuzzleLevel() ? CONFIG.text.puzzleTitle : CONFIG.text.clueTitle;
+      title.classList.toggle("riddle-title", isPuzzleLevel());
       if (isPuzzleLevel()) { fitClueList(); return; }
       words.forEach(word => {
         const item = document.createElement("li");
@@ -2781,7 +2914,7 @@
         clueIntro.classList.remove("show", "dismiss");
         clueIntro.setAttribute("aria-hidden", "true");
       }, CONFIG.ui.clueDismissMs);
-      if (CONFIG.anomaly.enabled && completedWordCount >= CONFIG.anomaly.afterWords) { anomalyEnabled = true; scheduleAnomalyCheck(); }
+      if (CONFIG.anomaly.enabled && completedWordCount >= anomalyWordThreshold()) { anomalyEnabled = true; scheduleAnomalyCheck(); }
       scheduleNextHandCheck();
       scheduleSpiderCheck();
     }
@@ -3056,10 +3189,12 @@
       if (isArabic()) {
         const measure = document.createElement("canvas").getContext("2d");
         const maximum = CONFIG.letters.hudMaxFontPx;
+        measure.font = `${maximum}px "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
+        const prefixWidths = Array.from({ length: currentWord.length + 1 }, (_, count) => measure.measureText(currentWord.slice(0, count)).width);
         measure.font = `${maximum}px "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
         let widest = 1;
         for (let count = 0; count <= currentWord.length; count++) {
-          widest = Math.max(widest, measure.measureText(currentWord.slice(0, count)).width + measure.measureText("·".repeat(currentWord.length - count)).width + CONFIG.letters.hudGapPx * 2);
+          widest = Math.max(widest, prefixWidths[count] + measure.measureText("·".repeat(currentWord.length - count)).width + CONFIG.letters.hudGapPx * 2);
         }
         wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, Math.min(maximum, maximum * width / widest))}px`);
         return;
@@ -3136,7 +3271,7 @@
     }
 
     function chooseLetterGlyph(letter, word) {
-      if (!levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
+      if (!levelIsUnlocked(CONFIG.letters.decoyStartLevel) || !levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
       // A decoy must be absent from the entire clue, not just the current slot.
       const alphabet = isArabic() ? "ابتثجحخدذرزسشصضطظعغفقكلمنهويءأإآؤئةى" : "abcdefghijklmnopqrstuvwxyz";
       const candidates = [...alphabet].filter(candidate => !word.includes(candidate));
@@ -3281,7 +3416,7 @@
       flight.textContent = glyph.textContent;
       flight.style.left = `${start.left + start.width / 2 - frame.left}px`;
       flight.style.top = `${start.top + start.height / 2 - frame.top}px`;
-      flight.style.fontFamily = style.fontFamily;
+      flight.style.fontFamily = isArabic() ? '"Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif' : style.fontFamily;
       flight.style.fontSize = style.fontSize;
       flight.style.letterSpacing = style.letterSpacing;
       flight.style.color = style.color;
@@ -3661,7 +3796,7 @@
         window.clearTimeout(handTimer);
         stopSpiderEncounter();
       }
-      if (!roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && completedWordCount >= CONFIG.anomaly.afterWords) {
+      if (!roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && completedWordCount >= anomalyWordThreshold()) {
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
@@ -3998,17 +4133,17 @@
     function scheduleSpiderCheck() {
       window.clearTimeout(spiderTimer);
       spiderTimer = null;
-      if (!CONFIG.spider.enabled || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+      if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
       spiderTimer = window.setTimeout(() => {
         spiderTimer = null;
-        if (!CONFIG.spider.enabled || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
+        if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
         if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
         scheduleSpiderCheck();
       }, SPIDER_CHECK_MS);
     }
 
     function spawnSpiderOffscreen() {
-      if (!CONFIG.spider.enabled || !gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
+      if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || !gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
       const width = spiderMeta.width * SPIDER_SCALE;
       const visible = currentVisibleWorldRange();
       const ranges = [];
@@ -4080,9 +4215,11 @@
 
     function scheduleAnomalyCheck() {
       window.clearTimeout(anomalyTimer);
-      if (!CONFIG.anomaly.enabled || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
+      anomalyTimer = null;
+      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
       anomalyTimer = window.setTimeout(async () => {
-        if (!CONFIG.anomaly.enabled || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
+        anomalyTimer = null;
+        if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
         if (Math.random() < ANOMALY_SPAWN_CHANCE) {
           const placed = await spawnAnomalyOffscreen();
           if (!placed) scheduleAnomalyCheck();
@@ -4149,11 +4286,11 @@
     }
 
     async function spawnAnomalyOffscreen() {
-      if (anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
       const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (!meta || !meta.bbox || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      if (!meta || !meta.bbox || !levelIsUnlocked(CONFIG.anomaly.startLevel) || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -4326,9 +4463,12 @@
 
     function scheduleNextHandCheck() {
       window.clearTimeout(handTimer);
-      if (!CONFIG.hand.enabled || gameOver || roomCompleted) return;
+      handTimer = null;
+      if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || gameOver || roomCompleted) return;
       const delay = CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
       handTimer = window.setTimeout(() => {
+        handTimer = null;
+        if (!levelIsUnlocked(CONFIG.hand.startLevel)) return;
         if (!handVisible && Math.random() < CONFIG.hand.spawnChance) {
           showHand();
         } else {
@@ -4338,7 +4478,7 @@
     }
 
     function showHand() {
-      if (!CONFIG.hand.enabled || handVisible || gameOver || roomCompleted) return;
+      if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || handVisible || gameOver || roomCompleted) return;
       handVisible = true;
       updateCameraControls();
       finishPanGesture();
@@ -4739,7 +4879,7 @@
           !Array.isArray(level.words) || level.words.length < 1 || level.words.length > 20 ||
           !level.words.every(word => validSavedWord(word, language)) ||
           new Set(level.words).size !== level.words.length) throw new Error("Invalid unfinished level in save.txt.");
-      if (level.levelType === "puzzle" && value.version < 4) throw new Error("Invalid saved puzzle version.");
+      if (isPuzzleType(level.levelType) && value.version < 4) throw new Error("Invalid saved puzzle version.");
       const fallback = CONFIG.levels[level.levelType], rules = {};
       for (const key of ["timeLimitMs", "decoyLetterChance", "flyingLetters", "evadesCamera"]) {
         const v = level.rules?.[key] === undefined ? fallback[key] : level.rules[key];
@@ -4764,7 +4904,7 @@
       rules.roomCount = count; rules.wordCount = level.words.length;
       clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [...level.sceneNumbers], activeRoomIndex: level.activeRoomIndex,
         levelType: level.levelType, words: [...level.words], letterRooms: level.letterRooms.map(order => [...order]), rules };
-      if (level.levelType === "puzzle") {
+      if (isPuzzleType(level.levelType)) {
         if (value.version < 4 || level.words.length !== 1 || !level.puzzle ||
             typeof level.puzzle.prompt !== "string" || !level.puzzle.prompt.trim() || level.puzzle.prompt.length > 2048 ||
             level.puzzle.answer !== level.words[0] || parsePuzzleList(`${level.puzzle.prompt} [${level.puzzle.answer}]`, "", language).length !== 1) {
@@ -5008,16 +5148,12 @@
       document.documentElement.dataset.gameLanguage = CONFIG.language.code;
       clueList.lang = CONFIG.language.code;
       clueList.dir = isArabic() ? "rtl" : "ltr";
-      const arabicRule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.includes("Game Arabic"));
+      const fontRule = family => [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.replace(/["']/g, "") === family);
+      const arabicRule = fontRule("Game Arabic");
       if (arabicRule) arabicRule.style.setProperty("src", [...CONFIG.assets.arabicFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
         `url(${JSON.stringify(new URL(CONFIG.assets.arabicFontFile, document.baseURI).href)}) format("truetype")`].join(", "));
-      if (isArabic() && document.fonts) {
-        languageFontReady = false;
-        let deadline;
-        Promise.race([document.fonts.load('40px "Game Arabic"', "العربية"), new Promise(resolve => { deadline = setTimeout(resolve, CONFIG.loading.resourceTimeoutMs); })])
-          .catch(error => console.info("Using the system Arabic font.", error.message))
-          .finally(() => { clearTimeout(deadline); languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
-      }
+      const paperFontRule = fontRule("Game Arabic Paper");
+      if (paperFontRule) paperFontRule.style.setProperty("src", `url(${JSON.stringify(new URL(CONFIG.assets.arabicPaperFontFile, document.baseURI).href)}) format("opentype")`);
       prevRoomButton.textContent = CONFIG.text.previousRoom;
       nextRoomButton.textContent = CONFIG.text.nextRoom;
       updateLevelStatus();
@@ -5031,6 +5167,14 @@
         const rule = [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.includes("Dudu"));
         if (rule) rule.style.setProperty("src", [...CONFIG.assets.letterFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
           `url(${JSON.stringify(new URL(CONFIG.assets.letterFontFile, document.baseURI).href)}) format("truetype")`].join(", "));
+      }
+      if (document.fonts) {
+        languageFontReady = false;
+        let deadline;
+        const pending = [document.fonts.load('40px "Dudu Calligraphy"', "Riddle")];
+        if (isArabic()) pending.push(document.fonts.load('40px "Game Arabic"', "العربية"), document.fonts.load('40px "Game Arabic Paper"', "العربية"));
+        Promise.race([Promise.allSettled(pending), new Promise(resolve => { deadline = setTimeout(resolve, CONFIG.loading.resourceTimeoutMs); })])
+          .finally(() => { clearTimeout(deadline); languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
       }
       if (BATTERY_SLOT_COUNT !== batterySlots.length) {
         const svg = cameraBattery.querySelector("svg");
