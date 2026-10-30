@@ -150,6 +150,7 @@
     .room-video-cover.snapping,
     #letterWorld.snapping,
     #anomalyWorld.snapping,
+    #dollWorld.snapping,
     #spiderWorld.snapping,
     .jumpscare-video.snapping {
       transition: transform var(--centre-flight-ms, 420ms) cubic-bezier(.22,.72,.22,1), filter 420ms ease;
@@ -715,7 +716,40 @@
       will-change: transform;
     }
 
-    #spiderWorld { z-index: 4; }
+    #spiderWorld { z-index: 5; }
+    #dollWorld {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      pointer-events: none;
+      transform-origin: left top;
+      will-change: transform;
+    }
+    /* The doll stays in front of the scare only for its short upward exit. */
+    #dollWorld.exiting { z-index: 155; }
+    .doll-actor {
+      position: absolute;
+      pointer-events: none;
+      filter: blur(var(--doll-blur, 1.2px));
+      opacity: var(--doll-opacity, 1);
+      will-change: transform;
+    }
+    .doll-actor[hidden] { display: none; }
+    .doll-image, .doll-bitmap {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      user-select: none;
+      -webkit-user-drag: none;
+      pointer-events: none;
+      color-scheme: light;
+      color-scheme: only light;
+      forced-color-adjust: none;
+    }
+    .doll-bitmap { visibility: hidden; }
     #spiderActor {
       position: absolute;
       top: -10px;
@@ -1047,6 +1081,7 @@
           <img id="anomalyImage" alt="" draggable="false" />
           <canvas id="anomalyBitmap" aria-hidden="true"></canvas>
         </div>
+        <div id="dollWorld" aria-hidden="true"></div>
         <div id="spiderWorld" aria-hidden="true">
           <div id="spiderActor" hidden>
             <canvas id="spiderCanvas"></canvas>
@@ -1196,9 +1231,9 @@
     "puzzle": {
       "chance": 0.9,
       "wordCount": 1,
-      "timeLimitMs": 120000,
+      "timeLimitMs": 60000,
       "decoyLetterChance": 0,
-      "flyingLetters": false,
+      "flyingLetters": true,
       "evadesCamera": false,
       "startLevel": 1
     },
@@ -1461,7 +1496,7 @@
     "wrapNavigation": true
   },
   "language": {
-    "code": "en"
+    "code": "ar"
   },
   "puzzles": {
     "minAnswerLength": 3,
@@ -1477,8 +1512,8 @@
       "fontHeightFraction": 0.033
     },
     "ar": {
-      "minFontPx": 18,
-      "maxFontPx": 27,
+      "minFontPx": 32,
+      "maxFontPx": 40,
       "fontHeightFraction": 0.033
     }
   },
@@ -1543,10 +1578,38 @@
       "ArrowDown"
     ],
     "panSpeedScreensPerSecond": 1.2
+  },
+  "doll": {
+    "enabled": true,
+    "startLevel": 1,
+    "spawnChance": 0.5,
+    "roomAssignments": {
+      "1": [
+        2,
+        4,
+        5,
+        7,
+        8,
+        10
+      ]
+    },
+    "filePattern": "doll_{number}.png",
+    "heightViewportFraction": 1.5,
+    "topImageFraction": -0.33,
+    "verticalJitterImageFraction": 0.025,
+    "scaleJitterFraction": 0.04,
+    "minXFraction": 0,
+    "maxXFraction": 1,
+    "parallaxMultiplier": 1.35,
+    "blurPx": 1.2,
+    "opacity": 1,
+    "retreatMs": 180,
+    "retreatExtraPx": 40,
+    "loadTimeoutMs": 6000
   }
 };
-    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10]};
-    const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"], ["puzzles.en", "minFontPx", "maxFontPx"], ["puzzles.ar", "minFontPx", "maxFontPx"]];
+    const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
+    const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"], ["puzzles.en", "minFontPx", "maxFontPx"], ["puzzles.ar", "minFontPx", "maxFontPx"], ["doll", "minXFraction", "maxXFraction"]];
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
     const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
@@ -1563,6 +1626,14 @@
 
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
+      if (path === "doll.roomAssignments") return value !== null && typeof value === "object" && !Array.isArray(value) &&
+        Object.keys(value).length <= 64 && Object.entries(value).every(([number, scenes]) =>
+          /^[1-9]\d*$/.test(number) && Number.isSafeInteger(Number(number)) && Number(number) <= 1000000000 &&
+          Array.isArray(scenes) && scenes.length <= 512 && new Set(scenes).size === scenes.length &&
+          scenes.every(scene => Number.isSafeInteger(scene) && scene >= 1 && scene <= 1000000000));
+      if (path === "doll.filePattern") return typeof value === "string" && value.length <= 200 &&
+        value.split("{number}").length === 2 && !/[\\/\r\n:?<>|]/.test(value) && !value.includes("..") &&
+        /\.(png|webp|jpe?g)$/i.test(value) && !/[{}]/.test(value.replace("{number}", ""));
       if (/^keyboard\.(leftKeys|rightKeys|previousRoomKeys|nextRoomKeys|shutterKeys|dismissHandKeys)$/.test(path)) return Array.isArray(value) && value.length <= 16 &&
         new Set(value).size === value.length && value.every(code => typeof code === "string" && KEYBOARD_CODE_PATTERN.test(code));
       if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
@@ -1896,6 +1967,7 @@
     const anomalyWorld = document.getElementById("anomalyWorld");
     const anomalyImage = document.getElementById("anomalyImage");
     const anomalyBitmap = document.getElementById("anomalyBitmap");
+    const dollWorld = document.getElementById("dollWorld");
     const spiderWorld = document.getElementById("spiderWorld");
     const spiderActor = document.getElementById("spiderActor");
     const spiderCanvas = document.getElementById("spiderCanvas");
@@ -2036,6 +2108,8 @@
     let handStartY = 0;
     let handCurrentY = 0;
     let handDragStarted = false;
+    let dollRetreatAnimation = null;
+    let dollsRetreating = false;
 
     let completedWordCount = 0;
     let roomCompleted = false;
@@ -2270,7 +2344,9 @@
         videoCoverReady: false, videoFrameCancel: null, videoRun: 0,
         backdropReady: false, metadataReady: false, scareReady: false,
         warmAttempted: false, preparing: null, audioUnlocked: false,
+        audioUnlocking: null, audioUnlockRun: 0,
         audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
+        dollState: null, dollActor: null, dollImage: null, dollLoaded: false,
         deadlineWarmStarted: false };
       scare.addEventListener("ended", () => {
         if (scare === jumpscareVideo && gameOver && scare.classList.contains("playing")) showGameOver();
@@ -2283,6 +2359,103 @@
         showGameOver();
       });
       return room;
+    }
+
+    function cleanDollPlan(value, count) {
+      if (!Array.isArray(value) || value.length !== count) return null;
+      if (!value.every(item => item === null || item && typeof item === "object" &&
+          Number.isSafeInteger(item.number) && item.number >= 1 && item.number <= 1000000000 &&
+          Number.isFinite(item.xFraction) && item.xFraction >= 0 && item.xFraction <= 1 &&
+          Number.isFinite(item.yVariation) && Math.abs(item.yVariation) <= 1 &&
+          Number.isFinite(item.sizeVariation) && Math.abs(item.sizeVariation) <= 1)) return null;
+      return value.map(item => item === null ? null : { number: item.number, xFraction: item.xFraction,
+        yVariation: item.yVariation, sizeVariation: item.sizeVariation });
+    }
+
+    function chooseRoomDoll(sceneNumber) {
+      if (!CONFIG.doll.enabled || !levelIsUnlocked(CONFIG.doll.startLevel)) return null;
+      const choices = Object.entries(CONFIG.doll.roomAssignments).filter(([, scenes]) => scenes.includes(sceneNumber)).map(([number]) => Number(number));
+      if (!choices.length || Math.random() >= CONFIG.doll.spawnChance) return null;
+      return { number: choices[Math.floor(Math.random() * choices.length)],
+        xFraction: CONFIG.doll.minXFraction + Math.random() * (CONFIG.doll.maxXFraction - CONFIG.doll.minXFraction),
+        yVariation: Math.random() * 2 - 1, sizeVariation: Math.random() * 2 - 1 };
+    }
+
+    async function preloadLevelDolls() {
+      const saved = cleanDollPlan(resumedLevel?.dolls, levelRooms.length);
+      const plan = saved || levelRooms.map(room => chooseRoomDoll(room.scene.number));
+      levelRooms.forEach((room, index) => { room.dollState = plan[index]; });
+      if (!CONFIG.doll.enabled || !levelIsUnlocked(CONFIG.doll.startLevel)) return;
+      await Promise.all(levelRooms.map(async room => {
+        if (!room.dollState) return;
+        const actor = document.createElement("div"), image = new Image(), bitmap = document.createElement("canvas");
+        actor.className = "doll-actor";
+        actor.hidden = true;
+        actor.dataset.dollNumber = room.dollState.number;
+        image.className = "doll-image";
+        image.alt = "";
+        image.draggable = false;
+        image.decoding = "async";
+        bitmap.className = "doll-bitmap";
+        bitmap.setAttribute("aria-hidden", "true");
+        actor.append(image, bitmap);
+        dollWorld.appendChild(actor);
+        room.dollActor = actor; room.dollImage = image;
+        preserveOverlayImageColors(image, bitmap);
+        const file = CONFIG.doll.filePattern.replace("{number}", room.dollState.number);
+        let deadline;
+        try {
+          const loaded = waitForMedia(image, "load", CONFIG.doll.loadTimeoutMs);
+          image.src = new URL(encodeURIComponent(file), levelBaseURL).href;
+          await loaded;
+          if (image.decode) await Promise.race([image.decode(), new Promise((_, reject) => {
+            deadline = setTimeout(() => reject(new Error("Doll decode timed out.")), CONFIG.doll.loadTimeoutMs);
+          })]);
+          room.dollLoaded = Boolean(image.naturalWidth && image.naturalHeight);
+        } catch (error) {
+          actor.remove(); room.dollActor = null;
+          console.warn(`Optional doll ${file} is unavailable; continuing without its artwork.`, error.message);
+        } finally { clearTimeout(deadline); }
+      }));
+    }
+
+    function layoutActiveDoll() {
+      const width = viewport.getBoundingClientRect().width, height = viewport.getBoundingClientRect().height;
+      const panorama = width + Math.abs(minOffset) * CONFIG.doll.parallaxMultiplier;
+      dollWorld.style.width = `${panorama}px`;
+      dollWorld.style.height = `${height}px`;
+      for (const [index, room] of levelRooms.entries()) {
+        if (!room.dollActor) continue;
+        if (index !== activeRoomIndex || !room.dollLoaded) { room.dollActor.hidden = true; continue; }
+        const state = room.dollState;
+        const imageHeight = height * CONFIG.doll.heightViewportFraction * (1 + state.sizeVariation * CONFIG.doll.scaleJitterFraction);
+        const imageWidth = imageHeight * room.dollImage.naturalWidth / room.dollImage.naturalHeight;
+        Object.assign(room.dollActor.style, { width: `${imageWidth}px`, height: `${imageHeight}px`,
+          left: `${state.xFraction * Math.max(0, panorama - imageWidth)}px`,
+          top: `${imageHeight * (CONFIG.doll.topImageFraction + state.yVariation * CONFIG.doll.verticalJitterImageFraction)}px` });
+        if (!dollsRetreating) room.dollActor.hidden = false;
+      }
+    }
+
+    function retreatActiveDoll() {
+      const actor = levelRooms[activeRoomIndex]?.dollActor;
+      if (!actor || actor.hidden || dollsRetreating) return;
+      dollsRetreating = true;
+      // Lift this already-positioned layer out of the scene's stacking context
+      // so the doll visibly exits while the jumpscare video is already playing.
+      viewport.insertBefore(dollWorld, gameOverScreen);
+      dollWorld.classList.add("exiting");
+      const distance = Math.max(0, parseFloat(actor.style.top) + actor.offsetHeight) + CONFIG.doll.retreatExtraPx;
+      const animation = actor.animate([{ transform: "translateY(0)" }, { transform: `translateY(${-distance}px)` }],
+        { duration: CONFIG.doll.retreatMs, easing: "cubic-bezier(.35,0,.85,.3)", fill: "forwards" });
+      dollRetreatAnimation = animation;
+      animation.finished.then(() => { actor.hidden = true; }).catch(() => {});
+    }
+
+    function hideDolls() {
+      if (dollRetreatAnimation) dollRetreatAnimation.cancel();
+      dollRetreatAnimation = null;
+      for (const room of levelRooms) if (room.dollActor) room.dollActor.hidden = true;
     }
 
     function waitForMedia(element, successEvent, timeoutMs) {
@@ -2535,7 +2708,7 @@
         } else selected = shuffleArray([...availableScenes]).slice(0, levelRoomCount);
         levelRooms = selected.map(makeLevelRoom);
         activeRoomIndex = resumedLevel?.activeRoomIndex || 0;
-        await Promise.all(levelRooms.map(async room => {
+        await Promise.all([preloadLevelDolls(), ...levelRooms.map(async room => {
           await Promise.all([
             preloadRoomBackdrop(room),
             (async () => {
@@ -2545,10 +2718,11 @@
               room.scare.load();
               await metadata;
               room.metadataReady = true;
+              prepareJumpscareAudioGraph(room);
               await prepareJumpscarePlayback({}, room).catch(() => {});
             })()
           ]);
-        }));
+        })]);
         if (gameOver) return;
         roomsReady = true;
         activateRoom(activeRoomIndex, { initial: true });
@@ -2943,26 +3117,17 @@
       });
     }
 
-    async function beginGameplayFromClues() {
-      if (!wordsReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
+    function beginGameplayFromClues() {
+      if (!wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       gameplayStarting = true;
       readyButton.disabled = true;
       const activeRoom = levelRooms[activeRoomIndex];
       if (activeRoom && activeRoom.media === activeRoom.video) showRoomVideo(activeRoom, { withAudio: true });
-      try {
-        // Calling play here also unlocks decoding on browsers that require
-        // a user gesture. Gameplay stays on the clue card until it is ready.
-        // Start every play/unlock synchronously inside this one trusted READY tap.
-        const jumpscarePreparation = Promise.all(levelRooms.map(room => prepareJumpscarePlayback({ unlockAudio: true }, room)));
-        // Unlock the optional encounter sound within the same trusted READY tap.
-        unlockSpiderSound();
-        await jumpscarePreparation;
-      } catch (error) {
-        if (activeRoom) activeRoom.video.muted = true;
-        gameplayStarting = false;
-        readyButton.disabled = false;
-        return;
-      }
+      // Downloads, decoding and first-frame parking already finished behind
+      // the loader. Only gesture-gated audio unlocks remain; never await a
+      // second decode/seek cycle before accepting camera input.
+      levelRooms.forEach(room => unlockPreparedJumpscareAudio(room));
+      unlockSpiderSound();
       if (gameOver) return;
       gameplayStarting = false;
       gameplayStarted = true;
@@ -3143,6 +3308,7 @@
       offsetX = clamp(offsetX, minOffset, 0);
       applyWorldOffset(false);
       if (spiderActive && spiderRoomIndex === activeRoomIndex) layoutSpider();
+      layoutActiveDoll();
     }
 
     function buildSnapPoints() {
@@ -3176,6 +3342,7 @@
       letterWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
       spiderWorld.classList.toggle("snapping", animate);
+      dollWorld.classList.toggle("snapping", animate);
       jumpscareVideo.classList.toggle("snapping", animate);
       const transform = `translateX(${offsetX}px)`;
       roomImage.style.transform = transform;
@@ -3184,6 +3351,7 @@
       letterWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
       spiderWorld.style.transform = transform;
+      dollWorld.style.transform = `translateX(${offsetX * CONFIG.doll.parallaxMultiplier}px)`;
       jumpscareVideo.style.transform = transform;
       // Only actual camera gestures/coasting can fix a decoy. Resizing and
       // layout updates also reposition the world, but do not count as looking away.
@@ -4578,6 +4746,11 @@
       jumpscareVideo.classList.remove("priming");
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
+      jumpscareVideo.volume = 1;
+      // Invalidate any asynchronous READY audio warm-up before it can pause
+      // or rewind the clip now owned by the actual scare.
+      levelRooms[activeRoomIndex].audioUnlockRun++;
+      retreatActiveDoll();
       if (jumpscareAudioGain) {
         jumpscareAudioGain.gain.setValueAtTime(1, jumpscareAudioContext.currentTime);
         resumeJumpscareAudio();
@@ -4615,6 +4788,7 @@
     }
 
     function showGameOver() {
+      hideDolls();
       stopButterflyFlight();
       stopSpiderEncounter();
       stopCameraTimer();
@@ -4917,11 +5091,11 @@
     // Keep desktop audio in the native media player. Routing file:// media
     // through Web Audio can produce CORS silence even when video playback works.
     // Touch devices use gain zero to unlock sound without an audible warm-up.
-    function unlockJumpscareAudio(room) {
+    function prepareJumpscareAudioGraph(room) {
       const clip = room.scare;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       const needsAudioGraph = location.protocol !== "file:" && window.matchMedia("(pointer: coarse)").matches;
-      if (!needsAudioGraph || !AudioContextClass) { clip.volume = 0; return Promise.resolve(); }
+      if (!needsAudioGraph || !AudioContextClass) return false;
       if (!jumpscareAudioContext) jumpscareAudioContext = new AudioContextClass();
       if (!room.audioSource) {
         room.audioGain = jumpscareAudioContext.createGain();
@@ -4932,8 +5106,47 @@
       }
       room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
       syncActiveScare(room);
+      return true;
+    }
+
+    function unlockJumpscareAudio(room) {
+      if (!prepareJumpscareAudioGraph(room)) { room.scare.volume = 0; return Promise.resolve(); }
+      room.scare.volume = 1;
       return jumpscareAudioContext.resume().then(() => {
         if (jumpscareAudioContext.state !== "running") throw new Error("Jumpscare audio is not ready.");
+      });
+    }
+
+    function unlockPreparedJumpscareAudio(room) {
+      if (room.audioUnlocked || room.audioUnlocking) return;
+      const clip = room.scare, run = ++room.audioUnlockRun;
+      let audioReady, played;
+      try {
+        audioReady = unlockJumpscareAudio(room);
+        clip.muted = false;
+        clip.defaultMuted = false;
+        clip.classList.add("priming");
+        // This play call stays inside the trusted READY event. It unlocks
+        // native media sound too, while zero volume/gain keeps it silent.
+        played = clip.play();
+      } catch (error) {
+        audioReady = Promise.reject(error);
+      }
+      room.audioUnlocking = Promise.all([audioReady, played]).then(() => {
+        if (run !== room.audioUnlockRun || clip.classList.contains("playing")) return;
+        clip.pause();
+        if (clip.currentTime > 0) clip.currentTime = 0;
+        room.audioUnlocked = true;
+      }).catch(error => {
+        if (run === room.audioUnlockRun) console.info("Sound unlock will retry on the next interaction.", error.message);
+      }).finally(() => {
+        room.audioUnlocking = null;
+        if (run !== room.audioUnlockRun || clip.classList.contains("playing")) return;
+        clip.pause();
+        clip.volume = 1;
+        clip.muted = false;
+        clip.classList.remove("priming");
+        syncActiveScare(room);
       });
     }
 
@@ -4942,6 +5155,7 @@
       if (event.isTrusted && gameplayStarted && !gameOver && !roomCompleted) {
         resumeJumpscareAudio();
         resumeSpiderSound();
+        levelRooms.forEach(room => { if (!room.audioUnlocked) unlockPreparedJumpscareAudio(room); });
       }
     }, true);
 
@@ -4961,6 +5175,7 @@
       let frameFallbackTimer = null;
       let cleanupBuffer = () => {};
       let cleanupFrameError = () => {};
+      let preparationTimer;
 
       const buffered = new Promise((resolve, reject) => {
         const check = () => {
@@ -5001,24 +5216,17 @@
       const playPromise = jumpscareVideo.play();
       const prepare = (async () => {
         try {
-          await Promise.all([playPromise, buffered, decoded, audioReady]);
+          await Promise.race([Promise.all([playPromise, buffered, decoded, audioReady]), new Promise((_, reject) => {
+            preparationTimer = setTimeout(() => reject(new Error("Jumpscare warm-up timed out.")), CONFIG.loading.resourceTimeoutMs);
+          })]);
           jumpscareVideo.pause();
           if (jumpscareVideo.currentTime > 0) {
-            await new Promise((resolve, reject) => {
-              const cleanup = () => {
-                jumpscareVideo.removeEventListener("seeked", done);
-                jumpscareVideo.removeEventListener("error", failed);
-              };
-              const done = () => { cleanup(); resolve(); };
-              const failed = () => { cleanup(); reject(new Error("Could not prepare jumpscare.mp4")); };
-              jumpscareVideo.addEventListener("seeked", done, { once: true });
-              jumpscareVideo.addEventListener("error", failed, { once: true });
-              jumpscareVideo.currentTime = 0;
-            });
+            await seekJumpscareStandbyFrame(0, room);
           }
           room.scareReady = true;
           if (unlockAudio) room.audioUnlocked = true;
         } finally {
+          clearTimeout(preparationTimer);
           cleanupBuffer();
           cleanupFrameError();
           window.clearTimeout(frameFallbackTimer);
@@ -5102,6 +5310,8 @@
         }
         clean.currentLevel.puzzle = { prompt: level.puzzle.prompt, answer: level.puzzle.answer };
       }
+      const dolls = cleanDollPlan(level.dolls, count);
+      if (dolls) clean.currentLevel.dolls = dolls;
       return clean;
     }
 
@@ -5139,13 +5349,22 @@
     }
 
     function rememberCurrentRoom() {
-      if (roomCompleted || gameOver || !roomsReady || !wordsReadyForClue || progressState.currentLevel && !progressState.currentLevel.legacy) return;
+      if (roomCompleted || gameOver || !roomsReady || !wordsReadyForClue) return;
+      if (progressState.currentLevel && !progressState.currentLevel.legacy) {
+        // Older saves get one doll plan; later visits/retries keep both present
+        // dolls and explicit absences instead of rolling them again.
+        progressState.currentLevel.dolls = levelRooms.map(room => room.dollState ? { ...room.dollState } : null);
+        progressState.updatedAt = new Date().toISOString();
+        saveProgress();
+        return;
+      }
       progressState.currentLevel = { roomNumber: currentRoomNumber, sceneNumbers: levelRooms.map(room => room.scene.number),
         activeRoomIndex, levelType: levelType.name, words: [...words], letterRooms: wordLetterRooms.map(order => [...order]), rules: {
           wordCount: words.length, roomCount: levelRoomCount, timeLimitMs: ROOM_TIME_LIMIT_MS, decoyLetterChance: levelType.decoyLetterChance,
           flyingLetters: Boolean(levelType.flyingLetters), evadesCamera: Boolean(levelType.evadesCamera)
         } };
       if (isPuzzleLevel()) progressState.currentLevel.puzzle = { ...currentPuzzle };
+      progressState.currentLevel.dolls = levelRooms.map(room => room.dollState ? { ...room.dollState } : null);
       progressState.updatedAt = new Date().toISOString();
       saveProgress();
     }
@@ -5315,6 +5534,7 @@
     function configureGamePresentation() {
       const style = document.documentElement.style;
       const cssSettings = {
+        "--doll-blur": `${CONFIG.doll.blurPx}px`, "--doll-opacity": CONFIG.doll.opacity,
         "--letter-beige": CONFIG.ui.letterColor, "--tarantino-yellow": CONFIG.ui.foundColor,
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
         "--shutter-color": CONFIG.shutter.color, "--shutter-min": `${CONFIG.shutter.minSizePx}px`,
@@ -5410,6 +5630,12 @@
       PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
       await initializeProgress();
       levelType = resumedLevel ? { name: resumedLevel.levelType, ...resumedLevel.rules } : chooseLevelType();
+      if (resumedLevel && levelType.name === "puzzle") {
+        // Apply the requested flying-letter setting to unfinished regular
+        // riddles too, retaining their rooms, riddle and saved time limit.
+        levelType.flyingLetters = CONFIG.levels.puzzle.flyingLetters;
+        resumedLevel.rules.flyingLetters = levelType.flyingLetters;
+      }
       levelRoomCount = resumedLevel?.rules.roomCount || CONFIG.rooms.count;
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;

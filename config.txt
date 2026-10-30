@@ -11,7 +11,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# New levels: regular riddles until level 10 is completed; then 90% regular / 10% flying decoy riddles.
+# New levels: flying riddles until level 10 is completed; then 90% flying riddles / 10% flying decoy riddles.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -110,7 +110,7 @@ chance = 0.9
 wordCount = 1
 timeLimitMs = 60000
 decoyLetterChance = 0
-flyingLetters = false
+flyingLetters = true
 evadesCamera = false
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
@@ -457,3 +457,33 @@ roomComplete = "LEVEL COMPLETE"
 retry = "TAP TO RETRY"
 playAgain = "TAP TO PLAY AGAIN"
 
+
+# Foreground dolls: one presence roll per eligible SCENE per level, retained on visits/retries.
+# All appearance/motion values below apply to every doll. Scene numbers match room_N files.
+# Map each doll number to the scenes it may inhabit; if several match, choose one uniformly.
+# Example: roomAssignments = {"1":[2,4,5,7,8,10],"2":[1,3,6]}
+[doll]
+enabled = true
+startLevel = 1
+spawnChance = 0.5
+roomAssignments = {"1":[2,4,5,7,8,10]}
+# Files are inside assets.levelsDirectory. Use {number} once; spaces in filenames are supported.
+filePattern = "doll_{number}.png"
+# Image height relative to viewport height; top is relative to the scaled image's own height.
+heightViewportFraction = 1.5
+topImageFraction = -0.50
+# Uniform small variations around the base top and size. Zero disables either variation.
+verticalJitterImageFraction = 0.025
+scaleJitterFraction = 0.04
+# Random horizontal placement within the doll's parallax panorama (0..1).
+minXFraction = 0
+maxXFraction = 1
+# >1 moves the doll faster than the room, so it feels closer to the player.
+parallaxMultiplier = 1.35
+blurPx = 1.2
+opacity = 1
+# Any jumpscare sends the active doll upwards over the playing video.
+retreatMs = 180
+retreatExtraPx = 40
+# Optional missing/corrupt doll art never prevents the level from starting.
+loadTimeoutMs = 6000
