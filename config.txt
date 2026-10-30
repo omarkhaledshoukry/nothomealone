@@ -475,9 +475,9 @@ roomAssignments = {"1":[2,4,5,7,8,10]}
 filePattern = "doll_{number}.png"
 # Image height relative to viewport height; top is relative to the scaled image's own height.
 heightViewportFraction = 1.5
-topImageFraction = -0.33
+topImageFraction = -0.50
 # Uniform small variations around the base top and size. Zero disables either variation.
-verticalJitterImageFraction = 0.025
+verticalJitterImageFraction = 0.05
 scaleJitterFraction = 0.04
 # Random horizontal placement within the doll's parallax panorama (0..1).
 minXFraction = 0
