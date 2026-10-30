@@ -335,6 +335,8 @@ radiusPaddingPx = 5
 
 # afterWords=1 preserves the original first-word requirement. Set 0 to start its checks from READY.
 [anomaly]
+# Actual room_N scene numbers. [] disables appearances; "all" allows every scene.
+allowedRooms = [1,2,5,7,10]
 # Single-riddle modes have no completed word before the level ends.
 # Start their anomaly checks from READY by default; multiword modes retain afterWords.
 riddleAfterWords = 0
@@ -446,6 +448,8 @@ retryFontVh = 3
 [text]
 hint = "HINT"
 puzzleTitle = "Riddle"
+# Used on the paper only when language.code="ar".
+puzzleTitleAr = "لغز"
 previousRoom = "PREV"
 nextRoom = "NEXT"
 clueFormat = "{current}/{total}"
@@ -471,7 +475,7 @@ roomAssignments = {"1":[2,4,5,7,8,10]}
 filePattern = "doll_{number}.png"
 # Image height relative to viewport height; top is relative to the scaled image's own height.
 heightViewportFraction = 1.5
-topImageFraction = -0.50
+topImageFraction = -0.33
 # Uniform small variations around the base top and size. Zero disables either variation.
 verticalJitterImageFraction = 0.025
 scaleJitterFraction = 0.04

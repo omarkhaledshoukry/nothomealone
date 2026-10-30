@@ -97,6 +97,8 @@
       inset: 0;
       pointer-events: none;
       transform-origin: 50% 50%;
+      filter: blur(var(--scene-hand-blur, 0px)) blur(var(--scene-hint-blur, 0px));
+      transition: filter 420ms ease;
       will-change: transform, filter;
     }
 
@@ -156,10 +158,8 @@
       transition: transform var(--centre-flight-ms, 420ms) cubic-bezier(.22,.72,.22,1), filter 420ms ease;
     }
 
-    #portraitViewport.hand-active .room-image,
-    #portraitViewport.hand-active .room-video,
-    #portraitViewport.hand-active .room-video-cover {
-      filter: blur(var(--hand-blur, 3px));
+    #portraitViewport.hand-active #sceneEffects {
+      --scene-hand-blur: var(--hand-blur, 3px);
     }
 
     #letterWorld {
@@ -167,10 +167,6 @@
       pointer-events: none;
       filter: blur(var(--letter-blur, .7px));
       transition: filter 420ms ease;
-    }
-
-    #portraitViewport.hand-active #letterWorld {
-      filter: blur(var(--hand-blur, 3px));
     }
 
     .letter-anchor {
@@ -337,7 +333,7 @@
     #status.puzzle-hint[aria-disabled="true"] { pointer-events: none; }
 
     #portraitViewport.hint-transition #sceneEffects { transition: filter var(--hint-fade-ms, 140ms) ease; }
-    #portraitViewport.hint-active #sceneEffects,
+    #portraitViewport.hint-active #sceneEffects { --scene-hint-blur: var(--hint-blur, 5px); }
     #portraitViewport.hint-active #handBlocker { filter: blur(var(--hint-blur, 5px)); }
 
     #clueIntro.hint-mode {
@@ -630,6 +626,11 @@
       text-underline-offset: .12em;
     }
     #clueTitle.riddle-title { text-transform: none; }
+    :root[data-game-language="ar"] #clueTitle.riddle-title {
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
+      direction: rtl;
+      letter-spacing: 0;
+    }
 
     #clueList {
       margin: 0;
@@ -1385,7 +1386,14 @@
     "spawnChance": 0.5,
     "offscreenMarginPx": 8,
     "alphaThreshold": 8,
-    "startLevel": 1
+    "startLevel": 1,
+    "allowedRooms": [
+      1,
+      2,
+      5,
+      7,
+      10
+    ]
   },
   "spider": {
     "enabled": true,
@@ -1488,7 +1496,8 @@
     "previousRoom": "PREV",
     "nextRoom": "NEXT",
     "hint": "HINT",
-    "puzzleTitle": "Riddle"
+    "puzzleTitle": "Riddle",
+    "puzzleTitleAr": "لغز"
   },
   "rooms": {
     "count": 4,
@@ -1626,6 +1635,8 @@
 
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
+      if (path === "anomaly.allowedRooms") return value === "all" || Array.isArray(value) && value.length <= 1000 &&
+        new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
       if (path === "doll.roomAssignments") return value !== null && typeof value === "object" && !Array.isArray(value) &&
         Object.keys(value).length <= 64 && Object.entries(value).every(([number, scenes]) =>
           /^[1-9]\d*$/.test(number) && Number.isSafeInteger(Number(number)) && Number(number) <= 1000000000 &&
@@ -3092,7 +3103,9 @@
       puzzleText.textContent = isPuzzleLevel() ? currentPuzzle.prompt : "";
       puzzleText.lang = CONFIG.language.code;
       const title = document.getElementById("clueTitle");
-      title.textContent = isPuzzleLevel() ? CONFIG.text.puzzleTitle : CONFIG.text.clueTitle;
+      title.textContent = isPuzzleLevel() ? (isArabic() ? CONFIG.text.puzzleTitleAr : CONFIG.text.puzzleTitle) : CONFIG.text.clueTitle;
+      title.lang = isPuzzleLevel() && isArabic() ? "ar" : "en";
+      title.dir = isPuzzleLevel() && isArabic() ? "rtl" : "ltr";
       title.classList.toggle("riddle-title", isPuzzleLevel());
       if (isPuzzleLevel()) { fitClueList(); return; }
       words.forEach(word => {
@@ -4560,6 +4573,10 @@
       stopSpiderSound();
     }
 
+    function anomalyRoomIsAllowed(number = currentScene?.number) {
+      return CONFIG.anomaly.allowedRooms === "all" || CONFIG.anomaly.allowedRooms.includes(number);
+    }
+
     function scheduleAnomalyCheck() {
       window.clearTimeout(anomalyTimer);
       anomalyTimer = null;
@@ -4567,7 +4584,7 @@
       anomalyTimer = window.setTimeout(async () => {
         anomalyTimer = null;
         if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
-        if (Math.random() < ANOMALY_SPAWN_CHANCE) {
+        if (anomalyRoomIsAllowed() && Math.random() < ANOMALY_SPAWN_CHANCE) {
           const placed = await spawnAnomalyOffscreen();
           if (!placed) scheduleAnomalyCheck();
         } else {
@@ -4633,11 +4650,11 @@
     }
 
     async function spawnAnomalyOffscreen() {
-      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
       const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (!meta || !meta.bbox || !levelIsUnlocked(CONFIG.anomaly.startLevel) || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      if (!meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
