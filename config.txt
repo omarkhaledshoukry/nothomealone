@@ -336,7 +336,7 @@ radiusPaddingPx = 5
 # afterWords=1 preserves the original first-word requirement. Set 0 to start its checks from READY.
 [anomaly]
 # Actual room_N scene numbers. [] disables appearances; "all" allows every scene.
-allowedRooms = [1,2,5,7,10]
+allowedRooms = [1,2,5,7,10,12,14]
 # Single-riddle modes have no completed word before the level ends.
 # Start their anomaly checks from READY by default; multiword modes retain afterWords.
 riddleAfterWords = 0
