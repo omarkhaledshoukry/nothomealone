@@ -470,7 +470,7 @@ playAgain = "TAP TO PLAY AGAIN"
 enabled = true
 startLevel = 1
 spawnChance = 0.5
-roomAssignments = {"1":[2,4,5,7,8,10,11,13,15,17]}
+roomAssignments = {"1":[2,4,5,7,8,10,11,13,15,17], "2":[2,4,5,7,8,10,11,13,15,17]}
 # Files are inside assets.levelsDirectory. Use {number} once; spaces in filenames are supported.
 filePattern = "doll_{number}.png"
 # Image height relative to viewport height; top is relative to the scaled image's own height.
