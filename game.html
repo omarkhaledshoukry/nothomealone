@@ -1203,7 +1203,7 @@
       "startLevel": 1
     },
     "decoy": {
-      "chance": 0,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 60000,
       "decoyLetterChance": 0.1,
@@ -1212,7 +1212,7 @@
       "startLevel": 1
     },
     "butterfly": {
-      "chance": 0,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 30000,
       "decoyLetterChance": 0,
@@ -1221,7 +1221,7 @@
       "startLevel": 1
     },
     "flyingDecoy": {
-      "chance": 0,
+      "chance": 0.0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
@@ -1230,22 +1230,50 @@
       "startLevel": 1
     },
     "puzzle": {
-      "chance": 0.9,
+      "chance": 0,
       "wordCount": 1,
-      "timeLimitMs": 60000,
+      "timeLimitMs": 120000,
       "decoyLetterChance": 0,
       "flyingLetters": true,
       "evadesCamera": false,
       "startLevel": 1
     },
     "flyingPuzzle": {
-      "chance": 0.1,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
       "flyingLetters": true,
       "evadesCamera": true,
       "startLevel": 11
+    },
+    "singleRoomSequential": {
+      "startLevel": 1,
+      "chance": 0.5,
+      "wordCount": 1,
+      "timeLimitMs": 120000,
+      "flyingLetters": true,
+      "evadesCamera": false,
+      "decoyLetterChance": 0.1,
+      "decoyStartLevels": [
+        1,
+        6,
+        11
+      ],
+      "decoyChances": [
+        0,
+        0.05,
+        0.1
+      ]
+    },
+    "singleRoomSpread": {
+      "startLevel": 1,
+      "chance": 0.5,
+      "wordCount": 1,
+      "timeLimitMs": 120000,
+      "flyingLetters": true,
+      "evadesCamera": false,
+      "decoyLetterChance": 0
     }
   },
   "failures": {
@@ -1335,7 +1363,11 @@
       "all",
       "all"
     ],
-    "decoyStartLevel": 1
+    "decoyStartLevel": 1,
+    "tapEnabled": true,
+    "tapSlopPx": 8,
+    "tapMaxMs": 400,
+    "tapHitPaddingPx": 8
   },
   "butterfly": {
     "minSpeed": 44,
@@ -1392,7 +1424,9 @@
       2,
       5,
       7,
-      10
+      10,
+      12,
+      14
     ]
   },
   "spider": {
@@ -1599,13 +1633,29 @@
         5,
         7,
         8,
-        10
+        10,
+        11,
+        13,
+        15,
+        17
+      ],
+      "2": [
+        2,
+        4,
+        5,
+        7,
+        8,
+        10,
+        11,
+        13,
+        15,
+        17
       ]
     },
     "filePattern": "doll_{number}.png",
     "heightViewportFraction": 1.5,
-    "topImageFraction": -0.33,
-    "verticalJitterImageFraction": 0.025,
+    "topImageFraction": -0.5,
+    "verticalJitterImageFraction": 0.05,
     "scaleJitterFraction": 0.04,
     "minXFraction": 0,
     "maxXFraction": 1,
@@ -1629,12 +1679,25 @@
     const KEYBOARD_BINDINGS = ["leftKeys", "rightKeys", "previousRoomKeys", "nextRoomKeys", "shutterKeys", "dismissHandKeys"];
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
+    Object.assign(CONFIG_LIMITS, {
+      "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40]
+    });
+    for (const name of ["singleRoomSequential", "singleRoomSpread"]) {
+      CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
+      CONFIG_LIMITS[`levels.${name}.wordCount`] = [1, 1, true];
+      CONFIG_LIMITS[`levels.${name}.timeLimitMs`] = [1000, 86400000, true];
+    }
+
     function configLeaf(path, tree = CONFIG_DEFAULTS) {
       return path.split(".").reduce((value, key) => value && Object.prototype.hasOwnProperty.call(value, key) ? value[key] : undefined, tree);
     }
 
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
+      if (path === "levels.singleRoomSequential.decoyStartLevels") return Array.isArray(value) && value.length >= 1 && value.length <= 32 && value[0] === 1 &&
+        value.every((level, index) => Number.isSafeInteger(level) && level >= 1 && level <= 1000000001 && (!index || level > value[index - 1]));
+      if (path === "levels.singleRoomSequential.decoyChances") return Array.isArray(value) && value.length >= 1 && value.length <= 32 &&
+        value.every(chance => typeof chance === "number" && Number.isFinite(chance) && chance >= 0 && chance <= 1);
       if (path === "anomaly.allowedRooms") return value === "all" || Array.isArray(value) && value.length <= 1000 &&
         new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
       if (path === "doll.roomAssignments") return value !== null && typeof value === "object" && !Array.isArray(value) &&
@@ -1737,6 +1800,20 @@
         for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
         warnings.push("All level chances were zero; default chances used.");
       }
+      const sequential = resolved.levels.singleRoomSequential;
+      if (sequential.decoyStartLevels.length !== sequential.decoyChances.length) {
+        sequential.decoyStartLevels = [...CONFIG_DEFAULTS.levels.singleRoomSequential.decoyStartLevels];
+        sequential.decoyChances = [...CONFIG_DEFAULTS.levels.singleRoomSequential.decoyChances];
+        warnings.push("Sequential decoy milestone arrays must have matching lengths; default stages used.");
+      }
+      // Older files should keep their explicitly selected modes when new types
+      // are added. The updated config explicitly sets both new mode weights.
+      const hasNewMode = ["singleRoomSequential", "singleRoomSpread"].some(name => values.has(`levels.${name}.chance`));
+      const hasLegacyMode = ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => values.has(`levels.${name}.chance`));
+      if (hasLegacyMode && !hasNewMode && ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => resolved.levels[name].chance > 0)) {
+        resolved.levels.singleRoomSequential.chance = 0;
+        resolved.levels.singleRoomSpread.chance = 0;
+      }
       // Read older configs without changing their vibration preference.
       if (values.has("letters.firstLetterVibrates") && !values.has("letters.vibrationByWord")) {
         resolved.letters.vibrationByWord = [resolved.letters.firstLetterVibrates ? "first" : "none"];
@@ -1781,7 +1858,11 @@
     function wordsFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
-    function isPuzzleType(name) { return name === "puzzle" || name === "flyingPuzzle"; }
+    function isSingleRoomType(name) { return name === "singleRoomSequential" || name === "singleRoomSpread"; }
+    function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
+    function isSequentialLetterLevel() { return levelType.name === "singleRoomSequential"; }
+    function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
+    function isPuzzleType(name) { return name === "puzzle" || name === "flyingPuzzle" || isSingleRoomType(name); }
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
     function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
     function progressionLevel() { return Math.max(1, currentRoomNumber); }
@@ -1888,6 +1969,12 @@
       BATTERY_SLOT_COUNT = CONFIG.battery.slotCount;
       for (const [name, values] of Object.entries(CONFIG.levels)) LEVEL_TYPES[name] = { name, ...values };
     }
+    function effectiveLevelRules(type) {
+      if (type.name !== "singleRoomSequential" || !CONFIG.milestones.enabled) return { ...type };
+      const stage = milestoneStage(type.decoyStartLevels);
+      return { ...type, decoyLetterChance: type.decoyChances[stage] };
+    }
+
     function chooseLevelType() {
       const types = Object.values(LEVEL_TYPES).filter(level => level.chance > 0 && levelIsUnlocked(level.startLevel));
       if (!types.length) {
@@ -1898,9 +1985,9 @@
       let roll = Math.random() * total;
       for (const type of types) {
         roll -= type.chance;
-        if (type.chance > 0 && roll < 0) return type;
+        if (type.chance > 0 && roll < 0) return effectiveLevelRules(type);
       }
-      return types[types.length - 1];
+      return effectiveLevelRules(types[types.length - 1]);
     }
     refreshConfigBindings();
     let levelType = LEVEL_TYPES.standard;
@@ -2074,7 +2161,7 @@
     let tiles = [];
     let anchors = [];
     let butterflyFlightFrame = 0;
-    let butterflyFlightState = null;
+    const butterflyFlightStates = new Map();
     let selectionHistory = [];
     let captureInProgress = false;
     let captureFlightAnimation = null;
@@ -2096,6 +2183,7 @@
 
     let isDragging = false;
     let movedDuringDrag = false;
+    let pendingSceneTap = null;
     let lastPanClientX = 0;
     let offsetX = 0;
     let lastAppliedWorldOffset = 0;
@@ -2820,10 +2908,10 @@
         const scoped = contentMilestonePool(parsePuzzleList(text, type), "puzzles");
         const eligible = scoped.filter(puzzle =>
           puzzle.answer.length >= CONFIG.puzzles.minAnswerLength && puzzle.answer.length <= CONFIG.puzzles.maxAnswerLength &&
-          puzzle.answer.length <= availableScenes.length);
+          (isSingleRoomLevel() || puzzle.answer.length <= availableScenes.length));
         if (!eligible.length) throw new Error(`No riddle in the current file pool fits ${CONFIG.puzzles.minAnswerLength}–${CONFIG.puzzles.maxAnswerLength} letters and the ${availableScenes.length} room/jumpscare pairs unlocked at level ${progressionLevel()}. Check your content and scene milestones.`);
         currentPuzzle = { ...eligible[Math.floor(Math.random() * eligible.length)] };
-        levelRoomCount = Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
+        levelRoomCount = isSingleRoomLevel() ? 1 : Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
         acceptWordList(currentPuzzle.answer, source, "text/plain");
         wordLoadInfo.count = eligible.length;
       } finally { clearTimeout(timeout); wordsLoading = false; }
@@ -2832,18 +2920,20 @@
     function acceptWordList(text, source, contentType = "", { preserveOrder = false } = {}) {
       const loaded = parseWordList(text, contentType);
       const scoped = isPuzzleLevel() || resumedLevel ? loaded : contentMilestonePool(loaded, "words");
-      const eligible = scoped.filter(word => word.length > 0 && word.length <= levelRoomCount);
+      const maxLength = isSingleRoomLevel() ? 32 : levelRoomCount;
+      const eligible = scoped.filter(word => word.length > 0 && word.length <= maxLength);
       const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length > 0 && word.length <= levelRoomCount) : [];
       const pool = preserveOrder ? eligible : [...seeded, ...shuffleArray(eligible.filter(word => !seeded.includes(word)))];
-      if (pool.length < levelType.wordCount) throw new Error(`${WORDS_FILE} needs at least ${levelType.wordCount} unique words of ${levelRoomCount} letters or fewer; found ${pool.length}.`);
+      if (pool.length < levelType.wordCount) throw new Error(`${levelDataFile()} needs at least ${levelType.wordCount} unique answers of ${maxLength} letters or fewer; found ${pool.length}.`);
       words = pool.slice(0, levelType.wordCount);
       wordLetterRooms = resumedLevel && !resumedLevel.legacy ? resumedLevel.letterRooms.map(order => [...order]) : words.map(word => {
+        if (isSingleRoomLevel()) return Array(word.length).fill(0);
         const order = Array.from({ length: levelRoomCount }, (_, index) => index);
         if (CONFIG.rooms.shuffleLetterRooms) shuffleArray(order);
         return order.slice(0, word.length);
       });
       wordLoadInfo = { status: "loaded", url: source, count: eligible.length, error: null };
-      console.info(`Loaded ${eligible.length} matching words of up to ${levelRoomCount} letters from ${source}`);
+      console.info(`Loaded ${eligible.length} matching answers of up to ${maxLength} letters from ${source}`);
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
       readyButton.disabled = false;
@@ -3502,6 +3592,45 @@
       return anchors.findIndex((anchor, index) => Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected"));
     }
 
+    function visibleRoomLetterIndices() {
+      const indices = [];
+      anchors.forEach((anchor, index) => {
+        if (!anchor.hidden && Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected")) indices.push(index);
+      });
+      return indices;
+    }
+
+    function shutterLetterIndex() {
+      const candidates = isSpreadLetterLevel() ? visibleRoomLetterIndices() : [currentRoomLetterIndex()];
+      const frame = viewport.getBoundingClientRect(), centerX = frame.left + frame.width / 2;
+      let closest = -1, distance = Infinity;
+      for (const index of candidates) {
+        if (!isCurrentLetterInFrame(index)) continue;
+        const rect = tiles[index].querySelector(".letter-glyph").getBoundingClientRect();
+        const dx = Math.abs(rect.left + rect.width / 2 - centerX);
+        if (dx < distance) { closest = index; distance = dx; }
+      }
+      return closest;
+    }
+
+    function letterAtPoint(x, y) {
+      let closest = -1, distance = Infinity;
+      const padding = CONFIG.letters.tapHitPaddingPx;
+      for (const index of visibleRoomLetterIndices()) {
+        if (!isCurrentLetterInFrame(index)) continue;
+        const rect = tiles[index].querySelector(".letter-glyph").getBoundingClientRect();
+        if (x < rect.left - padding || x > rect.right + padding || y < rect.top - padding || y > rect.bottom + padding) continue;
+        const d = Math.hypot(x - rect.left - rect.width / 2, y - rect.top - rect.height / 2);
+        if (d < distance) { closest = index; distance = d; }
+      }
+      return closest;
+    }
+
+    function isSceneTapPoint(x, y) {
+      const frame = viewport.getBoundingClientRect(), band = getSafeLetterBand();
+      return x >= frame.left && x <= frame.right && y >= frame.top + band.top && y <= frame.top + band.bottom;
+    }
+
     function isCurrentLetterInFrame(index = currentRoomLetterIndex()) {
       const anchor = anchors[index];
       if (!anchor || anchor.hidden) return false;
@@ -3516,7 +3645,8 @@
         letterRect.top >= frame.top - tolerance && letterRect.bottom <= frame.bottom + tolerance;
     }
 
-    function chooseLetterGlyph(letter, word) {
+    function chooseLetterGlyph(letter, word, index) {
+      if (isSequentialLetterLevel() && index === 0) return letter;
       if (!levelIsUnlocked(CONFIG.letters.decoyStartLevel) || !levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
       // A decoy must be absent from the entire clue, not just the current slot.
       const alphabet = isArabic() ? "ابتثجحخدذرزسشصضطظعغفقكلمنهويءأإآؤئةى" : "abcdefghijklmnopqrstuvwxyz";
@@ -3534,13 +3664,15 @@
 
     function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
       if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
-      const index = currentRoomLetterIndex(), anchor = anchors[index], tile = tiles[index];
-      if (!anchor || anchor.hidden || tile.dataset.decoy !== "true") return;
-      if (isCurrentLetterInFrame(index)) { tile.dataset.decoySeen = "true"; return; }
-      if (!allowCorrection || tile.dataset.decoySeen !== "true") return;
-      const bounds = tile.querySelector(".letter-glyph").getBoundingClientRect(), frame = viewport.getBoundingClientRect();
-      if (bounds.right > frame.left && bounds.left < frame.right) return;
-      correctDecoy(index);
+      for (const index of visibleRoomLetterIndices()) {
+        const tile = tiles[index];
+        if (tile.dataset.decoy !== "true") continue;
+        if (isCurrentLetterInFrame(index)) { tile.dataset.decoySeen = "true"; continue; }
+        if (!allowCorrection || tile.dataset.decoySeen !== "true") continue;
+        const bounds = tile.querySelector(".letter-glyph").getBoundingClientRect(), frame = viewport.getBoundingClientRect();
+        if (bounds.right > frame.left && bounds.left < frame.right) continue;
+        correctDecoy(index);
+      }
     }
 
     function drawShutterBitmap() {
@@ -3584,7 +3716,7 @@
       if (!shutterBitmapFrame) shutterBitmapFrame = requestAnimationFrame(drawShutterBitmap);
     }
 
-    function snapCamera() {
+    function snapCamera(targetIndex = null) {
       if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
       // throttled the interval while the tab was in the background.
@@ -3592,7 +3724,10 @@
       if (gameOver) return;
       finishPanGesture();
       stopShutterEffect();
-      const letterIsVisible = isCurrentLetterInFrame();
+      // A scene tap is targeted (including -1 for a miss); a shutter press
+      // chooses the current letter, or the closest X in the spread mode.
+      const index = targetIndex === null ? shutterLetterIndex() : targetIndex;
+      const letterIsVisible = isCurrentLetterInFrame(index);
       snapButton.classList.remove("snapping");
       void snapButton.offsetWidth;
       snapButton.classList.add("snapping");
@@ -3601,7 +3736,6 @@
       shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
       if (letterIsVisible) {
-        const index = currentRoomLetterIndex();
         const tile = tiles[index];
         selectLetter(tile.dataset.letter, index, tile);
       } else drainBatterySlot();
@@ -3744,7 +3878,8 @@
 
     function showCurrentLetter({ animate = true } = {}) {
       anchors.forEach((anchor, index) => {
-        const shouldShow = !wordTransitionPending && !captureInProgress &&
+        const shouldShow = !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) &&
+          (!isSequentialLetterLevel() || index === selectedCount) &&
           Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected");
         if (!shouldShow) {
           anchor.hidden = true;
@@ -3759,109 +3894,121 @@
       });
       updateDecoyVisibilityState();
       if (levelType.flyingLetters && gameplayStarted && !gameOver && !roomCompleted &&
-          !wordTransitionPending && !captureInProgress && anchors[currentRoomLetterIndex()] && !anchors[currentRoomLetterIndex()].hidden) startButterflyFlight();
+          !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) && visibleRoomLetterIndices().length) startButterflyFlight();
       else stopButterflyFlight();
     }
 
     function stopButterflyFlight() {
       if (butterflyFlightFrame) cancelAnimationFrame(butterflyFlightFrame);
       butterflyFlightFrame = 0;
-      butterflyFlightState = null;
+      butterflyFlightStates.clear();
     }
 
     function startButterflyFlight() {
-      const visibleIndex = currentRoomLetterIndex();
-      const anchor = anchors[visibleIndex];
-      if (!anchor) return;
-      if (butterflyFlightState?.anchor === anchor && butterflyFlightFrame) return;
-      stopButterflyFlight();
-      const tile = tiles[visibleIndex];
-      const radius = Number(anchor.dataset.flightRadius) + CONFIG.butterfly.paddingPx;
-      const band = getSafeLetterBand();
-      const bounds = { left: radius, right: Math.max(radius, renderedVideoWidth - radius),
-        top: band.top + radius, bottom: Math.max(band.top + radius, band.bottom - radius) };
-      const phase = Math.random() * Math.PI * 2;
-      const swayX = CONFIG.butterfly.minSwayXPx + Math.random() * (CONFIG.butterfly.maxSwayXPx - CONFIG.butterfly.minSwayXPx);
-      const swayY = CONFIG.butterfly.minSwayYPx + Math.random() * (CONFIG.butterfly.maxSwayYPx - CONFIG.butterfly.minSwayYPx);
-      const x = parseFloat(anchor.style.left);
-      const y = parseFloat(anchor.style.top);
-      const state = { anchor, tile, bounds, phase, swayX, swayY,
-        x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY,
-        vx: 0, vy: 0, goalX: x, goalY: y, elapsed: 0, nextTurn: 0,
-        speed: CONFIG.butterfly.minSpeed + Math.random() * (CONFIG.butterfly.maxSpeed - CONFIG.butterfly.minSpeed), lastTime: performance.now() };
-      state.escapeDirection = 1;
-      state.evadeNextTurn = 0;
-      state.evadeGoalY = y;
-      state.escapeTurnUntil = 0;
-      state.cameraProximity = 0;
-      butterflyFlightState = state;
+      // One animation loop updates every visible letter. Existing letters keep
+      // their velocities when another letter is captured, including overlaps.
+      const indices = visibleRoomLetterIndices();
+      const visibleAnchors = new Set(indices.map(index => anchors[index]));
+      for (const anchor of butterflyFlightStates.keys()) if (!visibleAnchors.has(anchor)) butterflyFlightStates.delete(anchor);
+      for (const index of indices) {
+        const anchor = anchors[index];
+        if (butterflyFlightStates.has(anchor)) continue;
+        const tile = tiles[index];
+        const radius = Number(anchor.dataset.flightRadius) + CONFIG.butterfly.paddingPx;
+        const band = getSafeLetterBand();
+        const bounds = { left: radius, right: Math.max(radius, renderedVideoWidth - radius),
+          top: band.top + radius, bottom: Math.max(band.top + radius, band.bottom - radius) };
+        const phase = Math.random() * Math.PI * 2;
+        const swayX = CONFIG.butterfly.minSwayXPx + Math.random() * (CONFIG.butterfly.maxSwayXPx - CONFIG.butterfly.minSwayXPx);
+        const swayY = CONFIG.butterfly.minSwayYPx + Math.random() * (CONFIG.butterfly.maxSwayYPx - CONFIG.butterfly.minSwayYPx);
+        const x = parseFloat(anchor.style.left);
+        const y = parseFloat(anchor.style.top);
+        const state = { anchor, tile, bounds, phase, swayX, swayY,
+          x: x - Math.sin(phase) * swayX, y: y - Math.sin(phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY,
+          vx: 0, vy: 0, goalX: x, goalY: y, elapsed: 0, nextTurn: 0,
+          speed: CONFIG.butterfly.minSpeed + Math.random() * (CONFIG.butterfly.maxSpeed - CONFIG.butterfly.minSpeed), lastTime: performance.now() };
+        state.escapeDirection = 1;
+        state.evadeNextTurn = 0;
+        state.evadeGoalY = y;
+        state.escapeTurnUntil = 0;
+        state.cameraProximity = 0;
+        butterflyFlightStates.set(anchor, state);
+      }
+      if (butterflyFlightFrame || !butterflyFlightStates.size) return;
       const step = time => {
         butterflyFlightFrame = 0;
-        if (butterflyFlightState !== state || !gameplayStarted || gameOver || roomCompleted ||
-            captureInProgress || wordTransitionPending || anchor !== anchors[currentRoomLetterIndex()] || anchor.hidden) {
+        if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending ||
+            captureInProgress && !isSpreadLetterLevel()) {
           stopButterflyFlight();
           return;
         }
-        // Capped elapsed steps prevent a leap when a background tab resumes.
-        const dt = Math.min(CONFIG.butterfly.maxStepMs / 1000, Math.max(0, (time - state.lastTime) / 1000));
-        state.lastTime = time;
-        state.elapsed += dt;
-        const t = state.elapsed;
-        if (t >= state.nextTurn) {
-          // Mostly local wandering, with occasional longer exploratory arcs.
-          const travel = Math.random() < CONFIG.butterfly.longArcChance ? CONFIG.butterfly.longHorizontalTravelPx : CONFIG.butterfly.horizontalTravelPx;
-          state.goalX = clamp(state.x + (Math.random() * 2 - 1) * travel, bounds.left, bounds.right);
-          state.goalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.verticalTravelPx, bounds.top, bounds.bottom);
-          state.nextTurn = t + (CONFIG.butterfly.minTurnMs + Math.random() * (CONFIG.butterfly.maxTurnMs - CONFIG.butterfly.minTurnMs)) / 1000;
-        }
-        let targetX = state.goalX, targetY = state.goalY;
-        let intensity = 0;
-        if (levelType.evadesCamera) {
-          const viewWidth = viewport.getBoundingClientRect().width;
-          const center = -offsetX + viewWidth / 2;
-          const letterX = parseFloat(anchor.style.left);
-          const relative = letterX - center;
-          const proximity = clamp(1 - Math.abs(relative) / (viewWidth * CONFIG.butterfly.evadeApproachScreens), 0, 1);
-          state.cameraProximity = proximity;
-          intensity = proximity * proximity;
-          if (t >= state.escapeTurnUntil && Math.abs(relative) > viewWidth * CONFIG.butterfly.evadeDirectionDeadzoneFraction) state.escapeDirection = Math.sign(relative);
-          if (state.escapeDirection < 0 && state.x - bounds.left < CONFIG.butterfly.evadeEdgeMarginPx) {
-            state.escapeDirection = 1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
-          } else if (state.escapeDirection > 0 && bounds.right - state.x < CONFIG.butterfly.evadeEdgeMarginPx) {
-            state.escapeDirection = -1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
+        for (const [anchor, state] of butterflyFlightStates) {
+          if (anchor.hidden || state.tile.classList.contains("selected") || Number(anchor.dataset.roomIndex) !== activeRoomIndex) {
+            butterflyFlightStates.delete(anchor);
+            continue;
           }
-          if (intensity > 0) {
-            if (t >= state.evadeNextTurn) {
-              state.evadeGoalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.evadeVerticalTravelPx, bounds.top, bounds.bottom);
-              state.evadeNextTurn = t + CONFIG.butterfly.evadeRetargetMs / 1000;
+          const { tile, bounds, phase, swayX, swayY } = state;
+          // Capped elapsed steps prevent a leap when a background tab resumes.
+          const dt = Math.min(CONFIG.butterfly.maxStepMs / 1000, Math.max(0, (time - state.lastTime) / 1000));
+          state.lastTime = time;
+          state.elapsed += dt;
+          const t = state.elapsed;
+          if (t >= state.nextTurn) {
+            // Mostly local wandering, with occasional longer exploratory arcs.
+            const travel = Math.random() < CONFIG.butterfly.longArcChance ? CONFIG.butterfly.longHorizontalTravelPx : CONFIG.butterfly.horizontalTravelPx;
+            state.goalX = clamp(state.x + (Math.random() * 2 - 1) * travel, bounds.left, bounds.right);
+            state.goalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.verticalTravelPx, bounds.top, bounds.bottom);
+            state.nextTurn = t + (CONFIG.butterfly.minTurnMs + Math.random() * (CONFIG.butterfly.maxTurnMs - CONFIG.butterfly.minTurnMs)) / 1000;
+          }
+          let targetX = state.goalX, targetY = state.goalY;
+          let intensity = 0;
+          if (levelType.evadesCamera) {
+            const viewWidth = viewport.getBoundingClientRect().width;
+            const center = -offsetX + viewWidth / 2;
+            const letterX = parseFloat(anchor.style.left);
+            const relative = letterX - center;
+            const proximity = clamp(1 - Math.abs(relative) / (viewWidth * CONFIG.butterfly.evadeApproachScreens), 0, 1);
+            state.cameraProximity = proximity;
+            intensity = proximity * proximity;
+            if (t >= state.escapeTurnUntil && Math.abs(relative) > viewWidth * CONFIG.butterfly.evadeDirectionDeadzoneFraction) state.escapeDirection = Math.sign(relative);
+            if (state.escapeDirection < 0 && state.x - bounds.left < CONFIG.butterfly.evadeEdgeMarginPx) {
+              state.escapeDirection = 1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
+            } else if (state.escapeDirection > 0 && bounds.right - state.x < CONFIG.butterfly.evadeEdgeMarginPx) {
+              state.escapeDirection = -1; state.escapeTurnUntil = t + CONFIG.butterfly.evadeBoundaryTurnMs / 1000;
             }
-            const escapeX = clamp(state.x + state.escapeDirection * CONFIG.butterfly.evadeTravelPx, bounds.left, bounds.right);
-            targetX += (escapeX - targetX) * intensity;
-            targetY += (state.evadeGoalY - targetY) * intensity;
+            if (intensity > 0) {
+              if (t >= state.evadeNextTurn) {
+                state.evadeGoalY = clamp(state.y + (Math.random() * 2 - 1) * CONFIG.butterfly.evadeVerticalTravelPx, bounds.top, bounds.bottom);
+                state.evadeNextTurn = t + CONFIG.butterfly.evadeRetargetMs / 1000;
+              }
+              const escapeX = clamp(state.x + state.escapeDirection * CONFIG.butterfly.evadeTravelPx, bounds.left, bounds.right);
+              targetX += (escapeX - targetX) * intensity;
+              targetY += (state.evadeGoalY - targetY) * intensity;
+            }
           }
+          const dx = targetX - state.x, dy = targetY - state.y;
+          const distance = Math.max(1, Math.hypot(dx, dy));
+          // Ease the heading and alternate hovering with short bursts of flight.
+          const pace = state.speed * (CONFIG.butterfly.minPaceFraction + (1 - CONFIG.butterfly.minPaceFraction) * Math.pow(.5 + .5 * Math.sin(t * CONFIG.butterfly.hoverFrequency + phase), 2)) * Math.min(1, distance / CONFIG.butterfly.slowdownDistancePx) * (1 + intensity * (CONFIG.butterfly.evadeMaxSpeedMultiplier - 1));
+          const steering = 1 - Math.exp(-dt * CONFIG.butterfly.steering * (1 + intensity * (CONFIG.butterfly.evadeSteeringMultiplier - 1)));
+          state.vx += (dx / distance * pace * CONFIG.butterfly.horizontalSpeedMultiplier - state.vx) * steering;
+          state.vy += (dy / distance * pace - state.vy) * steering;
+          state.x += state.vx * dt;
+          state.y += state.vy * dt;
+          // Unequal oscillation frequencies make little loops instead of a
+          // straight bounce; a restrained 3D tilt suggests fluttering wings.
+          const swayBoost = 1 + intensity * (CONFIG.butterfly.evadeSwayMultiplier - 1);
+          const flightX = clamp(state.x + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * swayX * swayBoost, bounds.left, bounds.right);
+          const flightY = clamp(state.y + Math.sin(t * CONFIG.butterfly.swayYFrequency + phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY * swayBoost, bounds.top, bounds.bottom);
+          anchor.style.left = `${flightX}px`;
+          anchor.style.top = `${flightY}px`;
+          anchor.dataset.worldX = (flightX - bounds.left) / Math.max(1, bounds.right - bounds.left);
+          anchor.dataset.worldY = (flightY - bounds.top) / Math.max(1, bounds.bottom - bounds.top);
+          tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * CONFIG.butterfly.bankVelocityMultiplier + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * CONFIG.butterfly.bankSwayDeg, -CONFIG.butterfly.maxBankDeg, CONFIG.butterfly.maxBankDeg)}deg`);
+          tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * CONFIG.butterfly.flutterFrequency * (1 + intensity * (CONFIG.butterfly.evadeFlutterMultiplier - 1)) + phase) * CONFIG.butterfly.flutterDeg}deg`);
         }
-        const dx = targetX - state.x, dy = targetY - state.y;
-        const distance = Math.max(1, Math.hypot(dx, dy));
-        // Ease the heading and alternate hovering with short bursts of flight.
-        const pace = state.speed * (CONFIG.butterfly.minPaceFraction + (1 - CONFIG.butterfly.minPaceFraction) * Math.pow(.5 + .5 * Math.sin(t * CONFIG.butterfly.hoverFrequency + phase), 2)) * Math.min(1, distance / CONFIG.butterfly.slowdownDistancePx) * (1 + intensity * (CONFIG.butterfly.evadeMaxSpeedMultiplier - 1));
-        const steering = 1 - Math.exp(-dt * CONFIG.butterfly.steering * (1 + intensity * (CONFIG.butterfly.evadeSteeringMultiplier - 1)));
-        state.vx += (dx / distance * pace * CONFIG.butterfly.horizontalSpeedMultiplier - state.vx) * steering;
-        state.vy += (dy / distance * pace - state.vy) * steering;
-        state.x += state.vx * dt;
-        state.y += state.vy * dt;
-        // Unequal oscillation frequencies make little loops instead of a
-        // straight bounce; a restrained 3D tilt suggests fluttering wings.
-        const swayBoost = 1 + intensity * (CONFIG.butterfly.evadeSwayMultiplier - 1);
-        const flightX = clamp(state.x + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * swayX * swayBoost, bounds.left, bounds.right);
-        const flightY = clamp(state.y + Math.sin(t * CONFIG.butterfly.swayYFrequency + phase * CONFIG.butterfly.verticalPhaseMultiplier) * swayY * swayBoost, bounds.top, bounds.bottom);
-        anchor.style.left = `${flightX}px`;
-        anchor.style.top = `${flightY}px`;
-        anchor.dataset.worldX = (flightX - bounds.left) / Math.max(1, bounds.right - bounds.left);
-        anchor.dataset.worldY = (flightY - bounds.top) / Math.max(1, bounds.bottom - bounds.top);
-        tile.style.setProperty("--butterfly-bank", `${clamp(state.vx * CONFIG.butterfly.bankVelocityMultiplier + Math.sin(t * CONFIG.butterfly.swayXFrequency + phase) * CONFIG.butterfly.bankSwayDeg, -CONFIG.butterfly.maxBankDeg, CONFIG.butterfly.maxBankDeg)}deg`);
-        tile.style.setProperty("--butterfly-flutter", `${Math.sin(t * CONFIG.butterfly.flutterFrequency * (1 + intensity * (CONFIG.butterfly.evadeFlutterMultiplier - 1)) + phase) * CONFIG.butterfly.flutterDeg}deg`);
         updateDecoyVisibilityState();
-        butterflyFlightFrame = requestAnimationFrame(step);
+        if (butterflyFlightStates.size) butterflyFlightFrame = requestAnimationFrame(step);
       };
       butterflyFlightFrame = requestAnimationFrame(step);
     }
@@ -3900,7 +4047,7 @@
         }
         const glyph = document.createElement("span");
         glyph.className = "letter-glyph";
-        glyph.textContent = chooseLetterGlyph(letter, currentWord);
+        glyph.textContent = chooseLetterGlyph(letter, currentWord, index);
         tile.dataset.decoy = String(glyph.textContent !== letter);
         tile.dataset.decoySeen = "false";
         tile.setAttribute("aria-label", `Letter ${glyph.textContent}`);
@@ -3965,7 +4112,7 @@
     }
 
     function selectLetter(letter, tileIndex, tile) {
-      if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       updateCameraTimer();
       if (gameOver) return;
       if (tile !== tiles[tileIndex] || anchors[tileIndex].hidden || tile.classList.contains("selected")) return;
@@ -4256,6 +4403,7 @@
       // itself fire lostpointercapture.
       isDragging = false;
       panPointerId = null;
+      pendingSceneTap = null;
       panMotionSamples = [];
       panMotionDirection = 0;
       panDirectionTravel = 0;
@@ -4294,6 +4442,10 @@
       panPointerId = event.pointerId;
       dragStartClientX = event.clientX;
       lastPanClientX = event.clientX;
+      if (CONFIG.letters.tapEnabled && !captureInProgress && !wordTransitionPending && isSceneTapPoint(event.clientX, event.clientY)) {
+        pendingSceneTap = { x: event.clientX, y: event.clientY, started: event.timeStamp,
+          index: letterAtPoint(event.clientX, event.clientY), roomIndex: activeRoomIndex, wordIndex, selectedCount };
+      }
       // Input timestamps keep touch velocity independent of render delays.
       panMotionSamples = [{ x: event.clientX, time: event.timeStamp }];
       body.classList.add("grabbing");
@@ -4303,6 +4455,7 @@
 
     function pointerMove(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
+      if (pendingSceneTap && Math.hypot(event.clientX - pendingSceneTap.x, event.clientY - pendingSceneTap.y) > CONFIG.letters.tapSlopPx) pendingSceneTap = null;
       // Recover immediately when the mouse returns after an outside release.
       if (event.pointerType !== "touch" && (event.buttons & 1) === 0) {
         finishPanGesture();
@@ -4315,6 +4468,7 @@
         if (Math.abs(dragDistance) <= CONFIG.camera.dragThresholdPx) return;
         try { viewport.setPointerCapture(event.pointerId); } catch {}
         movedDuringDrag = true;
+        pendingSceneTap = null;
       }
 
       // Consume each movement even at the room's edge. Reversing direction
@@ -4329,6 +4483,13 @@
     function pointerUp(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
 
+      const tap = pendingSceneTap;
+      const isTap = tap && !movedDuringDrag && tap.roomIndex === activeRoomIndex && tap.wordIndex === wordIndex && tap.selectedCount === selectedCount &&
+        event.timeStamp - tap.started <= CONFIG.letters.tapMaxMs &&
+        Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= CONFIG.letters.tapSlopPx && isSceneTapPoint(event.clientX, event.clientY);
+      // Lock a moving glyph on press so a fast letter cannot escape a clean
+      // tap during the short down/up interval. No per-letter pointer handlers.
+      const targetIndex = isTap ? (tap.index >= 0 ? tap.index : letterAtPoint(event.clientX, event.clientY)) : -1;
       const released = event.timeStamp;
       recordPanMotion(event.clientX, released);
       const velocity = movedDuringDrag ? getPanReleaseVelocity(released) : 0;
@@ -4340,7 +4501,8 @@
       // Release pointer ownership before starting the independent glide, so
       // the next press can immediately stop it and start a fresh drag.
       finishPanGesture();
-      startCameraMomentum(velocity, travel);
+      if (isTap) snapCamera(targetIndex);
+      else startCameraMomentum(velocity, travel);
     }
 
     function pointerCancel(event) {
@@ -5278,16 +5440,16 @@
     let progressMessage = "";
 
     function emptyProgress() {
-      return { version: 4, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, currentLevel: null, updatedAt: null };
+      return { version: 5, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, currentLevel: null, updatedAt: null };
     }
 
     function validateProgress(value) {
-      if (!value || ![1, 2, 3, 4].includes(value.version) || value.game !== "room-word-hunt" ||
+      if (!value || ![1, 2, 3, 4, 5].includes(value.version) || value.game !== "room-word-hunt" ||
           !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
       if (value.updatedAt !== null && (typeof value.updatedAt !== "string" || !Number.isFinite(Date.parse(value.updatedAt)))) throw new Error("Invalid save date.");
       const language = value.version >= 3 ? value.language : "en";
       if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
-      const clean = { version: 4, game: "room-word-hunt", language, completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
+      const clean = { version: 5, game: "room-word-hunt", language, completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
       if (value.currentLevel === null) return clean;
       const level = value.currentLevel;
       if (!level || level.roomNumber !== value.completedRooms + 1 || !Object.prototype.hasOwnProperty.call(CONFIG_DEFAULTS.levels, level.levelType) ||
@@ -5295,6 +5457,8 @@
           !level.words.every(word => validSavedWord(word, language)) ||
           new Set(level.words).size !== level.words.length) throw new Error("Invalid unfinished level in save.txt.");
       if (isPuzzleType(level.levelType) && value.version < 4) throw new Error("Invalid saved puzzle version.");
+      const singleRoom = isSingleRoomType(level.levelType);
+      if (singleRoom && (value.version < 5 || level.words.length !== 1)) throw new Error("Invalid saved single-room level.");
       const fallback = CONFIG.levels[level.levelType], rules = {};
       for (const key of ["timeLimitMs", "decoyLetterChance", "flyingLetters", "evadesCamera"]) {
         const v = level.rules?.[key] === undefined ? fallback[key] : level.rules[key];
@@ -5313,9 +5477,11 @@
           !Array.isArray(level.sceneNumbers) || level.sceneNumbers.length !== count ||
           !level.sceneNumbers.every(number => Number.isSafeInteger(number) && number > 0) || new Set(level.sceneNumbers).size !== count ||
           !Number.isInteger(level.activeRoomIndex) || level.activeRoomIndex < 0 || level.activeRoomIndex >= count ||
-          level.words.some(word => word.length < 1 || word.length > count) ||
+          singleRoom && count !== 1 ||
+          level.words.some(word => word.length < 1 || word.length > (singleRoom ? 32 : count)) ||
           !Array.isArray(level.letterRooms) || level.letterRooms.length !== level.words.length ||
-          !level.letterRooms.every((order, wordIndex) => Array.isArray(order) && order.length === level.words[wordIndex].length && new Set(order).size === order.length && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
+          !level.letterRooms.every((order, wordIndex) => Array.isArray(order) && order.length === level.words[wordIndex].length &&
+            (singleRoom || new Set(order).size === order.length) && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
       rules.roomCount = count; rules.wordCount = level.words.length;
       clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [...level.sceneNumbers], activeRoomIndex: level.activeRoomIndex,
         levelType: level.levelType, words: [...level.words], letterRooms: level.letterRooms.map(order => [...order]), rules };
@@ -5653,7 +5819,7 @@
         levelType.flyingLetters = CONFIG.levels.puzzle.flyingLetters;
         resumedLevel.rules.flyingLetters = levelType.flyingLetters;
       }
-      levelRoomCount = resumedLevel?.rules.roomCount || CONFIG.rooms.count;
+      levelRoomCount = resumedLevel?.rules.roomCount || (isSingleRoomLevel() ? 1 : CONFIG.rooms.count);
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       batterySlotsRemaining = BATTERY_SLOT_COUNT;

@@ -11,7 +11,8 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# New levels: flying riddles until level 10 is completed; then 90% flying riddles / 10% flying decoy riddles.
+# New levels: 50% single-room sequential riddles / 50% single-room spread riddles from level 1.
+# Unfinished saved levels retain their original mode, rooms and riddle until completed.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -39,7 +40,8 @@ startLevels = [1,10,20]
 maxSceneNumbers = [5,10,0]
 
 # Standard levels use this many distinct rooms; word lengths may be this number or fewer.
-# Puzzle levels treat count as a minimum and add rooms to fit the chosen answer (up to 32 rooms).
+# Multi-room puzzle levels treat count as a minimum and add rooms to fit the answer.
+# singleRoomSequential and singleRoomSpread always use ONE room, regardless of count or answer length.
 # Requires at least count complete room_N / jumpscare_N pairs in levels/.
 # Short words use a subset of rooms; the other rooms contain no letter for that word.
 # Word count is set separately for each level type. Puzzle levels always contain exactly one puzzle.
@@ -106,7 +108,7 @@ flyingLetters = false
 [levels.puzzle]
 # First progression level at which this feature may be selected.
 startLevel = 1
-chance = 0.9
+chance = 0
 wordCount = 1
 timeLimitMs = 120000
 decoyLetterChance = 0
@@ -114,15 +116,45 @@ flyingLetters = true
 evadesCamera = false
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
-# Unlock after completing level 10. Set startLevel=1 for 90/10 from the first level.
+# Disabled by chance=0 in this version; set a weight to re-enable, and startLevel to its unlock level.
 [levels.flyingPuzzle]
 startLevel = 11
-chance = 0.1
+chance = 0
 wordCount = 1
 timeLimitMs = 120000
 decoyLetterChance = 0.1
 flyingLetters = true
 evadesCamera = true
+
+# One riddle, ONE room, one flying letter at a time, in answer order.
+# The first letter is ALWAYS genuine, including when decoy chance is 1.
+# startLevel is the progression level at which this mode is eligible.
+[levels.singleRoomSequential]
+startLevel = 1
+chance = 1
+wordCount = 1
+timeLimitMs = 120000
+flyingLetters = true
+evadesCamera = false
+# Used if milestones.enabled=false. With milestones enabled, use the stage arrays below.
+decoyLetterChance = 0.1
+# Parallel arrays, any equal length 1..32; startLevels must begin at 1 and increase.
+# Levels 1-5: 0%; 6-10: 5%; 11 onward: 10%. Decoys still correct by looking away/back.
+decoyStartLevels = [1,6,11]
+decoyChances = [0,0.05,0.1]
+
+# One riddle, ONE room, every uncollected answer letter flying at the same time.
+# Tap a particular letter, or use the shutter to choose the fully visible letter
+# with the smallest ABSOLUTE horizontal distance from the camera/view center.
+# Collect in answer order. A wrong-order letter costs the usual miss battery slot.
+[levels.singleRoomSpread]
+startLevel = 1
+chance = 0
+wordCount = 1
+timeLimitMs = 120000
+flyingLetters = true
+evadesCamera = false
+decoyLetterChance = 0
 
 # Each non-comment line in puzzles.txt: Short puzzle text [answer]
 # Answers are single words. language.code selects puzzles.txt or puzzles_ar.txt.
@@ -135,7 +167,7 @@ hintBlurPx = 5
 
 # Paper riddle text sizes, independent for each language (UI and scene letters are unchanged).
 # Starting size = viewport height * fontHeightFraction, limited by minFontPx/maxFontPx.
-# Long riddles may shrink further to fit the paper. These apply to both riddle level types.
+# Long riddles may shrink further to fit the paper. These apply to every riddle level type.
 # Older shared [puzzles] font settings remain supported when language settings are absent.
 [puzzles.en]
 minFontPx = 18
@@ -259,6 +291,13 @@ timerRefreshMs = 250
 
 # Uniform random scale and rotation; positive padding keeps letters clear of the UI. Time values in milliseconds.
 [letters]
+# A stationary scene tap takes a targeted photo (empty space is a miss).
+# Dragging always wins, including when the press starts on/overlapping a letter.
+# A letter hit on press remains the tap target while it flies beneath your finger.
+tapEnabled = true
+tapSlopPx = 8
+tapMaxMs = 400
+tapHitPaddingPx = 8
 # Wrong-letter appearances are disabled before this progression level.
 decoyStartLevel = 1
 # One entry per word, in order: "first", "all" or "none".
@@ -290,7 +329,7 @@ hudMaxFontPx = 40
 hudGlyphWidthRatio = 0.67
 hudGapPx = 2
 
-# Flying motion applies to both butterfly and flyingDecoy. Speeds are CSS pixels/second; travel/sway in CSS pixels.
+# Flying motion applies to every mode with flyingLetters=true. Speeds are CSS pixels/second; travel/sway in CSS pixels.
 [butterfly]
 # Escape tuning: only active when the level has evadesCamera=true. Far-away flight keeps its normal motion.
 evadeApproachScreens = 0.9
