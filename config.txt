@@ -135,7 +135,7 @@ chance = 1
 wordCount = 1
 timeLimitMs = 60000
 flyingLetters = true
-evadesCamera = true
+evadesCamera = false
 # Used if milestones.enabled=false. With milestones enabled, use the stage arrays below.
 decoyLetterChance = 0.1
 # Parallel arrays, any equal length 1..32; startLevels must begin at 1 and increase.
