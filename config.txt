@@ -123,7 +123,7 @@ chance = 0
 wordCount = 1
 timeLimitMs = 120000
 decoyLetterChance = 0.1
-flyingLetters = true
+flyingLetters = false
 evadesCamera = true
 
 # One riddle, ONE room, one flying letter at a time, in answer order.
@@ -135,7 +135,7 @@ chance = 1
 wordCount = 1
 timeLimitMs = 60000
 flyingLetters = true
-evadesCamera = false
+evadesCamera = true
 # Used if milestones.enabled=false. With milestones enabled, use the stage arrays below.
 decoyLetterChance = 0.1
 # Parallel arrays, any equal length 1..32; startLevels must begin at 1 and increase.
@@ -303,7 +303,7 @@ decoyStartLevel = 1
 # One entry per word, in order: "first", "all" or "none".
 # Example: ["first", "all", "all"] vibrates only the first letter of word 1,
 # then every letter of words 2 and 3. The last entry repeats for extra words.
-vibrationByWord = ["all", "all", "all"]
+vibrationByWord = ["first", "none", "none"]
 minScale = 0.7
 maxScale = 1
 minRotationDeg = -25
