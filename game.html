@@ -367,6 +367,7 @@
       -webkit-tap-highlight-color: transparent;
     }
     #prevRoomButton { left: max(2.5%, calc(var(--safe-left) + 2px)); }
+    #prevRoomButton.hold-hint { touch-action: none; }
     #nextRoomButton { right: max(2.5%, calc(var(--safe-right) + 2px)); }
     .room-navigation:active { transform: scale(.95); }
     .room-navigation:disabled { opacity: .45; cursor: default; }
@@ -718,6 +719,9 @@
     }
 
     #spiderWorld { z-index: 5; }
+    /* Deepest scene overlay: above the room pixels, below letters and props.
+       It remains inside sceneEffects so all existing blur triggers still apply. */
+    #anomalyWorld { z-index: 1; }
     #dollWorld {
       position: absolute;
       z-index: 4;
@@ -1243,15 +1247,15 @@
       "wordCount": 1,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
-      "flyingLetters": true,
+      "flyingLetters": false,
       "evadesCamera": true,
       "startLevel": 11
     },
     "singleRoomSequential": {
       "startLevel": 1,
-      "chance": 0.5,
+      "chance": 0.6,
       "wordCount": 1,
-      "timeLimitMs": 120000,
+      "timeLimitMs": 60000,
       "flyingLetters": true,
       "evadesCamera": false,
       "decoyLetterChance": 0.1,
@@ -1268,12 +1272,31 @@
     },
     "singleRoomSpread": {
       "startLevel": 1,
-      "chance": 0.5,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 120000,
       "flyingLetters": true,
       "evadesCamera": false,
       "decoyLetterChance": 0
+    },
+    "singleRoomFixed": {
+      "startLevel": 4,
+      "chance": 0.4,
+      "wordCount": 1,
+      "timeLimitMs": 60000,
+      "flyingLetters": false,
+      "evadesCamera": false,
+      "decoyLetterChance": 0.1,
+      "decoyStartLevels": [
+        1,
+        6,
+        11
+      ],
+      "decoyChances": [
+        0,
+        0.05,
+        0.1
+      ]
     }
   },
   "failures": {
@@ -1359,9 +1382,9 @@
     "hudGlyphWidthRatio": 0.67,
     "hudGapPx": 2,
     "vibrationByWord": [
-      "all",
-      "all",
-      "all"
+      "first",
+      "none",
+      "none"
     ],
     "decoyStartLevel": 1,
     "tapEnabled": true,
@@ -1531,7 +1554,10 @@
     "nextRoom": "NEXT",
     "hint": "HINT",
     "puzzleTitle": "Riddle",
-    "puzzleTitleAr": "لغز"
+    "puzzleTitleAr": "لغز",
+    "hunt": "HUNT",
+    "exit": "EXIT",
+    "puzzleLevelFormat": "{title} #{number}"
   },
   "rooms": {
     "count": 4,
@@ -1539,7 +1565,7 @@
     "wrapNavigation": true
   },
   "language": {
-    "code": "ar"
+    "code": "en"
   },
   "puzzles": {
     "minAnswerLength": 3,
@@ -1620,7 +1646,11 @@
     "dismissHandKeys": [
       "ArrowDown"
     ],
-    "panSpeedScreensPerSecond": 1.2
+    "panSpeedScreensPerSecond": 1.2,
+    "advanceKeys": [
+      "Enter",
+      "NumpadEnter"
+    ]
   },
   "doll": {
     "enabled": true,
@@ -1676,13 +1706,13 @@
     let folderImportBusy = false;
     let gameInitializationStarted = false;
 
-    const KEYBOARD_BINDINGS = ["leftKeys", "rightKeys", "previousRoomKeys", "nextRoomKeys", "shutterKeys", "dismissHandKeys"];
+    const KEYBOARD_BINDINGS = ["leftKeys", "rightKeys", "previousRoomKeys", "nextRoomKeys", "shutterKeys", "dismissHandKeys", "advanceKeys"];
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40]
     });
-    for (const name of ["singleRoomSequential", "singleRoomSpread"]) {
+    for (const name of ["singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
       CONFIG_LIMITS[`levels.${name}.wordCount`] = [1, 1, true];
       CONFIG_LIMITS[`levels.${name}.timeLimitMs`] = [1000, 86400000, true];
@@ -1694,9 +1724,9 @@
 
     function configValueIsValid(path, value, fallback) {
       if (path === "language.code") return value === "en" || value === "ar";
-      if (path === "levels.singleRoomSequential.decoyStartLevels") return Array.isArray(value) && value.length >= 1 && value.length <= 32 && value[0] === 1 &&
+      if (/^levels\.(singleRoomSequential|singleRoomFixed)\.decoyStartLevels$/.test(path)) return Array.isArray(value) && value.length >= 1 && value.length <= 32 && value[0] === 1 &&
         value.every((level, index) => Number.isSafeInteger(level) && level >= 1 && level <= 1000000001 && (!index || level > value[index - 1]));
-      if (path === "levels.singleRoomSequential.decoyChances") return Array.isArray(value) && value.length >= 1 && value.length <= 32 &&
+      if (/^levels\.(singleRoomSequential|singleRoomFixed)\.decoyChances$/.test(path)) return Array.isArray(value) && value.length >= 1 && value.length <= 32 &&
         value.every(chance => typeof chance === "number" && Number.isFinite(chance) && chance >= 0 && chance <= 1);
       if (path === "anomaly.allowedRooms") return value === "all" || Array.isArray(value) && value.length <= 1000 &&
         new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
@@ -1708,7 +1738,7 @@
       if (path === "doll.filePattern") return typeof value === "string" && value.length <= 200 &&
         value.split("{number}").length === 2 && !/[\\/\r\n:?<>|]/.test(value) && !value.includes("..") &&
         /\.(png|webp|jpe?g)$/i.test(value) && !/[{}]/.test(value.replace("{number}", ""));
-      if (/^keyboard\.(leftKeys|rightKeys|previousRoomKeys|nextRoomKeys|shutterKeys|dismissHandKeys)$/.test(path)) return Array.isArray(value) && value.length <= 16 &&
+      if (/^keyboard\.(leftKeys|rightKeys|previousRoomKeys|nextRoomKeys|shutterKeys|dismissHandKeys|advanceKeys)$/.test(path)) return Array.isArray(value) && value.length <= 16 &&
         new Set(value).size === value.length && value.every(code => typeof code === "string" && KEYBOARD_CODE_PATTERN.test(code));
       if (path === "letters.vibrationByWord") return Array.isArray(value) && value.length > 0 && value.length <= 20 && value.every(mode => ["first", "all", "none"].includes(mode));
       if (/^milestones\.(words|puzzles)\.mode$/.test(path)) return ["stage", "cumulative"].includes(value);
@@ -1800,19 +1830,26 @@
         for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
         warnings.push("All level chances were zero; default chances used.");
       }
-      const sequential = resolved.levels.singleRoomSequential;
-      if (sequential.decoyStartLevels.length !== sequential.decoyChances.length) {
-        sequential.decoyStartLevels = [...CONFIG_DEFAULTS.levels.singleRoomSequential.decoyStartLevels];
-        sequential.decoyChances = [...CONFIG_DEFAULTS.levels.singleRoomSequential.decoyChances];
-        warnings.push("Sequential decoy milestone arrays must have matching lengths; default stages used.");
+      for (const name of ["singleRoomSequential", "singleRoomFixed"]) {
+        const sequential = resolved.levels[name];
+        if (sequential.decoyStartLevels.length !== sequential.decoyChances.length) {
+          sequential.decoyStartLevels = [...CONFIG_DEFAULTS.levels[name].decoyStartLevels];
+          sequential.decoyChances = [...CONFIG_DEFAULTS.levels[name].decoyChances];
+          warnings.push(`Decoy milestone arrays for ${name} must have matching lengths; default stages used.`);
+        }
       }
       // Older files should keep their explicitly selected modes when new types
       // are added. The updated config explicitly sets both new mode weights.
-      const hasNewMode = ["singleRoomSequential", "singleRoomSpread"].some(name => values.has(`levels.${name}.chance`));
+      const hasNewMode = ["singleRoomSequential", "singleRoomSpread", "singleRoomFixed"].some(name => values.has(`levels.${name}.chance`));
       const hasLegacyMode = ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => values.has(`levels.${name}.chance`));
       if (hasLegacyMode && !hasNewMode && ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => resolved.levels[name].chance > 0)) {
         resolved.levels.singleRoomSequential.chance = 0;
         resolved.levels.singleRoomSpread.chance = 0;
+        resolved.levels.singleRoomFixed.chance = 0;
+      }
+      if (!values.has("levels.singleRoomFixed.chance") && [...values.keys()].some(path => /^levels\..+\.chance$/.test(path))) resolved.levels.singleRoomFixed.chance = 0;
+      if (Object.values(resolved.levels).every(level => level.chance === 0)) {
+        for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
       }
       // Read older configs without changing their vibration preference.
       if (values.has("letters.firstLetterVibrates") && !values.has("letters.vibrationByWord")) {
@@ -1858,9 +1895,10 @@
     function wordsFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
-    function isSingleRoomType(name) { return name === "singleRoomSequential" || name === "singleRoomSpread"; }
+    function isSequentialType(name) { return name === "singleRoomSequential" || name === "singleRoomFixed"; }
+    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread"; }
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
-    function isSequentialLetterLevel() { return levelType.name === "singleRoomSequential"; }
+    function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
     function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
     function isPuzzleType(name) { return name === "puzzle" || name === "flyingPuzzle" || isSingleRoomType(name); }
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
@@ -1895,6 +1933,12 @@
       const allowed = maxNumber ? scenes.filter(scene => scene.number <= maxNumber) : scenes;
       milestoneSelectionInfo.rooms = { level: progressionLevel(), stage: stage + 1, maxSceneNumber: maxNumber, count: allowed.length };
       return allowed;
+    }
+    function nonRepeatingScenePool(scenes, previousNumber) {
+      if (previousNumber === null || previousNumber === undefined) return scenes;
+      const candidates = scenes.filter(scene => scene.number !== previousNumber);
+      if (!candidates.length) throw new Error("No alternative room is unlocked. Add or unlock another complete room/jumpscare pair so consecutive levels do not repeat the same scene.");
+      return candidates;
     }
     function puzzlesFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicPuzzlesFile : config.assets.puzzlesFile;
@@ -1970,7 +2014,7 @@
       for (const [name, values] of Object.entries(CONFIG.levels)) LEVEL_TYPES[name] = { name, ...values };
     }
     function effectiveLevelRules(type) {
-      if (type.name !== "singleRoomSequential" || !CONFIG.milestones.enabled) return { ...type };
+      if (!isSequentialType(type.name) || !CONFIG.milestones.enabled) return { ...type };
       const stage = milestoneStage(type.decoyStartLevels);
       return { ...type, decoyLetterChance: type.decoyChances[stage] };
     }
@@ -2149,6 +2193,7 @@
     let levelLoading = false;
     let hintActive = false;
     let hintPointerId = null;
+    let hintPointerControl = null;
     let hintKey = null;
     let hintHideTimer = null;
     let clueDismissTimer = null;
@@ -2433,10 +2478,15 @@
         sceneEffects.insertBefore(backgroundVideo, letterWorld);
         viewport.insertBefore(scare, gameOverScreen);
       }
-      const videoCover = document.createElement("canvas");
-      videoCover.className = "room-video-cover";
-      videoCover.setAttribute("aria-hidden", "true");
-      sceneEffects.insertBefore(videoCover, letterWorld);
+      // Cached screenshots are only useful when returning to another room.
+      // Single-room levels allocate no frame canvas and do no bitmap capture.
+      let videoCover = null;
+      if (levelRoomCount > 1) {
+        videoCover = document.createElement("canvas");
+        videoCover.className = "room-video-cover";
+        videoCover.setAttribute("aria-hidden", "true");
+        sceneEffects.insertBefore(videoCover, letterWorld);
+      }
       image.style.display = backgroundVideo.style.display = "none";
       scare.style.display = "";
       const room = { scene, image, video: backgroundVideo, videoCover, scare, media: image,
@@ -2570,7 +2620,7 @@
 
     function cacheRoomVideoFrame(room) {
       const clip = room.video, cover = room.videoCover;
-      if (clip.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !clip.videoWidth || !clip.videoHeight) return false;
+      if (!cover || clip.readyState < HTMLMediaElement.HAVE_CURRENT_DATA || !clip.videoWidth || !clip.videoHeight) return false;
       try {
         const context = cover.getContext("2d");
         if (!context) return false;
@@ -2638,6 +2688,14 @@
       // room's soundtrack synchronously inside the player's click/tap.
       room.video.muted = !withAudio;
       if (withAudio) room.video.defaultMuted = false;
+      if (!room.videoCover) {
+        // The first decoded frame is already loaded. Start directly behind the
+        // loader/paper and keep the same video element running through READY.
+        room.video.style.opacity = "1";
+        const played = room.video.play();
+        if (played) played.catch(() => {});
+        return;
+      }
       room.videoCover.style.display = room.videoCoverReady ? "block" : "none";
       room.video.style.opacity = room.videoCoverReady ? ".001" : "0";
       const isCurrent = () => run === room.videoRun && levelRooms[activeRoomIndex] === room && !gameOver;
@@ -2680,6 +2738,13 @@
       room.video.src = room.scene.roomVideo;
       room.video.load();
       await loaded;
+      if (!room.videoCover) {
+        // Keep video download/metadata/first-frame decoding, but skip the
+        // old multi-room play -> screenshot -> pause warm-up cycle entirely.
+        room.media = room.video;
+        room.backdropReady = true;
+        return;
+      }
       // loadeddata prepares media data, not necessarily the first displayed
       // video layer. Warm it behind the loader and cache an actual frame.
       room.video.style.display = "block";
@@ -2728,7 +2793,7 @@
       for (const room of levelRooms) {
         room.videoRun++;
         room.videoFrameCancel?.();
-        room.videoCover.style.display = "none";
+        if (room.videoCover) room.videoCover.style.display = "none";
         room.image.style.display = room.video.style.display = "none";
         room.video.pause();
         room.video.muted = true;
@@ -2776,8 +2841,10 @@
       if (next !== activeRoomIndex) activateRoom(next);
     }
 
-    prevRoomButton.addEventListener("click", event => { event.stopPropagation(); switchRoom(-1); });
-    nextRoomButton.addEventListener("click", event => { event.stopPropagation(); switchRoom(1); });
+    // Single-room controls are HINT and an inert EXIT placeholder. Retain the
+    // old navigation only for an unfinished multi-room save or re-enabled mode.
+    prevRoomButton.addEventListener("click", event => { event.stopPropagation(); if (!usesSingleRoomControls()) switchRoom(-1); });
+    nextRoomButton.addEventListener("click", event => { event.stopPropagation(); if (!usesSingleRoomControls()) switchRoom(1); });
 
     async function loadRandomLevel() {
       if (levelLoading) return;
@@ -2786,6 +2853,7 @@
         availableScenes = await discoverScenes();
         // Retry/resume must retain its original scene set even after config edits.
         if (!resumedLevel) availableScenes = roomMilestonePool(availableScenes);
+        if (!resumedLevel) availableScenes = nonRepeatingScenePool(availableScenes, progressState.lastSceneNumber);
         if (!resumedLevel && CONFIG.milestones.enabled && availableScenes.length < levelRoomCount) {
           wordLoadInfo.url = new URL(levelDataFile(), document.baseURI).href;
           showWordLoadError(new Error(`The scene milestone at level ${progressionLevel()} allows ${availableScenes.length} complete room/jumpscare pairs, but rooms.count requires ${levelRoomCount}. Raise milestones.rooms.maxSceneNumbers, lower rooms.count, or add the matching scene files, then reload.`));
@@ -3186,6 +3254,13 @@
     }
     cluePaper.addEventListener("load", fitClueList);
 
+    function puzzlePaperHeading() {
+      const number = isArabic() ? String(progressionLevel()).replace(/\d/g, digit => "٠١٢٣٤٥٦٧٨٩"[Number(digit)]) : String(progressionLevel());
+      return gameText(CONFIG.text.puzzleLevelFormat, {
+        title: isArabic() ? CONFIG.text.puzzleTitleAr : CONFIG.text.puzzleTitle, number
+      });
+    }
+
     function populateClueList() {
       clueList.replaceChildren();
       clueList.hidden = isPuzzleLevel();
@@ -3193,7 +3268,7 @@
       puzzleText.textContent = isPuzzleLevel() ? currentPuzzle.prompt : "";
       puzzleText.lang = CONFIG.language.code;
       const title = document.getElementById("clueTitle");
-      title.textContent = isPuzzleLevel() ? (isArabic() ? CONFIG.text.puzzleTitleAr : CONFIG.text.puzzleTitle) : CONFIG.text.clueTitle;
+      title.textContent = isPuzzleLevel() ? puzzlePaperHeading() : CONFIG.text.clueTitle;
       title.lang = isPuzzleLevel() && isArabic() ? "ar" : "en";
       title.dir = isPuzzleLevel() && isArabic() ? "rtl" : "ltr";
       title.classList.toggle("riddle-title", isPuzzleLevel());
@@ -3253,17 +3328,22 @@
 
     readyButton.addEventListener("click", beginGameplayFromClues);
 
+    function usesSingleRoomControls() { return isSingleRoomLevel() || levelRooms.length === 1; }
+    function puzzleHintControl() { return usesSingleRoomControls() ? prevRoomButton : status; }
+
     function updateLevelStatus() {
-      status.textContent = isPuzzleLevel() ? CONFIG.text.hint : gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
-      status.classList.toggle("puzzle-hint", isPuzzleLevel());
+      const single = usesSingleRoomControls(), control = puzzleHintControl();
+      status.textContent = isPuzzleLevel() ? CONFIG.text.hunt : gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
+      status.classList.toggle("puzzle-hint", isPuzzleLevel() && !single);
+      prevRoomButton.classList.toggle("hold-hint", isPuzzleLevel() && single);
+      prevRoomButton.textContent = single ? CONFIG.text.hint : CONFIG.text.previousRoom;
+      nextRoomButton.textContent = single ? CONFIG.text.exit : CONFIG.text.nextRoom;
+      for (const element of [status, prevRoomButton]) for (const name of ["role", "tabindex", "aria-controls", "aria-label", "aria-expanded", "aria-disabled"]) element.removeAttribute(name);
       if (isPuzzleLevel()) {
-        status.setAttribute("role", "button");
-        status.setAttribute("tabindex", "0");
-        status.setAttribute("aria-controls", "clueIntro");
-        status.setAttribute("aria-label", `${CONFIG.text.hint}: hold to read the puzzle`);
-        status.setAttribute("aria-expanded", String(hintActive));
-      } else {
-        for (const name of ["role", "tabindex", "aria-controls", "aria-label", "aria-expanded", "aria-disabled"]) status.removeAttribute(name);
+        if (control === status) { control.setAttribute("role", "button"); control.setAttribute("tabindex", "0"); }
+        control.setAttribute("aria-controls", "clueIntro");
+        control.setAttribute("aria-label", `${CONFIG.text.hint}: hold to read the puzzle`);
+        control.setAttribute("aria-expanded", String(hintActive));
       }
     }
 
@@ -3277,7 +3357,7 @@
       clueIntro.classList.add("hint-mode", "show");
       clueIntro.setAttribute("aria-hidden", "false");
       viewport.classList.add("hint-active", "hint-transition");
-      status.setAttribute("aria-expanded", "true");
+      puzzleHintControl().setAttribute("aria-expanded", "true");
       fitClueList();
       updateCameraControls();
       return true;
@@ -3286,15 +3366,17 @@
     function hidePuzzleHint({ immediate = false } = {}) {
       if (!hintActive && hintPointerId === null && hintKey === null && !(immediate && clueIntro.classList.contains("hint-mode"))) return;
       const pointerId = hintPointerId;
+      const control = hintPointerControl || puzzleHintControl();
       hintActive = false; hintPointerId = null; hintKey = null;
+      hintPointerControl = null;
       if (pointerId !== null) {
-        try { if (status.hasPointerCapture(pointerId)) status.releasePointerCapture(pointerId); } catch {}
+        try { if (control.hasPointerCapture(pointerId)) control.releasePointerCapture(pointerId); } catch {}
       }
       clearTimeout(hintHideTimer);
       viewport.classList.remove("hint-active");
       clueIntro.classList.remove("show", "dismiss");
       clueIntro.setAttribute("aria-hidden", "true");
-      status.setAttribute("aria-expanded", "false");
+      puzzleHintControl().setAttribute("aria-expanded", "false");
       if (immediate) { clueIntro.classList.remove("hint-mode"); viewport.classList.remove("hint-transition"); }
       else hintHideTimer = setTimeout(finishHintFade, CONFIG.puzzles.hintFadeMs * 2);
       updateCameraControls();
@@ -3311,28 +3393,31 @@
           Number(getComputedStyle(clueIntro).opacity) === 0) finishHintFade();
     });
 
-    status.addEventListener("pointerdown", event => {
-      if (event.isPrimary === false || event.button !== 0 || !isPuzzleLevel()) return;
-      event.stopPropagation();
-      if (!showPuzzleHint()) return;
-      hintPointerId = event.pointerId;
-      try { status.setPointerCapture(event.pointerId); } catch {}
-    });
+    for (const control of [status, prevRoomButton]) {
+      control.addEventListener("pointerdown", event => {
+        if (control !== puzzleHintControl() || event.isPrimary === false || event.button !== 0 || !isPuzzleLevel()) return;
+        event.stopPropagation();
+        if (!showPuzzleHint()) return;
+        hintPointerId = event.pointerId;
+        hintPointerControl = control;
+        try { control.setPointerCapture(event.pointerId); } catch {}
+      });
+      control.addEventListener("lostpointercapture", event => {
+        if (control === hintPointerControl && event.pointerId === hintPointerId) hidePuzzleHint();
+      });
+      control.addEventListener("keydown", event => {
+        if (control !== puzzleHintControl() || ![" ", "Enter"].includes(event.key) || !isPuzzleLevel()) return;
+        event.preventDefault(); event.stopPropagation();
+        if (!event.repeat && showPuzzleHint()) hintKey = event.key;
+      });
+      control.addEventListener("keyup", event => {
+        if (event.key === hintKey) { event.preventDefault(); hidePuzzleHint(); }
+      });
+      control.addEventListener("blur", () => { if (hintKey !== null) hidePuzzleHint(); });
+    }
     for (const name of ["pointerup", "pointercancel"]) window.addEventListener(name, event => {
       if (event.pointerId === hintPointerId) hidePuzzleHint();
     }, true);
-    status.addEventListener("lostpointercapture", event => {
-      if (event.pointerId === hintPointerId) hidePuzzleHint();
-    });
-    status.addEventListener("keydown", event => {
-      if (![" ", "Enter"].includes(event.key) || !isPuzzleLevel()) return;
-      event.preventDefault(); event.stopPropagation();
-      if (!event.repeat && showPuzzleHint()) hintKey = event.key;
-    });
-    status.addEventListener("keyup", event => {
-      if (event.key === hintKey) { event.preventDefault(); hidePuzzleHint(); }
-    });
-    status.addEventListener("blur", () => { if (hintKey !== null) hidePuzzleHint(); });
 
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -3540,14 +3625,21 @@
     }
 
     function updateCameraControls() {
+      updateLevelStatus();
       const blocked = !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
       if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = blocked || hintActive || wordTransitionPending || captureInProgress;
-      prevRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === 0;
-      nextRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === levelRooms.length - 1;
-      if (isPuzzleLevel()) status.setAttribute("aria-disabled", String(blocked));
-      prevRoomButton.setAttribute("aria-label", `Previous room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
-      nextRoomButton.setAttribute("aria-label", `Next room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
+      if (usesSingleRoomControls()) {
+        prevRoomButton.disabled = blocked || !isPuzzleLevel();
+        nextRoomButton.disabled = blocked || hintActive;
+        nextRoomButton.setAttribute("aria-label", CONFIG.text.exit);
+      } else {
+        prevRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === 0;
+        nextRoomButton.disabled = blocked || hintActive || levelRooms.length < 2 || !CONFIG.rooms.wrapNavigation && activeRoomIndex === levelRooms.length - 1;
+        prevRoomButton.setAttribute("aria-label", `Previous room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
+        nextRoomButton.setAttribute("aria-label", `Next room. Current room ${activeRoomIndex + 1} of ${levelRoomCount}`);
+      }
+      if (isPuzzleLevel()) puzzleHintControl().setAttribute("aria-disabled", String(blocked));
     }
 
     function updateCameraTimer() {
@@ -4275,6 +4367,7 @@
         return;
       }
       const code = keyboardEventCode(event), action = keyboardAction(code);
+      if (action === "advanceKeys") return; // These keys only advance a visible screen.
       if (!action || !keyboardInputIsAvailable()) return;
       // Keep native activation for buttons reached using Tab. A focused HINT
       // already handles Space/Enter itself before this bubbling listener.
@@ -4324,6 +4417,20 @@
 
     window.addEventListener("keydown", keyboardDown);
     window.addEventListener("keyup", keyboardUp);
+    function advanceScreenFromKeyboard(event) {
+      if (!CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select") ||
+          !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
+      const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
+      const endVisible = gameOverScreen.classList.contains("show");
+      if (!readyVisible && !endVisible) return false;
+      event.preventDefault(); event.stopPropagation();
+      if (event.repeat) return true;
+      if (endVisible) retryOrContinue();
+      else beginGameplayFromClues();
+      return true;
+    }
+    window.addEventListener("keydown", advanceScreenFromKeyboard, true);
 
     function stopCameraMomentum() {
       if (cameraMomentumFrame) cancelAnimationFrame(cameraMomentumFrame);
@@ -5440,16 +5547,18 @@
     let progressMessage = "";
 
     function emptyProgress() {
-      return { version: 5, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, currentLevel: null, updatedAt: null };
+      return { version: 6, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, lastSceneNumber: null, currentLevel: null, updatedAt: null };
     }
 
     function validateProgress(value) {
-      if (!value || ![1, 2, 3, 4, 5].includes(value.version) || value.game !== "room-word-hunt" ||
+      if (!value || ![1, 2, 3, 4, 5, 6].includes(value.version) || value.game !== "room-word-hunt" ||
           !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
       if (value.updatedAt !== null && (typeof value.updatedAt !== "string" || !Number.isFinite(Date.parse(value.updatedAt)))) throw new Error("Invalid save date.");
       const language = value.version >= 3 ? value.language : "en";
       if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
-      const clean = { version: 5, game: "room-word-hunt", language, completedRooms: value.completedRooms, currentLevel: null, updatedAt: value.updatedAt };
+      const lastSceneNumber = value.lastSceneNumber ?? null;
+      if (lastSceneNumber !== null && (!Number.isSafeInteger(lastSceneNumber) || lastSceneNumber < 1 || lastSceneNumber > 1000000000)) throw new Error("Invalid previous room scene in save.txt.");
+      const clean = { version: 6, game: "room-word-hunt", language, completedRooms: value.completedRooms, lastSceneNumber, currentLevel: null, updatedAt: value.updatedAt };
       if (value.currentLevel === null) return clean;
       const level = value.currentLevel;
       if (!level || level.roomNumber !== value.completedRooms + 1 || !Object.prototype.hasOwnProperty.call(CONFIG_DEFAULTS.levels, level.levelType) ||
@@ -5556,6 +5665,7 @@
       if (completionRecorded) return;
       completionRecorded = true;
       progressState.completedRooms = currentRoomNumber;
+      progressState.lastSceneNumber = levelRooms[activeRoomIndex].scene.number;
       progressState.currentLevel = null;
       progressState.updatedAt = new Date().toISOString();
       saveProgress();
@@ -5683,8 +5793,9 @@
     }
 
     function retryOrContinue(event) {
-      if (event.target.closest?.("button, input, .progress-actions")) return;
-      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+      if (!gameOverScreen.classList.contains("show")) return;
+      if (event?.target.closest?.("button, input, .progress-actions")) return;
+      if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
       // Reuse this exact unfinished room; completed rooms already cleared it.
       saveProgress();
       location.reload();

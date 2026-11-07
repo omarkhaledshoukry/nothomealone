@@ -11,7 +11,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# New levels: 50% single-room sequential riddles / 50% single-room spread riddles from level 1.
+# New levels: flying sequential riddles at levels 1-3; 60% flying / 40% fixed from level 4.
 # Unfinished saved levels retain their original mode, rooms and riddle until completed.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
@@ -41,7 +41,7 @@ maxSceneNumbers = [5,10,0]
 
 # Standard levels use this many distinct rooms; word lengths may be this number or fewer.
 # Multi-room puzzle levels treat count as a minimum and add rooms to fit the answer.
-# singleRoomSequential and singleRoomSpread always use ONE room, regardless of count or answer length.
+# singleRoomSequential, singleRoomSpread and singleRoomFixed always use ONE room, regardless of count or answer length.
 # Requires at least count complete room_N / jumpscare_N pairs in levels/.
 # Short words use a subset of rooms; the other rooms contain no letter for that word.
 # Word count is set separately for each level type. Puzzle levels always contain exactly one puzzle.
@@ -131,7 +131,7 @@ evadesCamera = true
 # startLevel is the progression level at which this mode is eligible.
 [levels.singleRoomSequential]
 startLevel = 1
-chance = 1
+chance = 0.6
 wordCount = 1
 timeLimitMs = 60000
 flyingLetters = true
@@ -155,6 +155,20 @@ timeLimitMs = 120000
 flyingLetters = true
 evadesCamera = false
 decoyLetterChance = 0
+
+# One riddle, ONE room, one stationary letter at a time. Position stays fixed until captured.
+# This shares sequential decoy/look-away rules; its first letter is always genuine.
+# Levels 1-3: locked. From level 4: 40% fixed / 60% flying with the weights below.
+[levels.singleRoomFixed]
+startLevel = 4
+chance = 0.4
+wordCount = 1
+timeLimitMs = 60000
+flyingLetters = false
+evadesCamera = false
+decoyLetterChance = 0.1
+decoyStartLevels = [1,6,11]
+decoyChances = [0,0.05,0.1]
 
 # Each non-comment line in puzzles.txt: Short puzzle text [answer]
 # Answers are single words. language.code selects puzzles.txt or puzzles_ar.txt.
@@ -261,6 +275,8 @@ slotColors = ["#e0bd38", "#a6d33c", "#78d936", "#52d52f"]
 # Avoid assigning one key to different actions. enabled=false disables all added shortcuts.
 # Speed is measured in viewport widths per second. Focused HINT keeps its Space/Enter hold behavior.
 [keyboard]
+# Advance READY and visible level-complete/game-over screens once per key press.
+advanceKeys = ["Enter", "NumpadEnter"]
 enabled = true
 leftKeys = ["KeyA"]
 rightKeys = ["KeyD"]
@@ -483,8 +499,12 @@ retryMinFontPx = 20
 retryMaxFontPx = 30
 retryFontVh = 3
 
-# Plain text only. Available placeholders: clueFormat {current}/{total}; roomFormat {number}.
+# Plain text only. Placeholders: clueFormat {current}/{total}; roomFormat {number}; puzzleLevelFormat {title}/{number}.
 [text]
+hunt = "HUNT"
+exit = "EXIT"
+# Used for both languages; the title is selected below and Arabic uses Arabic digits.
+puzzleLevelFormat = "{title} #{number}"
 hint = "HINT"
 puzzleTitle = "Riddle"
 # Used on the paper only when language.code="ar".
