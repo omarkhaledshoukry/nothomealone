@@ -472,6 +472,9 @@
     }
 
     #loadingWord[hidden], #wordLoadError[hidden] { display: none; }
+    #mediaPreparation { max-width: 85%; color: #f1efe5; text-align: center; font: 18px/1.5 Arial, sans-serif; }
+    #mediaPreparation[hidden] { display: none; }
+    #prepareMediaButton { padding: 12px 20px; border: 1px solid #fff; background: transparent; color: #fff; -webkit-text-fill-color: #fff; font: inherit; cursor: pointer; }
     #wordLoadError {
       width: min(88%, 440px);
       max-height: 90%;
@@ -1040,6 +1043,10 @@
           <span class="loading-letter">N</span>
           <span class="loading-letter">G</span>
         </div>
+        <div id="mediaPreparation" hidden>
+          <p id="mediaPreparationMessage"></p>
+          <button id="prepareMediaButton" type="button">CONTINUE</button>
+        </div>
         <div id="wordLoadError" role="alert" hidden>
           <h2 id="wordLoadTitle">Couldn’t load words.txt</h2>
           <p id="wordLoadReason"></p>
@@ -1066,7 +1073,7 @@
               <p id="puzzleText" hidden></p>
             </div>
           </div>
-          <button id="readyButton" type="button">READY</button>
+          <button id="readyButton" type="button" disabled>READY</button>
         </div>
         <div class="clue-file-controls">
           <div id="localFileControls" hidden><button id="changeLocalFilesButton" type="button">Change local files</button></div>
@@ -1557,7 +1564,10 @@
     "puzzleTitleAr": "لغز",
     "hunt": "HUNT",
     "exit": "EXIT",
-    "puzzleLevelFormat": "{title} #{number}"
+    "puzzleLevelFormat": "{title} #{number}",
+    "prepareMedia": "CONTINUE",
+    "mediaPreparationPrompt": "Tap to finish loading.",
+    "mediaPreparationFailed": "Loading could not finish. Tap to try again."
   },
   "rooms": {
     "count": 4,
@@ -2075,6 +2085,10 @@
     const handBitmap = document.getElementById("handBitmap");
     const loadingScreen = document.getElementById("loadingScreen");
     const loadingWord = document.getElementById("loadingWord");
+    const mediaPreparation = document.getElementById("mediaPreparation");
+    const mediaPreparationMessage = document.getElementById("mediaPreparationMessage");
+    const prepareMediaButton = document.getElementById("prepareMediaButton");
+    let mediaPreparationPending = null;
     const wordLoadError = document.getElementById("wordLoadError");
     const wordLoadTitle = document.getElementById("wordLoadTitle");
     const wordLoadHelp = document.getElementById("wordLoadHelp");
@@ -2886,7 +2900,11 @@
               await metadata;
               room.metadataReady = true;
               prepareJumpscareAudioGraph(room);
-              await prepareJumpscarePlayback({}, room).catch(() => {});
+              try { await prepareJumpscarePlayback({}, room); }
+              catch (error) {
+                room.preparationError = error;
+                console.info("Jumpscare preparation needs another attempt before READY.", error.message);
+              }
             })()
           ]);
         })]);
@@ -3004,12 +3022,12 @@
       console.info(`Loaded ${eligible.length} matching answers of up to ${maxLength} letters from ${source}`);
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
-      readyButton.disabled = false;
+      readyButton.disabled = !levelMediaIsPrepared();
       startWord(0);
       populateClueList();
       wordsReadyForClue = true;
       rememberCurrentRoom();
-      maybeShowClueIntro();
+      revealWhenMediaReady();
     }
 
     function showWordLoadError(error) {
@@ -3282,7 +3300,8 @@
     }
 
     function maybeShowClueIntro() {
-      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue || !languageFontReady) return;
+      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue || !languageFontReady || !levelMediaIsPrepared()) return;
+      readyButton.disabled = false;
       fitClueList();
       clueIntroShown = true;
       viewport.classList.add("clue-intro-active");
@@ -3297,14 +3316,15 @@
 
     function beginGameplayFromClues() {
       if (!wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
+      if (!levelMediaIsPrepared()) { revealWhenMediaReady(); return; }
       gameplayStarting = true;
       readyButton.disabled = true;
       const activeRoom = levelRooms[activeRoomIndex];
       if (activeRoom && activeRoom.media === activeRoom.video) showRoomVideo(activeRoom, { withAudio: true });
-      // Downloads, decoding and first-frame parking already finished behind
-      // the loader. Only gesture-gated audio unlocks remain; never await a
-      // second decode/seek cycle before accepting camera input.
-      levelRooms.forEach(room => unlockPreparedJumpscareAudio(room));
+      // Download, buffering, decoded-frame parking and the silent audio-unlock
+      // playback all succeeded before this button became visible. READY does
+      // no video warm-up, rewind, download or asynchronous preparation.
+      resumeJumpscareAudio();
       unlockSpiderSound();
       if (gameOver) return;
       gameplayStarting = false;
@@ -4421,12 +4441,14 @@
       if (!CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
           event.target?.isContentEditable || event.target?.closest?.("input, textarea, select") ||
           !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
+      const preparationVisible = !mediaPreparation.hidden && !prepareMediaButton.disabled && !gameplayStarted;
       const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
       const endVisible = gameOverScreen.classList.contains("show");
-      if (!readyVisible && !endVisible) return false;
+      if (!preparationVisible && !readyVisible && !endVisible) return false;
       event.preventDefault(); event.stopPropagation();
       if (event.repeat) return true;
       if (endVisible) retryOrContinue();
+      else if (preparationVisible) prepareMediaBeforeReady();
       else beginGameplayFromClues();
       return true;
     }
@@ -5324,12 +5346,67 @@
     // or cannot be decoded; this also works when opening the game locally.
     let roomMediaReady = false;
 
+    function levelMediaIsPrepared() {
+      return roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
+        room.backdropReady && room.metadataReady && room.scareReady && room.audioUnlocked &&
+        !room.preparing && !room.audioUnlocking && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
+        room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
+    }
+
     function revealWhenMediaReady() {
-      if (roomsReady && levelRooms.every(room => room.backdropReady && room.metadataReady && room.warmAttempted) && !gameOver) {
-        videosReadyForClue = true;
+      if (gameOver || gameplayStarted) return;
+      videosReadyForClue = levelMediaIsPrepared();
+      readyButton.disabled = !videosReadyForClue;
+      if (videosReadyForClue) {
+        mediaPreparation.hidden = true;
         maybeShowClueIntro();
+      } else if (roomsReady && wordsReadyForClue) {
+        if (clueIntroShown) {
+          clueIntroShown = false;
+          clueIntro.classList.remove("show");
+          viewport.classList.remove("clue-intro-active");
+        }
+        if (!mediaPreparationPending) showMediaPreparationPrompt();
       }
     }
+
+    function showMediaPreparationPrompt(error = null) {
+      if (gameOver || gameplayStarted) return;
+      videosReadyForClue = false;
+      readyButton.disabled = true;
+      loadingScreen.classList.remove("hidden");
+      loadingWord.hidden = true;
+      mediaPreparationMessage.textContent = error ? CONFIG.text.mediaPreparationFailed : CONFIG.text.mediaPreparationPrompt;
+      prepareMediaButton.textContent = CONFIG.text.prepareMedia;
+      prepareMediaButton.disabled = false;
+      mediaPreparation.hidden = false;
+    }
+
+    function prepareMediaBeforeReady() {
+      if (mediaPreparationPending || gameOver || gameplayStarted || !roomsReady) return mediaPreparationPending;
+      prepareMediaButton.disabled = true;
+      mediaPreparation.hidden = true;
+      loadingWord.hidden = false;
+      // Invoke every play()/AudioContext.resume() synchronously in this loading
+      // screen gesture. No gesture-dependent media work is deferred to READY.
+      const attempts = levelRooms.map(room => {
+        try { return prepareJumpscarePlayback({ unlockAudio: true }, room); }
+        catch (error) { return Promise.reject(error); }
+      });
+      mediaPreparationPending = Promise.allSettled(attempts).then(results => {
+        const failed = results.find(result => result.status === "rejected");
+        if (failed) throw failed.reason;
+        if (!levelMediaIsPrepared()) throw new Error("Jumpscare preparation did not complete.");
+        mediaPreparationPending = null;
+        revealWhenMediaReady();
+      }).catch(error => {
+        mediaPreparationPending = null;
+        console.warn("Keeping READY hidden until jumpscare preparation succeeds.", error);
+        showMediaPreparationPrompt(error);
+      });
+      return mediaPreparationPending;
+    }
+    prepareMediaButton.addEventListener("click", prepareMediaBeforeReady);
 
     function resumeJumpscareAudio() {
       if (!jumpscareAudioContext || jumpscareAudioContext.state === "running" || jumpscareAudioContext.state === "closed") return;
@@ -5447,11 +5524,18 @@
 
     function prepareJumpscarePlayback({ unlockAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
       const jumpscareVideo = room.scare;
-      if (room.scareReady && (!unlockAudio || room.audioUnlocked)) return Promise.resolve();
+      if (room.scareReady && (!unlockAudio || room.audioUnlocked) && jumpscareVideo.paused &&
+          !jumpscareVideo.seeking && jumpscareVideo.currentTime <= 0.05 &&
+          jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
       if (room.preparing) return room.preparing;
-      const audioReady = unlockAudio ? unlockJumpscareAudio(room) : Promise.resolve();
+      room.scareReady = false;
+      if (unlockAudio) room.audioUnlocked = false;
+      room.preparationError = null;
+      let audioReady;
+      try { audioReady = unlockAudio ? unlockJumpscareAudio(room) : Promise.resolve(); }
+      catch (error) { audioReady = Promise.reject(error); }
       jumpscareVideo.classList.add("priming");
-      // Unlock the same video from READY. Desktop uses volume zero during
+      // Unlock the same video behind the loader. Desktop uses volume zero during
       // warm-up; mobile uses its gain node, since system volume is user-owned.
       const audibleWarmup = unlockAudio;
       jumpscareVideo.muted = !audibleWarmup;
@@ -5497,20 +5581,28 @@
         }
       });
 
-      // Call play synchronously: a READY click can supply the required user
+      // Call play synchronously: the loading-screen control supplies the user
       // gesture on browsers that block the initial silent warm-up attempt.
-      const playPromise = jumpscareVideo.play();
+      let playPromise;
+      try { playPromise = jumpscareVideo.play(); }
+      catch (error) { playPromise = Promise.reject(error); }
       const prepare = (async () => {
         try {
           await Promise.race([Promise.all([playPromise, buffered, decoded, audioReady]), new Promise((_, reject) => {
             preparationTimer = setTimeout(() => reject(new Error("Jumpscare warm-up timed out.")), CONFIG.loading.resourceTimeoutMs);
           })]);
           jumpscareVideo.pause();
-          if (jumpscareVideo.currentTime > 0) {
-            await seekJumpscareStandbyFrame(0, room);
+          if (jumpscareVideo.currentTime > 0 || jumpscareVideo.seeking) {
+            const parked = await seekJumpscareStandbyFrame(0, room);
+            if (!parked) throw new Error("Could not prepare the jumpscare's starting frame.");
           }
+          if (jumpscareVideo.seeking || jumpscareVideo.currentTime > 0.05 || jumpscareVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) throw new Error("The jumpscare's starting frame is not decoded.");
           room.scareReady = true;
           if (unlockAudio) room.audioUnlocked = true;
+        } catch (error) {
+          room.scareReady = false;
+          room.preparationError = error;
+          throw error;
         } finally {
           clearTimeout(preparationTimer);
           cleanupBuffer();
