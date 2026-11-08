@@ -397,7 +397,7 @@ allowedRooms = [1,2,5,7,10,12,14]
 riddleAfterWords = 0
 # First progression level at which this feature may be selected.
 startLevel = 1
-enabled = true
+enabled = false
 afterWords = 1
 checkMs = 15000
 spawnChance = 0.5
