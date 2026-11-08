@@ -397,7 +397,7 @@ allowedRooms = [1,2,5,7,10,12,14]
 riddleAfterWords = 0
 # First progression level at which this feature may be selected.
 startLevel = 1
-enabled = false
+enabled = true
 afterWords = 1
 checkMs = 15000
 spawnChance = 0.5
@@ -519,10 +519,14 @@ found = "FOUND"
 roomComplete = "LEVEL COMPLETE"
 retry = "TAP TO RETRY"
 playAgain = "TAP TO PLAY AGAIN"
+prepareMedia = "TAP"
+clearProgress = "CLEAR"
 
 
 # Foreground dolls: one presence roll per eligible SCENE per level, retained on visits/retries.
 # All appearance/motion values below apply to every doll. Scene numbers match room_N files.
+# Numbered dolls found in levels/ with no assignment inherit doll 1's room list.
+# An explicit empty list (for example "3":[]) disables that doll's eligible rooms.
 # Map each doll number to the scenes it may inhabit; if several match, choose one uniformly.
 # Example: roomAssignments = {"1":[2,4,5,7,8,10],"2":[1,3,6]}
 [doll]

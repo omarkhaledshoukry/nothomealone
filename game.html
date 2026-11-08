@@ -472,9 +472,8 @@
     }
 
     #loadingWord[hidden], #wordLoadError[hidden] { display: none; }
-    #mediaPreparation { max-width: 85%; color: #f1efe5; text-align: center; font: 18px/1.5 Arial, sans-serif; }
+    #mediaPreparation { position: fixed; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center; background: #000; cursor: pointer; }
     #mediaPreparation[hidden] { display: none; }
-    #prepareMediaButton { padding: 12px 20px; border: 1px solid #fff; background: transparent; color: #fff; -webkit-text-fill-color: #fff; font: inherit; cursor: pointer; }
     #wordLoadError {
       width: min(88%, 440px);
       max-height: 90%;
@@ -665,7 +664,8 @@
       text-align: right;
     }
 
-    #readyButton {
+    #readyButton,
+    #prepareMediaButton {
       appearance: none;
       border: 0;
       padding: 10px 12px;
@@ -681,6 +681,7 @@
       cursor: pointer;
       animation: readyJitter 0.4s steps(1, end) infinite;
     }
+    #prepareMediaButton { margin: 0; align-self: auto; -webkit-text-fill-color: var(--letter-beige); }
 
     @keyframes readyJitter {
       0%   { transform: translate(0,0); }
@@ -1044,8 +1045,7 @@
           <span class="loading-letter">G</span>
         </div>
         <div id="mediaPreparation" hidden>
-          <p id="mediaPreparationMessage"></p>
-          <button id="prepareMediaButton" type="button">CONTINUE</button>
+          <button id="prepareMediaButton" type="button">TAP</button>
         </div>
         <div id="wordLoadError" role="alert" hidden>
           <h2 id="wordLoadTitle">Couldn’t load words.txt</h2>
@@ -1078,9 +1078,7 @@
         <div class="clue-file-controls">
           <div id="localFileControls" hidden><button id="changeLocalFilesButton" type="button">Change local files</button></div>
           <div class="progress-actions">
-          <button type="button" class="export-progress">Save save.txt</button>
-          <button type="button" class="import-progress">Load save.txt</button>
-          <span class="progress-status" role="status"></span>
+          <button type="button" class="clear-progress">CLEAR</button>
         </div>
         </div>
       </div>
@@ -1141,9 +1139,7 @@
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
         <div class="progress-actions">
-          <button type="button" class="export-progress">Save save.txt</button>
-          <button type="button" class="import-progress">Load save.txt</button>
-          <span class="progress-status" role="status"></span>
+          <button type="button" class="clear-progress">CLEAR</button>
         </div>
       </div>
     </div>
@@ -1565,7 +1561,8 @@
     "hunt": "HUNT",
     "exit": "EXIT",
     "puzzleLevelFormat": "{title} #{number}",
-    "prepareMedia": "CONTINUE",
+    "prepareMedia": "TAP",
+    "clearProgress": "CLEAR",
     "mediaPreparationPrompt": "Tap to finish loading.",
     "mediaPreparationFailed": "Loading could not finish. Tap to try again."
   },
@@ -2086,9 +2083,23 @@
     const loadingScreen = document.getElementById("loadingScreen");
     const loadingWord = document.getElementById("loadingWord");
     const mediaPreparation = document.getElementById("mediaPreparation");
-    const mediaPreparationMessage = document.getElementById("mediaPreparationMessage");
     const prepareMediaButton = document.getElementById("prepareMediaButton");
     let mediaPreparationPending = null;
+    let sessionMediaUnlocked = false;
+    let levelTransitionPending = null;
+    let currentLevelLoadPromise = Promise.resolve();
+    let levelGeneration = 0;
+    const levelTimeouts = new Set();
+
+    function levelTimeout(callback, delay) {
+      const generation = levelGeneration;
+      const timer = window.setTimeout(() => {
+        levelTimeouts.delete(timer);
+        if (generation === levelGeneration) callback();
+      }, delay);
+      levelTimeouts.add(timer);
+      return timer;
+    }
     const wordLoadError = document.getElementById("wordLoadError");
     const wordLoadTitle = document.getElementById("wordLoadTitle");
     const wordLoadHelp = document.getElementById("wordLoadHelp");
@@ -2194,6 +2205,11 @@
     }
 
     let levelRooms = [];
+    const roomMediaPool = [];
+    const dollFiles = new Map();
+    let levelFileNamesPromise = null;
+    let sceneCatalogPromise = null;
+    let dollDiscoveryPromise = null;
     let activeRoomIndex = 0;
     let levelRoomCount = CONFIG.rooms.count;
     let roomsReady = false;
@@ -2460,13 +2476,62 @@
       return buildSceneCatalog(filenames);
     }
 
+    function discoverLevelFileNames() {
+      if (!levelFileNamesPromise) levelFileNamesPromise = (async () => {
+        if (Array.isArray(localFolderImport?.levelFiles)) return localFolderImport.levelFiles.filter(name => typeof name === "string" && !/[\\/]/.test(name));
+        if (levelBaseURL.protocol === "file:") return [];
+        const [indexed, listed] = await Promise.all([readLevelIndex(), readLevelDirectory()]);
+        return [...indexed, ...listed];
+      })();
+      return levelFileNamesPromise;
+    }
+
     async function discoverScenes() {
-      if (levelBaseURL.protocol === "file:") return probeNumberedLevels();
       // An optional index is {"files":["room_1.mp4","jumpscare_1.mp4",...]}
       // or a filename array. Normal web-server directory listings work too.
-      const [indexed, listed] = await Promise.all([readLevelIndex(), readLevelDirectory()]);
-      const scenes = buildSceneCatalog([...indexed, ...listed]);
-      return scenes.length ? scenes : probeNumberedLevels();
+      if (!sceneCatalogPromise) sceneCatalogPromise = (async () => {
+        const scenes = buildSceneCatalog(await discoverLevelFileNames());
+        return scenes.length ? scenes : probeNumberedLevels();
+      })();
+      return sceneCatalogPromise;
+    }
+
+    function dollNumberFromFile(name) {
+      const configured = CONFIG.doll.filePattern.split("{number}");
+      if (name.startsWith(configured[0]) && name.endsWith(configured[1])) {
+        const middle = name.slice(configured[0].length, -configured[1].length);
+        if (/^[1-9]\d*$/.test(middle) && Number.isSafeInteger(Number(middle)) && Number(middle) <= 1000000000) return Number(middle);
+      }
+      const match = /^doll[ _-]?([1-9]\d*)\.(png|webp|jpe?g)$/i.exec(name);
+      return match && Number.isSafeInteger(Number(match[1])) && Number(match[1]) <= 1000000000 ? Number(match[1]) : null;
+    }
+
+    function discoverDollFiles() {
+      if (!CONFIG.doll.enabled) return Promise.resolve();
+      if (!dollDiscoveryPromise) dollDiscoveryPromise = (async () => {
+        const listed = await discoverLevelFileNames();
+        for (const entry of listed) {
+          const name = typeof entry === "string" ? entry : entry?.name;
+          if (!name || /[\\/]/.test(name)) continue;
+          const number = dollNumberFromFile(name);
+          if (number !== null) dollFiles.set(number, name);
+        }
+        // Static hosts may have no directory listing and an older index may
+        // list only room videos. Probe numbered dolls once per page session.
+        let next = 1, absent = 0;
+        while (absent < LEVEL_PROBE_GAP) {
+          const found = await Promise.all(Array.from({ length: CONFIG.loading.levelProbeBatchSize }, (_, i) => next + i).map(async number => {
+            if (dollFiles.has(number)) return true;
+            const names = [CONFIG.doll.filePattern.replace("{number}", number)];
+            if (CONFIG.doll.filePattern === "doll_{number}.png") names.push(`doll${number}.png`);
+            for (const name of names) if (await levelAssetExists(name)) { dollFiles.set(number, name); return true; }
+            return false;
+          }));
+          for (const exists of found) absent = exists ? 0 : absent + 1;
+          next += found.length;
+        }
+      })();
+      return dollDiscoveryPromise;
     }
 
     function chooseScene(scenes) {
@@ -2481,9 +2546,37 @@
     }
 
     function makeLevelRoom(scene, index) {
-      const image = index === 0 ? roomImage : roomImage.cloneNode(false);
-      const backgroundVideo = index === 0 ? video : video.cloneNode(false);
-      const scare = index === 0 ? jumpscareVideo : jumpscareVideo.cloneNode(false);
+      const pooled = roomMediaPool[index];
+      if (pooled) {
+        const sameScare = pooled.scene.jumpscare === scene.jumpscare;
+        const sameBackdrop = pooled.scene.roomImage === scene.roomImage && pooled.scene.roomVideo === scene.roomVideo;
+        if (!sameScare) {
+          if (pooled.scareURL?.startsWith("blob:")) URL.revokeObjectURL(pooled.scareURL);
+          pooled.scareURL = null;
+          pooled.metadataReady = pooled.scareReady = false;
+        }
+        pooled.scene = scene;
+        pooled.backdropReady = sameBackdrop && pooled.backdropReady;
+        if (!sameBackdrop) pooled.videoCoverReady = false;
+        pooled.scare.style.display = "";
+        pooled.cameraFraction = .5;
+        pooled.deadlineWarmStarted = false;
+        pooled.preparationError = null;
+        pooled.dollState = pooled.dollActor = pooled.dollImage = null;
+        pooled.dollLoaded = false;
+        if (levelRoomCount === 1 && pooled.videoCover) { pooled.videoCover.remove(); pooled.videoCover = null; pooled.videoCoverReady = false; }
+        else if (levelRoomCount > 1 && !pooled.videoCover) {
+          pooled.videoCover = document.createElement("canvas");
+          pooled.videoCover.className = "room-video-cover";
+          pooled.videoCover.setAttribute("aria-hidden", "true");
+          sceneEffects.insertBefore(pooled.videoCover, letterWorld);
+        }
+        return pooled;
+      }
+      const primary = roomMediaPool[0];
+      const image = index === 0 ? roomImage : primary.image.cloneNode(false);
+      const backgroundVideo = index === 0 ? video : primary.video.cloneNode(false);
+      const scare = index === 0 ? jumpscareVideo : primary.scare.cloneNode(false);
       if (index) {
         image.id = `roomImage-${index}`;
         backgroundVideo.id = `roomVideo-${index}`;
@@ -2511,6 +2604,7 @@
         audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
         dollState: null, dollActor: null, dollImage: null, dollLoaded: false,
         deadlineWarmStarted: false };
+      roomMediaPool[index] = room;
       scare.addEventListener("ended", () => {
         if (scare === jumpscareVideo && gameOver && scare.classList.contains("playing")) showGameOver();
       });
@@ -2537,7 +2631,12 @@
 
     function chooseRoomDoll(sceneNumber) {
       if (!CONFIG.doll.enabled || !levelIsUnlocked(CONFIG.doll.startLevel)) return null;
-      const choices = Object.entries(CONFIG.doll.roomAssignments).filter(([, scenes]) => scenes.includes(sceneNumber)).map(([number]) => Number(number));
+      const assignments = CONFIG.doll.roomAssignments;
+      const numbers = new Set([...Object.keys(assignments).map(Number), ...dollFiles.keys()]);
+      const choices = [...numbers].filter(number => {
+        const scenes = Object.prototype.hasOwnProperty.call(assignments, number) ? assignments[number] : assignments["1"] || CONFIG_DEFAULTS.doll.roomAssignments["1"];
+        return scenes.includes(sceneNumber);
+      });
       if (!choices.length || Math.random() >= CONFIG.doll.spawnChance) return null;
       return { number: choices[Math.floor(Math.random() * choices.length)],
         xFraction: CONFIG.doll.minXFraction + Math.random() * (CONFIG.doll.maxXFraction - CONFIG.doll.minXFraction),
@@ -2565,7 +2664,7 @@
         dollWorld.appendChild(actor);
         room.dollActor = actor; room.dollImage = image;
         preserveOverlayImageColors(image, bitmap);
-        const file = CONFIG.doll.filePattern.replace("{number}", room.dollState.number);
+        const file = dollFiles.get(room.dollState.number) || CONFIG.doll.filePattern.replace("{number}", room.dollState.number);
         let deadline;
         try {
           const loaded = waitForMedia(image, "load", CONFIG.doll.loadTimeoutMs);
@@ -2728,6 +2827,7 @@
     }
 
     async function preloadRoomBackdrop(room) {
+      if (room.backdropReady) return;
       if (room.scene.roomImage) {
         try {
           const loaded = waitForMedia(room.image, "load", CONFIG.loading.resourceTimeoutMs);
@@ -2864,7 +2964,8 @@
       if (levelLoading) return;
       levelLoading = true;
       try {
-        availableScenes = await discoverScenes();
+        const [catalog] = await Promise.all([discoverScenes(), discoverDollFiles()]);
+        availableScenes = [...catalog];
         // Retry/resume must retain its original scene set even after config edits.
         if (!resumedLevel) availableScenes = roomMilestonePool(availableScenes);
         if (!resumedLevel) availableScenes = nonRepeatingScenePool(availableScenes, progressState.lastSceneNumber);
@@ -2889,25 +2990,31 @@
         } else selected = shuffleArray([...availableScenes]).slice(0, levelRoomCount);
         levelRooms = selected.map(makeLevelRoom);
         activeRoomIndex = resumedLevel?.activeRoomIndex || 0;
-        await Promise.all([preloadLevelDolls(), ...levelRooms.map(async room => {
-          await Promise.all([
+        const loaded = await Promise.allSettled([preloadLevelDolls(), ...levelRooms.map(async room => {
+          const parts = await Promise.allSettled([
             preloadRoomBackdrop(room),
             (async () => {
-              room.scareURL = await preloadJumpscareFile(room.scene.jumpscare);
-              const metadata = waitForMedia(room.scare, "loadedmetadata", CONFIG.loading.jumpscareDownloadTimeoutMs);
-              room.scare.src = room.scareURL;
-              room.scare.load();
-              await metadata;
-              room.metadataReady = true;
+              if (!room.metadataReady || room.scare.readyState < HTMLMediaElement.HAVE_METADATA) {
+                room.scareURL = room.scareURL || await preloadJumpscareFile(room.scene.jumpscare);
+                const metadata = waitForMedia(room.scare, "loadedmetadata", CONFIG.loading.jumpscareDownloadTimeoutMs);
+                room.scare.src = room.scareURL;
+                room.scare.load();
+                await metadata;
+                room.metadataReady = true;
+              }
               prepareJumpscareAudioGraph(room);
-              try { await prepareJumpscarePlayback({}, room); }
+              try { await prepareJumpscarePlayback({ unlockAudio: sessionMediaUnlocked }, room); }
               catch (error) {
                 room.preparationError = error;
                 console.info("Jumpscare preparation needs another attempt before READY.", error.message);
               }
             })()
           ]);
+          const failed = parts.find(part => part.status === "rejected");
+          if (failed) throw failed.reason;
         })]);
+        const failed = loaded.find(part => part.status === "rejected");
+        if (failed) throw failed.reason;
         if (gameOver) return;
         roomsReady = true;
         activateRoom(activeRoomIndex, { initial: true });
@@ -3156,8 +3263,10 @@
           const saveFile = find(selectedFolderPath(selectedConfig.assets.saveFile));
           if (saveFile) saveText = await saveFile.text();
         } catch (error) { console.info("No readable local save.txt.", error.message); }
+        const levelsPrefix = selectedFolderPath(selectedConfig.assets.levelsDirectory).replace(/\/?$/, "/");
+        const levelFiles = [...entries.keys()].filter(path => path.startsWith(levelsPrefix) && !path.slice(levelsPrefix.length).includes("/")).map(path => path.slice(levelsPrefix.length));
         const data = { version: 3, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, saveText };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, saveText, levelFiles };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -3309,8 +3418,9 @@
       clueIntro.setAttribute("aria-hidden", "false");
 
       // Fade the black loader away only once the blurred clue scene is ready beneath it.
+      const generation = levelGeneration;
       requestAnimationFrame(() => {
-        loadingScreen.classList.add("hidden");
+        if (generation === levelGeneration && clueIntroShown) loadingScreen.classList.add("hidden");
       });
     }
 
@@ -3336,7 +3446,7 @@
       viewport.classList.remove("clue-intro-active");
       anchors.forEach(anchor => { anchor.hidden = true; });
       showCurrentLetter();
-      clueDismissTimer = window.setTimeout(() => {
+      clueDismissTimer = levelTimeout(() => {
         clueDismissTimer = null;
         clueIntro.classList.remove("show", "dismiss");
         clueIntro.setAttribute("aria-hidden", "true");
@@ -3398,7 +3508,7 @@
       clueIntro.setAttribute("aria-hidden", "true");
       puzzleHintControl().setAttribute("aria-expanded", "false");
       if (immediate) { clueIntro.classList.remove("hint-mode"); viewport.classList.remove("hint-transition"); }
-      else hintHideTimer = setTimeout(finishHintFade, CONFIG.puzzles.hintFadeMs * 2);
+      else hintHideTimer = levelTimeout(finishHintFade, CONFIG.puzzles.hintFadeMs * 2);
       updateCameraControls();
     }
 
@@ -3845,7 +3955,7 @@
       snapButton.classList.add("snapping");
       refreshShutterBitmap();
       window.clearTimeout(shutterAnimationTimer);
-      shutterAnimationTimer = window.setTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
+      shutterAnimationTimer = levelTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
       if (letterIsVisible) {
         const tile = tiles[index];
@@ -3928,7 +4038,7 @@
       animation.finished.then(() => {
         if (captureFlightAnimation === animation) finishLetterTransfer();
       }).catch(() => {});
-      captureFinishTimer = window.setTimeout(() => finishLetterTransfer(), LETTER_TRANSFER_MS + CONFIG.letters.transferFallbackMs);
+      captureFinishTimer = levelTimeout(() => finishLetterTransfer(), LETTER_TRANSFER_MS + CONFIG.letters.transferFallbackMs);
     }
 
     function finishShutterGesture() {
@@ -4312,7 +4422,7 @@
       refreshMessageBitmap();
       void message.offsetWidth;
       message.classList.add("show");
-      wordAdvanceTimer = window.setTimeout(() => {
+      wordAdvanceTimer = levelTimeout(() => {
         if (gameOver) return;
         if (roomCompleted) {
           document.getElementById("gameOverTitle").textContent = CONFIG.text.roomComplete;
@@ -4439,7 +4549,7 @@
     window.addEventListener("keyup", keyboardUp);
     function advanceScreenFromKeyboard(event) {
       if (!CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
-          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select") ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, .progress-actions, #localFileControls") ||
           !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
       const preparationVisible = !mediaPreparation.hidden && !prepareMediaButton.disabled && !gameplayStarted;
       const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
@@ -4785,7 +4895,7 @@
       window.clearTimeout(spiderTimer);
       spiderTimer = null;
       if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
-      spiderTimer = window.setTimeout(() => {
+      spiderTimer = levelTimeout(() => {
         spiderTimer = null;
         if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
         if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
@@ -4872,12 +4982,13 @@
       window.clearTimeout(anomalyTimer);
       anomalyTimer = null;
       if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
-      anomalyTimer = window.setTimeout(async () => {
+      const generation = levelGeneration;
+      anomalyTimer = levelTimeout(async () => {
         anomalyTimer = null;
         if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
         if (anomalyRoomIsAllowed() && Math.random() < ANOMALY_SPAWN_CHANCE) {
           const placed = await spawnAnomalyOffscreen();
-          if (!placed) scheduleAnomalyCheck();
+          if (generation === levelGeneration && !placed) scheduleAnomalyCheck();
         } else {
           scheduleAnomalyCheck();
         }
@@ -4942,10 +5053,11 @@
 
     async function spawnAnomalyOffscreen() {
       if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      const generation = levelGeneration;
       const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (!meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      if (generation !== levelGeneration || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -5128,7 +5240,7 @@
       handTimer = null;
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || gameOver || roomCompleted) return;
       const delay = CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
-      handTimer = window.setTimeout(() => {
+      handTimer = levelTimeout(() => {
         handTimer = null;
         if (!levelIsUnlocked(CONFIG.hand.startLevel)) return;
         if (!handVisible && Math.random() < CONFIG.hand.spawnChance) {
@@ -5154,7 +5266,7 @@
 
       // Ensure the animation restarts cleanly every time.
       void handImage.offsetWidth;
-      window.setTimeout(() => {
+      levelTimeout(() => {
         if (!handVisible || handDismissing) return;
         handBlocker.className = "active resting";
       }, CONFIG.hand.enterMs);
@@ -5164,6 +5276,7 @@
       if (!handVisible || handDismissing) return;
       handDismissing = true;
       viewport.classList.remove("hand-active");
+      const generation = levelGeneration;
       const pointerId = handPointerId;
       handPointerId = null;
       handDragStarted = false;
@@ -5179,13 +5292,14 @@
         const exitY = Math.max(viewport.clientHeight * CONFIG.hand.exitViewportMultiplier, handImage.getBoundingClientRect().height * CONFIG.hand.exitImageMultiplier);
 
         requestAnimationFrame(() => {
+          if (generation !== levelGeneration) return;
           setOverlayImageStyles(handImage, handBitmap, { transform: `translate(-50%, ${exitY}px)` });
         });
       } else {
         handBlocker.className = "active exiting";
       }
 
-      window.setTimeout(() => {
+      levelTimeout(() => {
         handVisible = false;
         handDismissing = false;
         updateCameraControls();
@@ -5240,7 +5354,7 @@
         hideHand({ continueFromDrag: true });
       } else {
         setOverlayImageStyles(handImage, handBitmap, { transition: `transform ${CONFIG.hand.resetMs}ms ease-out`, transform: "translate(-50%, 0)" });
-        window.setTimeout(() => {
+        levelTimeout(() => {
           setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
         }, CONFIG.hand.resetCleanupMs);
       }
@@ -5376,7 +5490,6 @@
       readyButton.disabled = true;
       loadingScreen.classList.remove("hidden");
       loadingWord.hidden = true;
-      mediaPreparationMessage.textContent = error ? CONFIG.text.mediaPreparationFailed : CONFIG.text.mediaPreparationPrompt;
       prepareMediaButton.textContent = CONFIG.text.prepareMedia;
       prepareMediaButton.disabled = false;
       mediaPreparation.hidden = false;
@@ -5387,6 +5500,7 @@
       prepareMediaButton.disabled = true;
       mediaPreparation.hidden = true;
       loadingWord.hidden = false;
+      unlockSpiderSound();
       // Invoke every play()/AudioContext.resume() synchronously in this loading
       // screen gesture. No gesture-dependent media work is deferred to READY.
       const attempts = levelRooms.map(room => {
@@ -5397,6 +5511,7 @@
         const failed = results.find(result => result.status === "rejected");
         if (failed) throw failed.reason;
         if (!levelMediaIsPrepared()) throw new Error("Jumpscare preparation did not complete.");
+        sessionMediaUnlocked = true;
         mediaPreparationPending = null;
         revealWhenMediaReady();
       }).catch(error => {
@@ -5406,7 +5521,13 @@
       });
       return mediaPreparationPending;
     }
-    prepareMediaButton.addEventListener("click", prepareMediaBeforeReady);
+    // The single TAP prompt owns the entire page, including desktop margins.
+    window.addEventListener("click", event => {
+      if (mediaPreparation.hidden || prepareMediaButton.disabled || event.button > 0) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      prepareMediaBeforeReady();
+    }, true);
 
     function resumeJumpscareAudio() {
       if (!jumpscareAudioContext || jumpscareAudioContext.state === "running" || jumpscareAudioContext.state === "closed") return;
@@ -5628,6 +5749,7 @@
 
 
     const PROGRESS_STORAGE_BASE_KEY = `room-word-hunt/progress/v1:${new URL(".", document.baseURI).href}`;
+    const PROGRESS_RESET_KEY = PROGRESS_STORAGE_BASE_KEY + ":cleared";
     let PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY;
     let progressState = emptyProgress();
     let resumedLevel = null;
@@ -5794,6 +5916,10 @@
 
     async function initializeProgress() {
       let selected = savedBrowserProgress();
+      let ignoreExternalSave = false;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { if (window[store].getItem(PROGRESS_RESET_KEY) === "1") ignoreExternalSave = true; } catch {}
+      }
       const consider = text => {
         try {
           const candidate = parseProgress(text);
@@ -5801,7 +5927,9 @@
           if (!selected || progressTime(candidate) > progressTime(selected)) selected = candidate;
         } catch (error) { console.info("Ignoring unavailable/invalid save.txt.", error.message); }
       };
-      if (localFolderImport) {
+      if (ignoreExternalSave) {
+        progressSaveHandle = null;
+      } else if (localFolderImport) {
         if (typeof localFolderImport.saveText === "string") consider(localFolderImport.saveText);
       } else {
         const controller = new AbortController();
@@ -5812,7 +5940,7 @@
         } catch (error) { console.info("No readable save.txt; using browser progress.", error.message); }
         finally { clearTimeout(timer); }
       }
-      if ("showSaveFilePicker" in window) {
+      if (!ignoreExternalSave && "showSaveFilePicker" in window) {
         const handle = await saveHandleStore("get");
         try {
           if (handle?.kind === "file" && await handle.queryPermission({ mode: "readwrite" }) === "granted") {
@@ -5884,15 +6012,154 @@
       downloadProgress();
     }
 
+    function resetLevelState() {
+      levelGeneration++;
+      for (const timer of levelTimeouts) window.clearTimeout(timer);
+      levelTimeouts.clear();
+      gameplayStarted = gameplayStarting = false;
+      gameOver = true;
+      roomsReady = wordsReadyForClue = videosReadyForClue = clueIntroShown = false;
+      hidePuzzleHint({ immediate: true });
+      finishHintFade();
+      stopCameraTimer();
+      stopKeyboardInput();
+      stopButterflyFlight();
+      finishPanGesture();
+      finishShutterGesture();
+      finishLetterTransfer({ reveal: false });
+      stopShutterEffect();
+      stopSpiderEncounter();
+      hideDolls();
+      for (const timer of [wordAdvanceTimer, anomalyTimer, handTimer, clueDismissTimer, hintHideTimer, shutterAnimationTimer]) window.clearTimeout(timer);
+      wordAdvanceTimer = anomalyTimer = handTimer = clueDismissTimer = hintHideTimer = shutterAnimationTimer = null;
+      if (jumpscareFrameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
+      jumpscareFrameRequest = null;
+      if (handPointerId !== null) {
+        try { if (handBlocker.hasPointerCapture(handPointerId)) handBlocker.releasePointerCapture(handPointerId); } catch {}
+      }
+      handPointerId = null;
+      handVisible = handDismissing = handDragStarted = false;
+      handStartY = handCurrentY = 0;
+      handBlocker.className = "";
+      handBlocker.setAttribute("aria-hidden", "true");
+      setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
+      anomalyEnabled = anomalyActive = anomalyHasBeenSeen = false;
+      anomalyRoomIndex = spiderRoomIndex = -1;
+      anomalyMeta = anomalyWorldBox = null;
+      anomalyImage.removeAttribute("src");
+      setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
+      anomalyWorld.style.display = "";
+      spiderWorld.style.display = "";
+      dollWorld.replaceChildren();
+      dollWorld.classList.remove("exiting");
+      sceneEffects.insertBefore(dollWorld, spiderWorld);
+      dollsRetreating = false;
+      for (const room of roomMediaPool) {
+        room.videoRun++;
+        room.videoFrameCancel?.();
+        room.video.pause(); room.video.muted = true;
+        room.scare.pause(); room.audioUnlockRun++;
+        if (room.audioGain) room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
+        room.scare.classList.remove("playing", "priming", "snapping");
+        room.image.classList.remove("snapping"); room.video.classList.remove("snapping");
+        room.image.style.display = room.video.style.display = room.scare.style.display = "none";
+        if (room.videoCover) room.videoCover.style.display = "none";
+      }
+      if (roomMediaPool.length) {
+        roomImage = roomMediaPool[0].image; video = roomMediaPool[0].video;
+        jumpscareVideo = roomMediaPool[0].scare; roomMedia = video;
+      }
+      levelRooms = [];
+      activeRoomIndex = 0;
+      currentScene = null;
+      wordLetterRooms = [];
+      words = []; currentWord = ""; currentPuzzle = null;
+      wordIndex = selectedCount = completedWordCount = 0;
+      tiles = []; anchors = []; selectionHistory = [];
+      letterWorld.replaceChildren(); wordDisplay.replaceChildren();
+      letterWorld.classList.remove("snapping"); anomalyWorld.classList.remove("snapping"); dollWorld.classList.remove("snapping");
+      captureInProgress = wordTransitionPending = roomCompleted = completionRecorded = false;
+      offsetX = lastAppliedWorldOffset = minOffset = renderedVideoWidth = 0;
+      snapPoints = [0];
+      roomMediaReady = jumpscareReady = jumpscareWarmAttempted = jumpscareMetadataReady = jumpscareDeadlineWarmStarted = false;
+      jumpscarePreparing = jumpscareStandbySeekCancel = null;
+      jumpscareAudioGain = jumpscareAudioSource = null;
+      jumpscareAudioUnlocked = false;
+      mediaPreparationPending = null;
+      wordsLoading = levelLoading = false;
+      hintActive = false; hintPointerId = hintPointerControl = hintKey = null;
+      gameOverReason = null;
+      message.classList.remove("show"); snapButton.classList.remove("snapping");
+      viewport.classList.remove("hand-active", "hint-active", "hint-transition", "clue-intro-active");
+      clueIntro.classList.remove("show", "dismiss", "hint-mode");
+      clueIntro.setAttribute("aria-hidden", "true");
+      cameraOverlay.setAttribute("aria-hidden", "true");
+      gameOverScreen.classList.remove("show");
+      readyButton.disabled = true;
+      mediaPreparation.hidden = true;
+      wordLoadError.hidden = true;
+      loadingWord.hidden = false;
+      loadingScreen.classList.remove("hidden");
+      gameOver = false;
+    }
+
+    function resetBrowserProgress() {
+      // Only this game's progress is cleared; folder/config caches are retained.
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try {
+          window[store].removeItem(PROGRESS_STORAGE_BASE_KEY);
+          window[store].removeItem(PROGRESS_STORAGE_BASE_KEY + ":ar");
+          window[store].setItem(PROGRESS_RESET_KEY, "1");
+        } catch (error) { console.info("Could not clear browser progress.", error.message); }
+      }
+      progressSaveHandle = null;
+      progressMessage = "";
+      progressState = emptyProgress();
+      progressState.updatedAt = new Date().toISOString();
+      if (localFolderImport) { localFolderImport.saveText = null; rememberLocalFiles(localFolderImport); }
+      saveProgress();
+    }
+
+    function transitionToLevel({ fresh = false } = {}) {
+      if (levelTransitionPending) return levelTransitionPending;
+      // Resume within the actual Next/Retry/Clear gesture. Retain the unlocked
+      // media elements and AudioContexts while changing only level state.
+      resumeJumpscareAudio();
+      resumeSpiderSound();
+      gameOverScreen.classList.remove("show");
+      readyButton.disabled = true;
+      clueIntro.classList.remove("show");
+      loadingWord.hidden = false;
+      loadingScreen.classList.remove("hidden");
+      levelTransitionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending,
+        ...roomMediaPool.flatMap(room => [room.preparing, room.audioUnlocking])]).then(() => {
+        if (fresh) resetBrowserProgress();
+        resetLevelState();
+        resumedLevel = progressState.currentLevel ? validateProgress(progressState).currentLevel : null;
+        currentRoomNumber = progressState.completedRooms + 1;
+        currentLevelLoadPromise = prepareCurrentLevel();
+        return currentLevelLoadPromise;
+      }).catch(showLevelLoadError).finally(() => { levelTransitionPending = null; });
+      return levelTransitionPending;
+    }
+
+    function clearBrowserProgress(event) {
+      event?.preventDefault();
+      event?.stopPropagation();
+      if (levelTransitionPending || gameplayStarted && !gameOver && !roomCompleted) return;
+      return transitionToLevel({ fresh: true });
+    }
+
     function retryOrContinue(event) {
       if (!gameOverScreen.classList.contains("show")) return;
       if (event?.target.closest?.("button, input, .progress-actions")) return;
       if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
       // Reuse this exact unfinished room; completed rooms already cleared it.
       saveProgress();
-      location.reload();
+      return transitionToLevel();
     }
 
+    document.querySelectorAll(".clear-progress").forEach(button => button.addEventListener("click", clearBrowserProgress));
     document.querySelectorAll(".export-progress").forEach(button => button.addEventListener("click", exportProgress));
     document.querySelectorAll(".import-progress").forEach(button => button.addEventListener("click", event => {
       event.stopPropagation(); document.getElementById("progressFileInput").click();
@@ -5955,6 +6222,7 @@
       updateLevelStatus();
       document.getElementById("clueTitle").textContent = CONFIG.text.clueTitle;
       readyButton.textContent = CONFIG.text.ready;
+      document.querySelectorAll(".clear-progress").forEach(button => { button.textContent = CONFIG.text.clearProgress; });
       messageText.textContent = CONFIG.text.found;
       // Keep the local-first font rule (especially iOS), changing its source only
       // when a different font file or local names were actually configured.
@@ -6015,6 +6283,15 @@
       // Separate language profiles preserve English retries when switching to Arabic.
       PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
       await initializeProgress();
+      levelBaseURL = new URL(LEVELS_DIRECTORY.replace(/\/?$/, "/"), document.baseURI);
+      cluePaper.src = CONFIG.assets.paperFile;
+      handImage.src = CONFIG.assets.handFile;
+      loadSpiderAssets();
+      currentLevelLoadPromise = prepareCurrentLevel();
+      await currentLevelLoadPromise;
+    }
+
+    async function prepareCurrentLevel() {
       levelType = resumedLevel ? { name: resumedLevel.levelType, ...resumedLevel.rules } : chooseLevelType();
       if (resumedLevel && levelType.name === "puzzle") {
         // Apply the requested flying-letter setting to unfinished regular
@@ -6026,21 +6303,19 @@
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       batterySlotsRemaining = BATTERY_SLOT_COUNT;
-      levelBaseURL = new URL(LEVELS_DIRECTORY.replace(/\/?$/, "/"), document.baseURI);
       configureGamePresentation();
-      cluePaper.src = CONFIG.assets.paperFile;
-      handImage.src = CONFIG.assets.handFile;
       resizeGameViewport();
-      loadSpiderAssets();
-      loadRandomLevel();
+      const roomLoad = loadRandomLevel();
       revealWhenMediaReady();
       updateBatteryUI();
       updateCameraTimer();
-      if (isPuzzleLevel()) return; // The puzzle answer determines room count before scenes are chosen.
+      if (isPuzzleLevel()) return roomLoad; // The puzzle answer determines room count before scenes are chosen.
+      let wordLoad;
       if (resumedLevel && !resumedLevel.legacy) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
       else if (resumedLevel?.legacy && resumedLevel.words.length >= levelType.wordCount && resumedLevel.words.every(word => word.length > 0 && word.length <= levelRoomCount)) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
       else if (localFolderImport) acceptWordList(localFolderImport.wordsText, localFolderImport.wordsSource);
-      else loadWords();
+      else wordLoad = loadWords();
+      await Promise.allSettled([roomLoad, wordLoad]);
     }
     initializeGame();
   </script>
