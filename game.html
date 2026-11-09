@@ -481,8 +481,14 @@
     }
 
     #loadingWord[hidden], #wordLoadError[hidden] { display: none; }
-    #mediaPreparation { position: fixed; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center; background: #000; cursor: pointer; }
-    #mediaPreparation[hidden] { display: none; }
+    #mediaPreparation, #resumePlayback { position: absolute; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center; background: #000; cursor: pointer; }
+    #mediaPreparation { position: fixed; }
+    #mediaPreparation[hidden], #resumePlayback[hidden] { display: none; }
+    #portraitViewport.level-paused #sceneEffects,
+    #portraitViewport.level-paused #sceneEffects *,
+    #portraitViewport.level-paused #handBlocker,
+    #portraitViewport.level-paused #handBlocker *,
+    #portraitViewport.level-paused #message { animation-play-state: paused; }
     #wordLoadError {
       width: min(88%, 440px);
       max-height: 90%;
@@ -674,7 +680,8 @@
     }
 
     #readyButton,
-    #prepareMediaButton {
+    #prepareMediaButton,
+    #resumePlaybackButton {
       appearance: none;
       border: 0;
       padding: 10px 12px;
@@ -690,7 +697,7 @@
       cursor: pointer;
       animation: readyJitter 0.4s steps(1, end) infinite;
     }
-    #prepareMediaButton { margin: 0; align-self: auto; -webkit-text-fill-color: var(--letter-beige); }
+    #prepareMediaButton, #resumePlaybackButton { margin: 0; align-self: auto; -webkit-text-fill-color: var(--letter-beige); }
 
     @keyframes readyJitter {
       0%   { transform: translate(0,0); }
@@ -1204,6 +1211,7 @@
 
       <div id="blackFlash" aria-hidden="true"></div>
       <video id="jumpscareVideo" class="jumpscare-video" preload="auto" muted playsinline></video>
+      <div id="resumePlayback" hidden><button id="resumePlaybackButton" type="button">TAP TO RESUME</button></div>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
         <button class="home-back" id="endHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <div id="gameOverTitle">GAME OVER</div>
@@ -1870,10 +1878,15 @@
     let homeBootPromise = Promise.resolve();
     let homePlayPending = null;
     let menuActionPending = null;
-    let gameplayPaused = false;
+    let pageParked = false;
+    let pageSuspended = document.hidden;
+    let gameplayPaused = pageSuspended;
     let exitConfirmationActive = false;
-    let exitPausedElapsedMs = 0;
-    let exitVideoWasPlaying = false;
+    let playbackRevision = 0;
+    let levelResumePending = null;
+    let cancelMenuPrimer = null;
+    let loadingPlaybackInterrupted = false;
+    const mediaWaits = new Set();
     let fontLoadGeneration = 0;
     let progressInitializedLanguage = null;
 
@@ -2250,6 +2263,8 @@
     const loadingWord = document.getElementById("loadingWord");
     const mediaPreparation = document.getElementById("mediaPreparation");
     const prepareMediaButton = document.getElementById("prepareMediaButton");
+    const resumePlayback = document.getElementById("resumePlayback");
+    const resumePlaybackButton = document.getElementById("resumePlaybackButton");
     let mediaPreparationPending = null;
     let sessionMediaUnlocked = false;
     let levelTransitionPending = null;
@@ -2442,6 +2457,7 @@
     let wordTransitionPending = false;
     let wordAdvanceTimer = null;
     let cameraStartedAt = null;
+    let pausedCameraElapsedMs = null;
     let cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
     let cameraTimerInterval = null;
     let shutterAnimationTimer = null;
@@ -2497,6 +2513,9 @@
     let spiderActive = false;
     let spiderRetreating = false;
     let spiderRetreatFrame = 0;
+    let spiderRetreatStep = null;
+    let spiderRetreatStartedAt = 0;
+    let spiderRetreatPausedAt = null;
     let spiderFrameIndex = 0;
     let spiderWorldX = 0;
     let spiderWorldFraction = 0;
@@ -2509,6 +2528,9 @@
     let spiderAudioBuffer = null;
     let spiderAudioSource = null;
     let spiderSoundOffset = 0;
+    let spiderPlaybackStart = 0;
+    let spiderPlaybackOffset = 0;
+    let pausedSpiderSoundOffset = null;
     let spiderNativeAudio = null;
     let gameOver = false;
     let gameOverReason = null;
@@ -2527,6 +2549,7 @@
     let jumpscarePreparing = null;
     let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
     let jumpscareFrameRequest = null;
+    let pendingScareCentre = null;
     let jumpscareAudioContext = null;
     let jumpscareAudioGain = null;
     let jumpscareAudioSource = null;
@@ -2803,7 +2826,7 @@
         videoCoverReady: false, videoFrameCancel: null, videoRun: 0,
         backdropReady: false, metadataReady: false, scareReady: false,
         warmAttempted: false, preparing: null, audioUnlocked: false,
-        audioUnlocking: null, audioUnlockRun: 0,
+        cancelScarePreparation: null,
         audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
         mediaLoading: false, forceFreshDownload: false,
         dollState: null, dollActor: null, dollImage: null, dollLoaded: false,
@@ -2932,15 +2955,16 @@
 
     function waitForMedia(element, successEvent, timeoutMs) {
       return new Promise((resolve, reject) => {
-        const cleanup = () => { clearTimeout(timer); element.removeEventListener(successEvent, done); element.removeEventListener("error", fail); };
+        const cleanup = () => { cancelTimeout(); element.removeEventListener(successEvent, done); element.removeEventListener("error", fail); };
         const done = () => { cleanup(); resolve(); };
+        const rejectLoad = () => { cleanup(); reject(new Error(`Could not load ${element.currentSrc || element.src}`)); };
         const fail = () => {
           if (typeof element.readyState === "number" && !element.error) return;
-          cleanup(); reject(new Error(`Could not load ${element.currentSrc || element.src}`));
+          rejectLoad();
         };
-        const timer = setTimeout(fail, timeoutMs);
+        const cancelTimeout = visibleMediaTimeout(rejectLoad, timeoutMs);
         element.addEventListener(successEvent, done, { once: true });
-        element.addEventListener("error", fail, { once: true });
+        element.addEventListener("error", fail);
       });
     }
 
@@ -3009,6 +3033,7 @@
     }
 
     function showRoomVideo(room, { withAudio = gameplayStarted } = {}) {
+      if (isPageInactive() || menuPage !== null) return;
       const run = ++room.videoRun;
       // Loading stays silent. READY and PREV/NEXT enable only the active
       // room's soundtrack synchronously inside the player's click/tap.
@@ -3020,7 +3045,7 @@
         room.video.style.opacity = "1";
         const played = room.video.play();
         if (played) played.catch(() => {});
-        return;
+        return played;
       }
       room.videoCover.style.display = room.videoCoverReady ? "block" : "none";
       room.video.style.opacity = room.videoCoverReady ? ".001" : "0";
@@ -3037,6 +3062,7 @@
         // Keep the cached room visible if autoplay is blocked. READY or a
         // subsequent navigation tap can retry within a real user gesture.
       });
+      return play;
     }
 
     async function preloadRoomBackdrop(room) {
@@ -3085,7 +3111,7 @@
       room.video.src = mediaRetryURL(room.scene.roomVideo, fresh);
       room.video.load();
       await loaded;
-      if (!room.videoCover) {
+      if (!room.videoCover || isPageInactive() || menuPage !== null) {
         // Keep video download/metadata/first-frame decoding, but skip the
         // old multi-room play -> screenshot -> pause warm-up cycle entirely.
         room.media = room.video;
@@ -3159,7 +3185,10 @@
       buildSnapPoints();
       offsetX = clamp(room.cameraFraction * minOffset, minOffset, 0);
       applyWorldOffset(false);
-      if (room.media === room.video) showRoomVideo(room);
+      if (room.media === room.video) {
+        if (gameplayStarted) watchRoomPlayback(room, showRoomVideo(room, { withAudio: true }));
+        else showRoomVideo(room, { withAudio: false });
+      }
       if (currentWord) relayoutScatteredLetters();
       anomalyWorld.style.display = anomalyActive && anomalyRoomIndex !== index ? "none" : "";
       spiderWorld.style.display = spiderActive && spiderRoomIndex !== index ? "none" : "";
@@ -3237,7 +3266,8 @@
         roomsReady = true;
         activateRoom(activeRoomIndex, { initial: true });
         rememberCurrentRoom();
-        revealWhenMediaReady();
+        if (loadingPlaybackInterrupted) recoverLoadingPlayback();
+        else revealWhenMediaReady();
       } catch (error) { showLevelLoadError(error); }
       finally { levelLoading = false; }
     }
@@ -3332,6 +3362,7 @@
               room.metadataReady = true;
               room.forceFreshDownload = false;
             }
+            if (isPageInactive() || menuPage !== null) return;
             prepareJumpscareAudioGraph(room);
             try { await prepareJumpscarePlayback({ unlockAudio: sessionMediaUnlocked }, room); }
             catch (error) {
@@ -3339,7 +3370,7 @@
               // Gesture/seek preparation failures remain behind the TAP gate.
               // Actual source failures retry loading before showing an error.
               if (room.scare.error) throw error;
-              console.info("Jumpscare preparation needs another attempt before READY.", error.message);
+              if (error.name !== "AbortError") console.info("Jumpscare preparation needs another attempt before READY.", error.message);
             }
             return;
           } catch (error) {
@@ -3357,7 +3388,7 @@
       // Keep direct disk playback and its native audio path for file:// games.
       if (!/^https?:$/.test(new URL(url, document.baseURI).protocol)) return url;
       const controller = new AbortController();
-      const timeout = window.setTimeout(() => controller.abort(), CONFIG.loading.jumpscareDownloadTimeoutMs);
+      const cancelTimeout = visibleMediaTimeout(() => controller.abort(), CONFIG.loading.jumpscareDownloadTimeoutMs);
       try {
         const response = await fetch(url, { signal: controller.signal, cache: fresh ? "reload" : "default" });
         if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
@@ -3371,7 +3402,7 @@
           clip = new Blob([clip], { type });
         }
         return URL.createObjectURL(clip);
-      } finally { window.clearTimeout(timeout); }
+      } finally { cancelTimeout(); }
     }
 
     function parseWordList(text, contentType = "", language = CONFIG.language.code) {
@@ -3785,11 +3816,12 @@
 
     function beginGameplayFromClues() {
       if (menuPage !== null || gameplayPaused || !wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
-      if (!levelMediaIsPrepared()) { revealWhenMediaReady(); return; }
+      if (!levelMediaIsPrepared()) { prepareMediaBeforeReady(); return; }
       gameplayStarting = true;
       readyButton.disabled = true;
       const activeRoom = levelRooms[activeRoomIndex];
-      if (activeRoom && activeRoom.media === activeRoom.video) showRoomVideo(activeRoom, { withAudio: true });
+      const roomPlayback = activeRoom && activeRoom.media === activeRoom.video
+        ? showRoomVideo(activeRoom, { withAudio: true }) : null;
       // Download, buffering, decoded-frame parking and the silent audio-unlock
       // playback all succeeded before this button became visible. READY does
       // no video warm-up, rewind, download or asynchronous preparation.
@@ -3798,6 +3830,7 @@
       if (gameOver) return;
       gameplayStarting = false;
       gameplayStarted = true;
+      watchRoomPlayback(activeRoom, roomPlayback);
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
       startCameraTimer();
@@ -4135,25 +4168,26 @@
     }
 
     function updateCameraTimer() {
-      if (cameraStartedAt !== null) {
+      if (cameraStartedAt !== null && !gameplayPaused && !document.hidden) {
         cameraRemainingSeconds = Math.max(0, Math.ceil(
           (ROOM_TIME_LIMIT_MS - (performance.now() - cameraStartedAt)) / 1000));
       }
       const minutes = String(Math.floor(cameraRemainingSeconds / 60)).padStart(2, "0");
       const seconds = String(cameraRemainingSeconds % 60).padStart(2, "0");
       cameraTimer.textContent = `${minutes}:${seconds}`;
-      if (cameraStartedAt !== null && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= CONFIG.loading.deadlineWarmSeconds &&
+      if (cameraStartedAt !== null && !gameplayPaused && cameraRemainingSeconds > 0 && cameraRemainingSeconds <= CONFIG.loading.deadlineWarmSeconds &&
           !jumpscareDeadlineWarmStarted && !gameOver && !roomCompleted && !document.hidden) {
         levelRooms.forEach(room => warmJumpscareBeforeDeadline(room));
         jumpscareDeadlineWarmStarted = true;
       }
-      if (cameraStartedAt !== null && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
+      if (cameraStartedAt !== null && !gameplayPaused && !document.hidden && cameraRemainingSeconds === 0 && !gameOver && !roomCompleted) {
         endGame("timeout");
       }
     }
 
     function startCameraTimer() {
       window.clearInterval(cameraTimerInterval);
+      pausedCameraElapsedMs = null;
       cameraStartedAt = performance.now();
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       updateCameraTimer();
@@ -4167,9 +4201,25 @@
           (ROOM_TIME_LIMIT_MS - (performance.now() - cameraStartedAt)) / 1000));
       }
       cameraStartedAt = null;
+      pausedCameraElapsedMs = null;
       window.clearInterval(cameraTimerInterval);
       cameraTimerInterval = null;
       updateCameraTimer();
+    }
+
+    function pauseCameraTimer() {
+      if (cameraStartedAt === null) return;
+      const elapsed = Math.max(0, Math.min(ROOM_TIME_LIMIT_MS, performance.now() - cameraStartedAt));
+      stopCameraTimer();
+      pausedCameraElapsedMs = elapsed;
+    }
+
+    function resumeCameraTimer() {
+      if (pausedCameraElapsedMs === null || gameOver || roomCompleted) return;
+      cameraStartedAt = performance.now() - pausedCameraElapsedMs;
+      pausedCameraElapsedMs = null;
+      updateCameraTimer();
+      if (cameraStartedAt !== null) cameraTimerInterval = window.setInterval(updateCameraTimer, CONFIG.camera.timerRefreshMs);
     }
 
     function currentRoomLetterIndex() {
@@ -5208,11 +5258,11 @@
 
     function resumeSpiderSound() {
       if (!spiderAudioContext || spiderAudioContext.state === "running" || spiderAudioContext.state === "closed") return;
-      const resumed = spiderAudioContext.resume();
-      if (resumed) resumed.catch(() => {});
+      try { return Promise.resolve(spiderAudioContext.resume()).catch(() => {}); } catch {}
     }
 
     function stopSpiderSound() {
+      pausedSpiderSoundOffset = null;
       if (spiderAudioSource) {
         try { spiderAudioSource.stop(); } catch (error) {}
         spiderAudioSource.disconnect();
@@ -5221,7 +5271,25 @@
       if (spiderNativeAudio) spiderNativeAudio.pause();
     }
 
-    function playSpiderSound() {
+    function pauseSpiderSound() {
+      let offset;
+      if (spiderAudioSource && spiderAudioContext) {
+        offset = spiderPlaybackOffset + Math.max(0, spiderAudioContext.currentTime - spiderPlaybackStart);
+        if (offset >= spiderAudioBuffer.duration) return stopSpiderSound();
+      } else if (spiderNativeAudio && !spiderNativeAudio.paused) {
+        offset = spiderNativeAudio.currentTime;
+      } else return;
+      stopSpiderSound();
+      pausedSpiderSoundOffset = offset;
+    }
+
+    function resumePausedSpiderSound() {
+      if (pausedSpiderSoundOffset === null || gameplayPaused || isPageInactive() || menuPage !== null) return;
+      if (spiderAudioContext && spiderAudioContext.state !== "running") return;
+      playSpiderSound(pausedSpiderSoundOffset);
+    }
+
+    function playSpiderSound(offset = null) {
       stopSpiderSound();
       if (spiderAudioBuffer && spiderAudioContext?.state === "running") {
         const source = spiderAudioContext.createBufferSource();
@@ -5236,9 +5304,11 @@
           if (spiderAudioSource === source) spiderAudioSource = null;
         };
         spiderAudioSource = source;
-        source.start(0, spiderSoundOffset);
+        spiderPlaybackStart = spiderAudioContext.currentTime;
+        spiderPlaybackOffset = offset ?? spiderSoundOffset;
+        source.start(0, spiderPlaybackOffset);
       } else if (spiderNativeAudio && spiderSoundReady) {
-        spiderNativeAudio.currentTime = 0;
+        spiderNativeAudio.currentTime = offset ?? 0;
         const played = spiderNativeAudio.play();
         if (played) played.catch(() => {});
       }
@@ -5326,28 +5396,54 @@
     }
 
     function startSpiderRetreat() {
-      if (!spiderActive || spiderRetreating || gameOver || roomCompleted) return;
+      if (gameplayPaused || !spiderActive || spiderRetreating || gameOver || roomCompleted) return;
       spiderRetreating = true;
       playSpiderSound();
-      const started = performance.now();
+      spiderRetreatStartedAt = performance.now();
       const distance = spiderMeta.height * SPIDER_SCALE + CONFIG.spider.retreatExtraPx;
       const step = time => {
         spiderRetreatFrame = 0;
-        if (!spiderActive || gameOver || roomCompleted) return;
-        const elapsed = time - started;
+        if (gameplayPaused || !spiderActive || gameOver || roomCompleted) return;
+        const elapsed = time - spiderRetreatStartedAt;
         const progress = clamp(elapsed / SPIDER_RETREAT_MS, 0, 1);
         const index = Math.floor(elapsed / SPIDER_FRAME_MS) % spiderFrames.length;
         if (index !== spiderFrameIndex) drawSpiderFrame(index);
         spiderActor.style.transform = `translateY(${-distance * progress * progress}px)`;
         if (progress < 1) spiderRetreatFrame = requestAnimationFrame(step);
         else {
+          spiderRetreatStep = null;
           spiderActive = false;
           spiderRetreating = false;
           spiderActor.hidden = true;
           scheduleSpiderCheck();
         }
       };
+      spiderRetreatStep = step;
       spiderRetreatFrame = requestAnimationFrame(step);
+    }
+
+    function pauseSpiderEncounter() {
+      if (spiderRetreatStep && spiderRetreatPausedAt === null) {
+        spiderRetreatPausedAt = performance.now();
+        if (spiderRetreatFrame) cancelAnimationFrame(spiderRetreatFrame);
+        spiderRetreatFrame = 0;
+      }
+      pauseSpiderSound();
+    }
+
+    function resumeSpiderEncounter() {
+      if (spiderRetreatStep && spiderRetreatPausedAt !== null) {
+        spiderRetreatStartedAt += performance.now() - spiderRetreatPausedAt;
+        spiderRetreatPausedAt = null;
+        spiderRetreatFrame = requestAnimationFrame(spiderRetreatStep);
+      }
+      if (pausedSpiderSoundOffset === null) return;
+      const generation = levelGeneration, revision = playbackRevision;
+      const resumed = resumeSpiderSound();
+      if (resumed) resumed.then(() => {
+        if (generation === levelGeneration && revision === playbackRevision) resumePausedSpiderSound();
+      });
+      else resumePausedSpiderSound();
     }
 
     function stopSpiderEncounter() {
@@ -5355,6 +5451,7 @@
       spiderTimer = null;
       if (spiderRetreatFrame) cancelAnimationFrame(spiderRetreatFrame);
       spiderRetreatFrame = 0;
+      spiderRetreatStep = spiderRetreatPausedAt = null;
       spiderActive = false;
       spiderRetreating = false;
       spiderActor.hidden = true;
@@ -5554,21 +5651,22 @@
       jumpscareVideo.classList.add("playing");
       jumpscareVideo.muted = false;
       jumpscareVideo.volume = 1;
-      // Invalidate any asynchronous READY audio warm-up before it can pause
-      // or rewind the clip now owned by the actual scare.
-      levelRooms[activeRoomIndex].audioUnlockRun++;
       retreatActiveDoll();
-      if (jumpscareAudioGain) {
-        jumpscareAudioGain.gain.setValueAtTime(1, jumpscareAudioContext.currentTime);
-        resumeJumpscareAudio();
-      }
 
       let movementStarted = false;
+      const clip = jumpscareVideo, generation = levelGeneration;
       const flyToCentre = () => {
-        if (movementStarted || !jumpscareVideo.classList.contains("playing")) return;
+        if (generation !== levelGeneration || movementStarted || !clip.classList.contains("playing")) return;
+        if (gameplayPaused || isPageInactive()) { pendingScareCentre = flyToCentre; return; }
+        pendingScareCentre = null;
         movementStarted = true;
         requestAnimationFrame(() => {
-          if (!jumpscareVideo.classList.contains("playing")) return;
+          if (generation !== levelGeneration || !clip.classList.contains("playing")) return;
+          if (gameplayPaused || isPageInactive()) {
+            movementStarted = false;
+            pendingScareCentre = flyToCentre;
+            return;
+          }
           offsetX = minOffset / 2;
           applyWorldOffset(true);
         });
@@ -5582,19 +5680,47 @@
           flyToCentre();
         });
       } else jumpscareVideo.addEventListener("playing", flyToCentre, { once: true });
-      const playPromise = jumpscareVideo.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(error => {
-          if (error.name === "NotAllowedError") {
-            jumpscareVideo.muted = true;
-            const retry = jumpscareVideo.play();
-            if (retry) retry.catch(showGameOver);
-          } else showGameOver();
-        });
-      }
+      const room = levelRooms[activeRoomIndex], revision = playbackRevision;
+      try {
+        const played = playActiveScare(room, { gesture: reason !== "timeout" });
+        if (played) boundedMediaAction(played).catch(error => handleScarePlaybackFailure(room, revision, error));
+      } catch (error) { handleScarePlaybackFailure(room, revision, error); }
+    }
+
+    function handleScarePlaybackFailure(room, revision, error) {
+      if (playbackRevision !== revision || isPageInactive() || menuPage !== null || activeScareRoom() !== room) return;
+      if (room.scare.error || error.name === "NotSupportedError") showGameOver();
+      else showPlaybackResumePrompt();
+    }
+
+    function playActiveScare(room, { gesture = false } = {}) {
+      const revision = playbackRevision;
+      const audio = requireScareAudio(room);
+      const start = () => {
+        if (revision !== playbackRevision || isPageInactive() || menuPage !== null || activeScareRoom() !== room) return;
+        const clip = room.scare;
+        clip.muted = clip.defaultMuted = false;
+        clip.volume = 1;
+        if (room.audioGain) room.audioGain.gain.setValueAtTime(1, jumpscareAudioContext.currentTime);
+        return clip.paused ? clip.play() : undefined;
+      };
+      // A timer has no user activation to preserve. Wait for audio before
+      // starting the clip so an interrupted context cannot consume the scare silently.
+      if (audio && !gesture) return audio.then(start);
+      const playing = start();
+      return audio ? Promise.all([audio, playing]) : playing;
     }
 
     function showGameOver() {
+      ++playbackRevision;
+      levelResumePending = null;
+      resumePlayback.hidden = true;
+      resumePlaybackButton.disabled = false;
+      pendingScareCentre = null;
+      if (!isPageInactive() && menuPage === null) {
+        gameplayPaused = false;
+        viewport.classList.remove("level-paused");
+      }
       hideDolls();
       stopButterflyFlight();
       stopSpiderEncounter();
@@ -5701,7 +5827,7 @@
     }
 
     function handPointerDown(event) {
-      if (!handVisible || handDismissing || (event.button !== undefined && event.button !== 0)) return;
+      if (gameplayPaused || !handVisible || handDismissing || (event.button !== undefined && event.button !== 0)) return;
       event.preventDefault();
       event.stopPropagation();
       handPointerId = event.pointerId;
@@ -5808,6 +5934,8 @@
     viewport.addEventListener("pointerdown", pointerDown);
     // Observe releases before an overlay can stop their propagation, and
     // clean up interruptions so the very next press can drag normally.
+    window.addEventListener("pointerup", recoverLevelAudioFromGesture, true);
+    window.addEventListener("keydown", recoverLevelAudioFromGesture, true);
     window.addEventListener("pointermove", pointerMove, true);
     window.addEventListener("pointerup", pointerUp, true);
     window.addEventListener("pointercancel", pointerCancel, true);
@@ -5822,23 +5950,181 @@
       finishShutterGesture();
       finishLetterTransfer();
       stopShutterEffect();
+      if (handPointerId !== null) {
+        const pointer = handPointerId;
+        handPointerId = null;
+        handDragStarted = false;
+        try { if (handBlocker.hasPointerCapture(pointer)) handBlocker.releasePointerCapture(pointer); } catch {}
+        handBlocker.classList.remove("dragging");
+        setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
+      }
     }
     window.addEventListener("blur", interruptCameraInput);
-    window.addEventListener("pagehide", interruptCameraInput);
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) interruptCameraInput();
-      else {
-        if (gameplayStarted && !roomCompleted) {
-          resumeJumpscareAudio();
-          resumeSpiderSound();
-        }
-        updateCameraTimer();
-        for (const room of levelRooms) if (room.preparing && !room.scareReady) {
-          const resume = room.scare.play();
-          if (resume) resume.catch(() => {});
-        }
+
+    function isPageInactive() {
+      return document.hidden || pageParked;
+    }
+
+    function pauseLevelActivity({ cancelPreparation = false } = {}) {
+      ++playbackRevision;
+      levelResumePending = null;
+      gameplayPaused = true;
+      resumePlayback.hidden = true;
+      resumePlaybackButton.disabled = false;
+      viewport.classList.add("level-paused");
+      pauseCameraTimer();
+      pauseLevelTimeouts();
+      interruptCameraInput();
+      stopButterflyFlight();
+      pauseSpiderEncounter();
+      dollRetreatAnimation?.pause();
+      if (cancelPreparation) cancelMenuPrimer?.();
+      for (const room of roomMediaPool) {
+        if (cancelPreparation) room.cancelScarePreparation?.();
+        ++room.videoRun;
+        room.videoFrameCancel?.();
+        room.video.pause();
+        room.scare.pause();
       }
+      updateCameraControls();
+    }
+
+    function resumeLevelSimulation() {
+      gameplayPaused = false;
+      resumePlayback.hidden = true;
+      viewport.classList.remove("level-paused");
+      resumeLevelTimeouts();
+      resumeCameraTimer();
+      if (gameplayStarted && !gameOver && !roomCompleted) {
+        showCurrentLetter({ animate: false });
+        resumeSpiderEncounter();
+      }
+      if (dollRetreatAnimation?.playState === "paused") dollRetreatAnimation.play();
+      pendingScareCentre?.();
+      updateCameraControls();
+    }
+
+    function activeScareRoom() {
+      const room = levelRooms[activeRoomIndex];
+      return gameOver && room?.scare.classList.contains("playing") ? room : null;
+    }
+
+    function showPlaybackResumePrompt() {
+      pauseLevelActivity();
+      if (isPageInactive() || menuPage !== null || exitConfirmationActive) return;
+      resumePlaybackButton.textContent = isArabic() ? "اضغط للمتابعة" : "TAP TO RESUME";
+      resumePlayback.hidden = false;
+      resumePlaybackButton.focus();
+    }
+
+    function boundedMediaAction(action, timeoutMs = CONFIG.loading.resourceTimeoutMs) {
+      let timer;
+      return Promise.race([action, new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          const error = new Error("Playback did not start in time.");
+          error.name = "TimeoutError";
+          reject(error);
+        }, timeoutMs);
+      })]).finally(() => clearTimeout(timer));
+    }
+
+    function watchRoomPlayback(room, attempt) {
+      if (!attempt || !room) return;
+      const revision = playbackRevision, run = room.videoRun;
+      boundedMediaAction(attempt).catch(error => {
+        if (revision !== playbackRevision || run !== room.videoRun || gameplayPaused || isPageInactive() ||
+            menuPage !== null || gameOver || roomCompleted || levelRooms[activeRoomIndex] !== room) return;
+        if (room.video.error) showLevelLoadError(mediaAssetError(room.scene.roomVideo, error, room.video));
+        else showPlaybackResumePrompt();
+      });
+    }
+
+    function recoverLoadingPlayback() {
+      const generation = levelGeneration;
+      const pending = [mediaPreparationPending, ...levelRooms.map(room => room.preparing)].filter(Boolean);
+      const restore = () => {
+        if (generation !== levelGeneration || isPageInactive() || menuPage !== null || gameplayStarted || gameOver || !roomsReady) return;
+        loadingPlaybackInterrupted = false;
+        const room = levelRooms[activeRoomIndex];
+        if (room && room.media === room.video && room.video.paused) showRoomVideo(room, { withAudio: false });
+        if (!levelMediaIsPrepared() && sessionMediaUnlocked) prepareMediaBeforeReady();
+        else revealWhenMediaReady();
+      };
+      if (pending.length) Promise.allSettled(pending).then(restore);
+      else restore();
+    }
+
+    function resumeLevelActivity({ gesture = false } = {}) {
+      if (isPageInactive() || menuPage !== null || exitConfirmationActive || levelResumePending) return levelResumePending;
+      const scareRoom = activeScareRoom();
+      const active = gameplayStarted && !gameOver && !roomCompleted;
+      if (!active && !scareRoom) {
+        resumeLevelSimulation();
+        if (!gameplayStarted && !gameOver) recoverLoadingPlayback();
+        return;
+      }
+      const revision = playbackRevision;
+      const room = levelRooms[activeRoomIndex];
+      const attempts = [];
+      try {
+        if (gesture) unlockSpiderSound();
+        else resumeSpiderSound();
+        if (scareRoom) {
+          const playing = playActiveScare(scareRoom, { gesture });
+          if (playing) attempts.push(playing);
+        } else {
+          const audio = requireScareAudio(room);
+          if (audio) attempts.push(audio);
+          if (room && room.media === room.video && (room.video.paused || room.video.muted)) {
+            const playing = showRoomVideo(room, { withAudio: true });
+            if (playing) attempts.push(playing);
+          }
+        }
+      } catch (error) { attempts.push(Promise.reject(error)); }
+      if (!attempts.length) { resumeLevelSimulation(); return; }
+      resumePlaybackButton.disabled = true;
+      const pending = boundedMediaAction(Promise.all(attempts), CONFIG.loading.standbySeekTimeoutMs)
+        .then(() => {
+          if (revision === playbackRevision && !isPageInactive() && menuPage === null && !exitConfirmationActive) resumeLevelSimulation();
+        }).catch(error => {
+          if (revision !== playbackRevision || isPageInactive() || menuPage !== null || exitConfirmationActive) return;
+          const clip = scareRoom?.scare || (room && room.media === room.video ? room.video : null);
+          if (clip?.error) {
+            resumeLevelSimulation();
+            if (scareRoom) showGameOver();
+            else showLevelLoadError(mediaAssetError(room.scene.roomVideo, error, clip));
+          } else showPlaybackResumePrompt();
+        }).finally(() => {
+          if (levelResumePending !== pending) return;
+          levelResumePending = null;
+          resumePlaybackButton.disabled = false;
+        });
+      levelResumePending = pending;
+      return pending;
+    }
+
+    function syncPageActivity() {
+      const suspended = isPageInactive();
+      if (suspended === pageSuspended) return;
+      pageSuspended = suspended;
+      for (const wait of mediaWaits) suspended ? wait.pause() : wait.resume();
+      if (suspended) {
+        menuSwipe = null;
+        if (menuPage === null && !gameplayStarted && !gameOver) loadingPlaybackInterrupted = true;
+        pauseLevelActivity({ cancelPreparation: true });
+      } else if (menuPage === null && !exitConfirmationActive) resumeLevelActivity();
+    }
+    document.addEventListener("visibilitychange", syncPageActivity);
+    window.addEventListener("pagehide", () => {
+      pageParked = true;
+      syncPageActivity();
     });
+    window.addEventListener("pageshow", () => {
+      pageParked = false;
+      syncPageActivity();
+    });
+    window.addEventListener("focus", syncPageActivity);
+    resumePlayback.addEventListener("click", () => resumeLevelActivity({ gesture: true }));
     viewport.addEventListener("dragstart", event => event.preventDefault());
 
     function hideLoadingScreen() {
@@ -5851,14 +6137,15 @@
     let roomMediaReady = false;
 
     function levelMediaIsPrepared() {
-      return roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
+      return !isPageInactive() && roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
         room.backdropReady && room.metadataReady && room.scareReady && room.audioUnlocked &&
-        !room.preparing && !room.audioUnlocking && !room.scare.error && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
+        (!room.audioGain || jumpscareAudioContext?.state === "running") &&
+        !room.preparing && !room.scare.error && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
         room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
     }
 
     function revealWhenMediaReady() {
-      if (menuPage !== null || gameOver || gameplayStarted) return;
+      if (menuPage !== null || isPageInactive() || gameOver || gameplayStarted) return;
       videosReadyForClue = levelMediaIsPrepared();
       readyButton.disabled = !videosReadyForClue;
       if (videosReadyForClue) {
@@ -5875,7 +6162,7 @@
     }
 
     function showMediaPreparationPrompt(error = null) {
-      if (menuPage !== null || gameOver || gameplayStarted) return;
+      if (menuPage !== null || isPageInactive() || gameOver || gameplayStarted) return;
       videosReadyForClue = false;
       readyButton.disabled = true;
       loadingScreen.classList.remove("hidden");
@@ -5886,7 +6173,7 @@
     }
 
     function prepareMediaBeforeReady() {
-      if (mediaPreparationPending || gameOver || gameplayStarted || !roomsReady) return mediaPreparationPending;
+      if (mediaPreparationPending || isPageInactive() || menuPage !== null || gameOver || gameplayStarted || !roomsReady) return mediaPreparationPending;
       prepareMediaButton.disabled = true;
       mediaPreparation.hidden = true;
       loadingWord.hidden = false;
@@ -5898,8 +6185,11 @@
           if (room.scare.error || !room.metadataReady) {
             // A decoder can fail after the paper was revealed. Reload that
             // source rather than repeatedly trying play() on a failed player.
-            const audio = unlockJumpscareAudio(room);
-            return Promise.all([audio, prepareRoomJumpscare(room)]).then(() => prepareJumpscarePlayback({ unlockAudio: true }, room));
+            const audio = boundedMediaAction(unlockJumpscareAudio(room));
+            return Promise.all([audio, prepareRoomJumpscare(room)]).then(() => {
+              if (menuPage !== null || isPageInactive()) throw mediaPreparationInterrupted();
+              return prepareJumpscarePlayback({ unlockAudio: true }, room);
+            });
           }
           return prepareJumpscarePlayback({ unlockAudio: true }, room);
         }
@@ -5914,7 +6204,7 @@
         revealWhenMediaReady();
       }).catch(error => {
         mediaPreparationPending = null;
-        console.warn("Keeping READY hidden until jumpscare preparation succeeds.", error);
+        if (error.name !== "AbortError") console.warn("Keeping READY hidden until jumpscare preparation succeeds.", error);
         showMediaPreparationPrompt(error);
       });
       return mediaPreparationPending;
@@ -5929,8 +6219,19 @@
 
     function resumeJumpscareAudio() {
       if (!jumpscareAudioContext || jumpscareAudioContext.state === "running" || jumpscareAudioContext.state === "closed") return;
-      const resumed = jumpscareAudioContext.resume();
-      if (resumed) resumed.catch(error => console.warn("Could not resume jumpscare audio.", error));
+      try {
+        return Promise.resolve(jumpscareAudioContext.resume()).catch(error => console.info("Could not resume jumpscare audio.", error));
+      } catch (error) { console.info("Could not resume jumpscare audio.", error); }
+    }
+
+    function requireScareAudio(room) {
+      if (!room?.audioGain || jumpscareAudioContext?.state === "running") return;
+      return Promise.resolve(resumeJumpscareAudio()).then(() => {
+        if (jumpscareAudioContext?.state === "running") return;
+        const error = new Error("Jumpscare audio needs a player interaction.");
+        error.name = "NotAllowedError";
+        throw error;
+      });
     }
 
     function cancelJumpscareStandbySeek() {
@@ -5994,56 +6295,25 @@
     function unlockJumpscareAudio(room) {
       if (!prepareJumpscareAudioGraph(room)) { room.scare.volume = 0; return Promise.resolve(); }
       room.scare.volume = 1;
-      return jumpscareAudioContext.resume().then(() => {
-        if (jumpscareAudioContext.state !== "running") throw new Error("Jumpscare audio is not ready.");
-      });
+      return Promise.resolve(requireScareAudio(room));
     }
 
-    function unlockPreparedJumpscareAudio(room) {
-      if (room.audioUnlocked || room.audioUnlocking) return;
-      const clip = room.scare, run = ++room.audioUnlockRun;
-      let audioReady, played;
-      try {
-        audioReady = unlockJumpscareAudio(room);
-        clip.muted = false;
-        clip.defaultMuted = false;
-        clip.classList.add("priming");
-        // This play call stays inside the trusted READY event. It unlocks
-        // native media sound too, while zero volume/gain keeps it silent.
-        played = clip.play();
-      } catch (error) {
-        audioReady = Promise.reject(error);
+    function recoverLevelAudioFromGesture(event) {
+      if (!event.isTrusted || gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || gameOver || roomCompleted) return;
+      resumeJumpscareAudio();
+      if (spiderNativeAudio && !spiderSoundReady) unlockSpiderSound();
+      else if (pausedSpiderSoundOffset !== null) resumeSpiderEncounter();
+      else resumeSpiderSound();
+      const room = levelRooms[activeRoomIndex];
+      if (room && room.media === room.video && (room.video.paused || room.video.muted)) {
+        watchRoomPlayback(room, showRoomVideo(room, { withAudio: true }));
       }
-      room.audioUnlocking = Promise.all([audioReady, played]).then(() => {
-        if (run !== room.audioUnlockRun || clip.classList.contains("playing")) return;
-        clip.pause();
-        if (clip.currentTime > 0) clip.currentTime = 0;
-        room.audioUnlocked = true;
-      }).catch(error => {
-        if (run === room.audioUnlockRun) console.info("Sound unlock will retry on the next interaction.", error.message);
-      }).finally(() => {
-        room.audioUnlocking = null;
-        if (run !== room.audioUnlockRun || clip.classList.contains("playing")) return;
-        clip.pause();
-        clip.volume = 1;
-        clip.muted = false;
-        clip.classList.remove("priming");
-        syncActiveScare(room);
-      });
     }
 
-    // Restore an interrupted audio context on the next real interaction too.
-    window.addEventListener("pointerup", event => {
-      if (event.isTrusted && gameplayStarted && !gameOver && !roomCompleted) {
-        resumeJumpscareAudio();
-        resumeSpiderSound();
-        levelRooms.forEach(room => { if (!room.audioUnlocked) unlockPreparedJumpscareAudio(room); });
-      }
-    }, true);
-
-    function prepareJumpscarePlayback({ unlockAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
+    function prepareJumpscarePlayback({ unlockAudio = false, refreshAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
       const jumpscareVideo = room.scare;
-      if (room.scareReady && (!unlockAudio || room.audioUnlocked) && jumpscareVideo.paused &&
+      if (isPageInactive()) return Promise.reject(mediaPreparationInterrupted());
+      if (!refreshAudio && room.scareReady && (!unlockAudio || room.audioUnlocked && (!room.audioGain || jumpscareAudioContext?.state === "running")) && jumpscareVideo.paused &&
           !jumpscareVideo.seeking && jumpscareVideo.currentTime <= 0.05 &&
           jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
       if (room.preparing) return room.preparing;
@@ -6065,6 +6335,14 @@
       let cleanupBuffer = () => {};
       let cleanupFrameError = () => {};
       let preparationTimer;
+      let canceled = false;
+      const interruption = new Promise((_, reject) => {
+        room.cancelScarePreparation = () => {
+          canceled = true;
+          room.standbySeekCancel?.();
+          reject(mediaPreparationInterrupted());
+        };
+      });
 
       const buffered = new Promise((resolve, reject) => {
         const check = () => {
@@ -6107,14 +6385,15 @@
       catch (error) { playPromise = Promise.reject(error); }
       const prepare = (async () => {
         try {
-          await Promise.race([Promise.all([playPromise, buffered, decoded, audioReady]), new Promise((_, reject) => {
+          await Promise.race([interruption, Promise.all([playPromise, buffered, decoded, audioReady]), new Promise((_, reject) => {
             preparationTimer = setTimeout(() => reject(new Error("Jumpscare warm-up timed out.")), CONFIG.loading.resourceTimeoutMs);
           })]);
           jumpscareVideo.pause();
           if (jumpscareVideo.currentTime > 0 || jumpscareVideo.seeking) {
             const parked = await seekJumpscareStandbyFrame(0, room);
-            if (!parked) throw new Error("Could not prepare the jumpscare's starting frame.");
+            if (!parked && !canceled) throw new Error("Could not prepare the jumpscare's starting frame.");
           }
+          if (canceled || isPageInactive()) throw mediaPreparationInterrupted();
           if (jumpscareVideo.seeking || jumpscareVideo.currentTime > 0.05 || jumpscareVideo.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) throw new Error("The jumpscare's starting frame is not decoded.");
           room.scareReady = true;
           if (unlockAudio) room.audioUnlocked = true;
@@ -6123,6 +6402,7 @@
           room.preparationError = error;
           throw error;
         } finally {
+          room.cancelScarePreparation = null;
           clearTimeout(preparationTimer);
           cleanupBuffer();
           cleanupFrameError();
@@ -6142,6 +6422,36 @@
         revealWhenMediaReady();
       });
       return room.preparing;
+    }
+
+    function mediaPreparationInterrupted() {
+      const error = new Error("Media preparation paused while the page was inactive.");
+      error.name = "AbortError";
+      return error;
+    }
+
+    function visibleMediaTimeout(callback, delay) {
+      let remaining = delay, started = 0, timer = null;
+      const wait = {
+        pause() {
+          if (timer === null) return;
+          remaining = Math.max(0, remaining - (performance.now() - started));
+          clearTimeout(timer);
+          timer = null;
+        },
+        resume() {
+          if (timer !== null) return;
+          started = performance.now();
+          timer = setTimeout(() => {
+            timer = null;
+            mediaWaits.delete(wait);
+            callback();
+          }, remaining);
+        }
+      };
+      mediaWaits.add(wait);
+      if (!isPageInactive()) wait.resume();
+      return () => { wait.pause(); mediaWaits.delete(wait); };
     }
 
 
@@ -6424,11 +6734,17 @@
 
     function resetLevelState() {
       levelGeneration++;
+      ++playbackRevision;
+      levelResumePending = null;
+      loadingPlaybackInterrupted = false;
+      resumePlayback.hidden = true;
+      resumePlaybackButton.disabled = false;
       for (const timer of levelTimeouts) clearLevelTimeout(timer);
       levelTimeouts.clear();
       levelTimeoutJobs.clear();
-      gameplayPaused = exitConfirmationActive = false;
-      exitPausedElapsedMs = 0;
+      exitConfirmationActive = false;
+      gameplayPaused = isPageInactive();
+      viewport.classList.toggle("level-paused", gameplayPaused);
       document.getElementById("exitConfirmContent").hidden = true;
       clueIntro.removeAttribute("role"); clueIntro.removeAttribute("aria-modal"); clueIntro.removeAttribute("aria-labelledby");
       gameplayStarted = gameplayStarting = false;
@@ -6449,6 +6765,7 @@
       wordAdvanceTimer = anomalyTimer = handTimer = clueDismissTimer = hintHideTimer = shutterAnimationTimer = null;
       if (jumpscareFrameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
       jumpscareFrameRequest = null;
+      pendingScareCentre = null;
       if (handPointerId !== null) {
         try { if (handBlocker.hasPointerCapture(handPointerId)) handBlocker.releasePointerCapture(handPointerId); } catch {}
       }
@@ -6473,7 +6790,7 @@
         room.videoRun++;
         room.videoFrameCancel?.();
         room.video.pause(); room.video.muted = true;
-        room.scare.pause(); room.audioUnlockRun++;
+        room.scare.pause();
         if (room.audioGain) room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
         room.scare.classList.remove("playing", "priming", "snapping");
         room.image.classList.remove("snapping"); room.video.classList.remove("snapping");
@@ -6544,19 +6861,18 @@
     }
 
     function transitionToLevel({ fresh = false } = {}) {
-      if (levelTransitionPending) return levelTransitionPending;
+      if (levelTransitionPending || isPageInactive()) return levelTransitionPending;
       const refreshMedia = fresh || Boolean(levelLoadFailure);
-      // Resume within the actual Next/Retry/Clear gesture. Retain the unlocked
-      // media elements and AudioContexts while changing only level state.
-      resumeJumpscareAudio();
-      resumeSpiderSound();
+      // Refresh permission on the retained element inside Next/Retry, before
+      // the asynchronously loaded scene can ask for playback.
+      const primed = primeRetainedScares();
       gameOverScreen.classList.remove("show");
       readyButton.disabled = true;
       clueIntro.classList.remove("show");
       loadingWord.hidden = false;
       loadingScreen.classList.remove("hidden");
-      levelTransitionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending,
-        ...roomMediaPool.flatMap(room => [room.preparing, room.audioUnlocking])]).then(() => {
+      levelTransitionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending, primed,
+        ...roomMediaPool.map(room => room.preparing)]).then(() => {
         if (fresh) resetBrowserProgress();
         resetLevelState();
         if (refreshMedia) clearPreparedLevelCache();
@@ -6821,6 +7137,8 @@
     function hideMenuForLoading() {
       menuSwipe = null;
       menuPage = null;
+      gameplayPaused = isPageInactive();
+      viewport.classList.toggle("level-paused", gameplayPaused);
       document.documentElement.classList.remove("menu-open");
       menuShell.hidden = true;
       viewport.inert = false;
@@ -6869,9 +7187,18 @@
       if (/^https?:$/.test(location.protocol)) loadSpiderAssets();
     }
 
-    function primeMediaFromMenuGesture() {
+    function primeRetainedScares(rooms = roomMediaPool) {
       unlockSpiderSound();
       resumeJumpscareAudio();
+      return Promise.allSettled(rooms.filter(room => room.metadataReady && !room.scare.error &&
+        !room.scare.classList.contains("playing")).map(room => {
+        try { return prepareJumpscarePlayback({ unlockAudio: true, refreshAudio: true }, room); }
+        catch (error) { return Promise.reject(error); }
+      }));
+    }
+
+    function primeMediaFromMenuGesture() {
+      unlockSpiderSound();
       let room = roomMediaPool[0];
       if (!room) {
         const count = levelRoomCount;
@@ -6883,8 +7210,9 @@
       let attempt;
       try {
         if (room.metadataReady && !clip.error && clip.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
-          const audio = unlockJumpscareAudio(room);
-          attempt = Promise.all([audio, prepareJumpscarePlayback({ unlockAudio: true }, room)]);
+          // A previously decoded first frame says nothing about iOS granting
+          // sound again. Actually play the retained element on this Play tap.
+          attempt = prepareJumpscarePlayback({ unlockAudio: true, refreshAudio: true }, room);
         } else {
           releaseRoomScareSource(room);
           room.mediaLoading = true;
@@ -6898,16 +7226,21 @@
           // Same native player, silent AAC track: Play supplies this trusted
           // gesture before any asynchronous level/config loading is awaited.
           const played = clip.play();
-          attempt = Promise.all([audio, playing, played]);
+          const interrupted = new Promise((_, reject) => {
+            cancelMenuPrimer = () => reject(mediaPreparationInterrupted());
+          });
+          attempt = boundedMediaAction(Promise.race([Promise.all([audio, playing, played]), interrupted]));
         }
       } catch (error) { attempt = Promise.reject(error); }
       return attempt.then(() => {
         room.audioUnlocked = sessionMediaUnlocked = true;
         return true;
       }).catch(error => {
-        console.info("Media unlock will use the loading-screen fallback if needed.", error.message);
+        room.audioUnlocked = false;
+        if (error.name !== "AbortError") console.info("Media unlock will use the loading-screen fallback if needed.", error.message);
         return false;
       }).finally(() => {
+        cancelMenuPrimer = null;
         room.mediaLoading = false;
         clip.pause(); clip.volume = 1; clip.muted = false;
         clip.classList.remove("priming");
@@ -6915,7 +7248,7 @@
     }
 
     function beginHomePlay() {
-      if (menuPage !== "home" || homePlayPending || menuActionPending) return homePlayPending;
+      if (menuPage !== "home" || isPageInactive() || homePlayPending || menuActionPending) return homePlayPending;
       const primed = primeMediaFromMenuGesture();
       hideMenuForLoading();
       document.getElementById("homeNotice").textContent = "";
@@ -6928,12 +7261,11 @@
     function returnToHome() {
       if (menuActionPending) return menuActionPending;
       if (progressInitializedLanguage === CONFIG.language.code) saveProgress();
-      gameplayPaused = true;
-      pauseLevelTimeouts();
-      stopCameraTimer(); stopKeyboardInput(); stopButterflyFlight(); stopSpiderSound();
+      pauseLevelActivity({ cancelPreparation: true });
+      stopSpiderSound();
       showMenuPage("home");
       menuActionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending,
-        ...roomMediaPool.flatMap(room => [room.preparing, room.audioUnlocking])]).then(() => {
+        ...roomMediaPool.map(room => room.preparing)]).then(() => {
         resetLevelState();
         gameInitializationStarted = false;
         progressInitializedLanguage = null;
@@ -6966,19 +7298,13 @@
     }
 
     function openExitConfirmation() {
-      if (menuPage !== null || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
+      if (menuPage !== null || gameplayPaused || isPageInactive() || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
       updateCameraTimer();
       if (gameOver) return;
       hidePuzzleHint({ immediate: true });
       clearLevelTimeout(clueDismissTimer); clueDismissTimer = null;
-      exitPausedElapsedMs = cameraStartedAt === null ? null : performance.now() - cameraStartedAt;
-      exitVideoWasPlaying = !video.paused;
-      stopCameraTimer();
-      gameplayPaused = exitConfirmationActive = true;
-      pauseLevelTimeouts();
-      stopKeyboardInput(); stopButterflyFlight(); finishPanGesture(); finishShutterGesture();
-      finishLetterTransfer({ reveal: false }); stopShutterEffect();
-      video.pause(); video.muted = true;
+      exitConfirmationActive = true;
+      pauseLevelActivity();
       clueIntro.classList.remove("hint-mode", "dismiss");
       clueIntro.classList.add("exit-mode", "show");
       clueIntro.setAttribute("aria-hidden", "false");
@@ -6991,27 +7317,20 @@
     }
 
     function stayInLevel() {
-      if (!exitConfirmationActive) return;
-      exitConfirmationActive = gameplayPaused = false;
+      if (!exitConfirmationActive || isPageInactive()) return;
+      exitConfirmationActive = false;
       clueIntro.classList.remove("show");
       clueIntro.setAttribute("aria-hidden", "true");
       clueIntro.removeAttribute("role"); clueIntro.removeAttribute("aria-modal"); clueIntro.removeAttribute("aria-labelledby");
       viewport.classList.remove("hint-active", "exit-confirm-active");
-      resumeLevelTimeouts();
-      if (exitPausedElapsedMs !== null && !gameOver && !roomCompleted) {
-        cameraStartedAt = performance.now() - exitPausedElapsedMs;
-        updateCameraTimer();
-        cameraTimerInterval = window.setInterval(updateCameraTimer, CONFIG.camera.timerRefreshMs);
-      }
-      if (exitVideoWasPlaying && !gameOver && !roomCompleted) showRoomVideo(levelRooms[activeRoomIndex], { withAudio: true });
-      showCurrentLetter({ animate: false }); updateCameraControls();
+      resumeLevelActivity({ gesture: true });
       levelTimeout(() => {
         if (exitConfirmationActive || hintActive) return;
         clueIntro.classList.remove("exit-mode");
         document.getElementById("exitConfirmContent").hidden = true;
         viewport.classList.remove("hint-transition");
       }, CONFIG.puzzles.hintFadeMs * 2);
-      nextRoomButton.focus();
+      if (resumePlayback.hidden) nextRoomButton.focus();
     }
 
     function handleMenuKeys(event) {
