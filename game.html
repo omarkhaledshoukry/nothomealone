@@ -5659,7 +5659,6 @@
       jumpscareVideo.style.transform = `translateX(${previousOffset}px)`;
       // The first frame is already decoded and parked at time zero. Avoid a
       // redundant seek here, which can delay the first visible scare frame.
-      viewport.classList.add("scene-blackout");
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.remove("priming");
       jumpscareVideo.classList.add("playing");
@@ -5685,15 +5684,25 @@
           applyWorldOffset(true);
         });
       };
+      const onScareFrame = () => {
+        flyToCentre();
+        // Leave the room visible until the video has had a chance to paint.
+        // Then keep black behind the clip so the room cannot flash at the end.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (generation === levelGeneration && clip === jumpscareVideo && clip.classList.contains("playing")) {
+            viewport.classList.add("scene-blackout");
+          }
+        }));
+      };
       // Show and start playback at the player's current view. Begin the
       // camera flight only after the video presents its first playing frame.
       void jumpscareVideo.offsetWidth;
       if (typeof jumpscareVideo.requestVideoFrameCallback === "function") {
         jumpscareFrameRequest = jumpscareVideo.requestVideoFrameCallback(() => {
           jumpscareFrameRequest = null;
-          flyToCentre();
+          onScareFrame();
         });
-      } else jumpscareVideo.addEventListener("playing", flyToCentre, { once: true });
+      } else jumpscareVideo.addEventListener("playing", onScareFrame, { once: true });
       const room = levelRooms[activeRoomIndex], revision = playbackRevision;
       try {
         const played = playActiveScare(room, { gesture: reason !== "timeout" });
