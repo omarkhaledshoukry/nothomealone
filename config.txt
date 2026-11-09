@@ -503,7 +503,7 @@ retryFontVh = 3
 
 # Plain text only. Placeholders: clueFormat {current}/{total}; roomFormat {number}; puzzleLevelFormat {title}/{number}.
 [text]
-hunt = "HUNT"
+hunt = "CASE"
 exit = "EXIT"
 # Used for both languages; the title is selected below and Arabic uses Arabic digits.
 puzzleLevelFormat = "{title} #{number}"
