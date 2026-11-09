@@ -561,8 +561,13 @@ loadTimeoutMs = 6000
 # Home screen copy. A saved Settings language overrides [language].code.
 [menu]
 title = "Housemaid in Hell"
+# How long Start takes to pan home.png to the right edge; 0 skips the pan.
+panMs = 650
+# Time offset between adjacent menu buttons and between Stay and Leave.
+jitterStaggerMs = 75
 
 [menu.en]
+start = "START"
 play = "PLAY"
 settings = "SETTINGS"
 story = "STORY"
@@ -580,6 +585,7 @@ howText = "Drag left or right to look around. Solve the riddle by collecting its
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
 
 [menu.ar]
+start = "ابدأ"
 play = "ابدأ اللعب"
 settings = "الإعدادات"
 story = "القصة"

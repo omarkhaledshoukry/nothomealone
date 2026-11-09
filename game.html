@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="color-scheme" content="only light" />
   <title>Room Word Hunt</title>
+  <link rel="preload" as="image" href="./home.png" />
   <style>
     @font-face {
       font-family: "Game Arabic Paper";
@@ -72,23 +73,31 @@
       background: #000;
     }
 
-    #portraitViewport {
-      --safe-left: max(0px, calc(env(safe-area-inset-left) - var(--frame-left-gap, 0px)));
-      --safe-right: max(0px, calc(env(safe-area-inset-right) - var(--frame-right-gap, 0px)));
+    #portraitFrame {
       position: relative;
       height: 100%;
-      aspect-ratio: var(--frame-aspect, .625);
+      width: calc(var(--game-height) * var(--frame-aspect, .625));
       max-width: 100%;
       overflow: hidden;
       background: #000;
       box-shadow: 0 0 40px rgba(0, 0, 0, .8);
+      isolation: isolate;
+    }
+
+    #portraitViewport {
+      --safe-left: max(0px, calc(env(safe-area-inset-left) - var(--frame-left-gap, 0px)));
+      --safe-right: max(0px, calc(env(safe-area-inset-right) - var(--frame-right-gap, 0px)));
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      background: #000;
       isolation: isolate;
       user-select: none;
       -webkit-user-select: none;
     }
 
     @media (max-width: 600px) and (orientation: portrait), (pointer: coarse) and (orientation: portrait) {
-      #portraitViewport { width: 100%; }
+      #portraitFrame { width: 100%; }
     }
 
     #sceneEffects {
@@ -1031,22 +1040,39 @@
       outline: 2px solid var(--camera-color, #fff);
       outline-offset: 3px;
     }
-    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
     #menuShell[hidden], .menu-page[hidden] { display: none !important; }
     html.menu-open, html.menu-open body, #menuShell { touch-action: pan-y; }
-    .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; }
-    #homePage { padding-top: 30px; padding-bottom: 30px; }
-    #homeTitle { margin: 0 auto 26px; max-width: 10ch; font-size: clamp(44px, calc(var(--view-unit) * 8.3), 84px); font-weight: 400; line-height: .98; text-transform: uppercase; }
+    #homeBackdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+    #homePoster { position: absolute; top: 0; left: 0; height: 100%; width: auto; min-width: 100%; object-fit: cover; transform: translate3d(var(--home-pan-x, 0px), 0, 0); }
+    #menuShell[data-page="intro"] #homePoster, #menuShell[data-page="panning"][data-pan-target="intro"] #homePoster { transform: translate3d(0, 0, 0); }
+    #menuShell[data-page="panning"] #homePoster { transition: transform var(--home-pan-ms, 650ms) cubic-bezier(.16,.72,.22,1); }
+    #menuShell[data-page="settings"] #homeBackdrop, #menuShell[data-page="story"] #homeBackdrop, #menuShell[data-page="how"] #homeBackdrop { visibility: hidden; }
+    .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; z-index: 1; }
+    #introPage { position: absolute; inset: 0; width: 100%; display: flex; justify-content: center; align-items: flex-end; padding: 0 0 max(9%, calc(env(safe-area-inset-bottom) + 12px)); }
+    #homeStartButton { font-size: clamp(30px, calc(var(--view-unit) * 4.4), 44px); }
+    /* Keep the menu at its original vertical position after removing the heading. */
+    #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
     .menu-page h2 { margin: 0 0 28px; font-size: clamp(32px, calc(var(--view-unit) * 5.5), 54px); font-weight: 400; line-height: 1.1; }
     .home-actions, .language-choices { display: flex; flex-direction: column; align-items: center; gap: 9px; }
     .menu-button, .home-back, .paper-button { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; -webkit-text-fill-color: currentColor; font: inherit; font-weight: 400; cursor: pointer; animation: readyJitter .4s steps(1, end) infinite; touch-action: manipulation; }
     .menu-button { min-height: 44px; padding: 7px 18px; font-size: clamp(24px, calc(var(--view-unit) * 3.7), 36px); line-height: 1.12; }
+    .home-actions > button, .paper-actions > button { animation-delay: calc(var(--jitter-phase, 0) * var(--menu-jitter-stagger, 75ms)); }
+    .home-actions > :nth-child(2), .paper-actions > :nth-child(2) { --jitter-phase: -1; }
+    .home-actions > :nth-child(3) { --jitter-phase: -2; }
+    .home-actions > :nth-child(4) { --jitter-phase: -3; }
+    .home-actions > :nth-child(5) { --jitter-phase: -4; }
     .menu-button:disabled { opacity: .45; cursor: default; }
     .menu-button[aria-pressed="true"] { text-decoration: underline; text-underline-offset: .2em; }
     .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; }
     .menu-back svg, .home-back svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .menu-body { margin: 0; font-size: clamp(20px, calc(var(--view-unit) * 3.2), 28px); line-height: 1.38; text-align: start; }
     #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: 18px; }
+    #homeNotice > span { animation: clearNoticeFade 1800ms ease both; }
+    @keyframes clearNoticeFade {
+      0%, 25% { opacity: 1; }
+      100% { opacity: 0; }
+    }
     #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #menuShell[data-language="ar"] .menu-page:not(#homePage) { direction: rtl; }
     #menuShell[data-language="ar"] .menu-body { line-height: 1.65; }
@@ -1066,11 +1092,12 @@
     .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.3), 32px); }
     :root[data-game-language="ar"] #exitConfirmContent { font-family: "Game Arabic Paper", "Game Arabic", serif; direction: rtl; }
     #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
-    @media (max-height: 580px) { #homeTitle { margin-bottom: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
+    @media (max-height: 580px) { #homePage { --home-menu-gap: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
   </style>
 </head>
 <body>
   <div id="game">
+    <div id="portraitFrame">
     <div id="portraitViewport">
       <div id="loadingScreen" aria-live="polite">
         <div id="loadingWord" aria-label="Loading">
@@ -1182,9 +1209,13 @@
         <p id="levelLoadDetails" hidden></p>
       </div>
     </div>
-    <section id="menuShell" aria-label="Housemaid in Hell" data-language="en">
-      <div id="homePage" class="menu-page">
-        <h1 id="homeTitle" lang="en" dir="ltr">Housemaid in Hell</h1>
+    <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro">
+      <div id="homeBackdrop" aria-hidden="true"><img id="homePoster" src="./home.png" alt="" draggable="false" fetchpriority="high" /></div>
+      <div id="introPage" class="menu-page">
+        <button id="homeStartButton" class="menu-button" type="button">START</button>
+      </div>
+      <div id="homePage" class="menu-page" hidden>
+        <button id="homeBackButton" class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <nav class="home-actions" aria-label="Main menu">
           <button id="homePlayButton" class="menu-button" type="button">PLAY</button>
           <button id="homeSettingsButton" class="menu-button" type="button">SETTINGS</button>
@@ -1211,6 +1242,7 @@
         <h2 id="howTitle">HOW TO PLAY</h2><p id="howCopy" class="menu-body"></p>
       </div>
     </section>
+    </div>
   </div>
 
   <input id="progressFileInput" type="file" accept=".txt,.json,text/plain,application/json" hidden />
@@ -1775,7 +1807,10 @@
   },
   "menu": {
     "title": "Housemaid in Hell",
+    "panMs": 650,
+    "jitterStaggerMs": 75,
     "en": {
+      "start": "START",
       "play": "PLAY",
       "settings": "SETTINGS",
       "story": "STORY",
@@ -1793,6 +1828,7 @@
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
     },
     "ar": {
+      "start": "ابدأ",
       "play": "ابدأ اللعب",
       "settings": "الإعدادات",
       "story": "القصة",
@@ -1820,8 +1856,11 @@
     let folderImportBusy = false;
     let gameInitializationStarted = false;
     const MENU_PREFERENCE_KEY = `room-word-hunt/settings/v1:${new URL(".", document.baseURI).href}`;
+    const portraitFrame = document.getElementById("portraitFrame");
     const menuShell = document.getElementById("menuShell");
-    let menuPage = "home";
+    const homePoster = document.getElementById("homePoster");
+    let menuPage = "intro";
+    let homePanTimer = null;
     let homeBootPromise = Promise.resolve();
     let homePlayPending = null;
     let menuActionPending = null;
@@ -1836,7 +1875,8 @@
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
-      "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40]
+      "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
+      "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true]
     });
     for (const name of ["singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
@@ -3887,6 +3927,7 @@
       rootStyle.setProperty("--game-top", `${visible?.offsetTop || 0}px`);
       rootStyle.setProperty("--game-left", `${visible?.offsetLeft || 0}px`);
       rootStyle.setProperty("--view-unit", `${height / 100}px`);
+      if (!menuShell.hidden) syncHomePoster();
     }
 
     function fitCameraText() {
@@ -6556,6 +6597,7 @@
         "--hint-fade-ms": `${CONFIG.puzzles.hintFadeMs}ms`, "--hint-blur": `${CONFIG.puzzles.hintBlurPx}px`,
         "--game-over-jitter-ms": `${CONFIG.ui.gameOverJitterMs}ms`, "--retry-jitter-ms": `${CONFIG.ui.retryJitterMs}ms`,
         "--retry-jitter-delay": `${CONFIG.ui.retryJitterDelayMs}ms`, "--found-flash-ms": `${CONFIG.ui.foundFlashMs}ms`,
+        "--menu-jitter-stagger": `${CONFIG.menu.jitterStaggerMs}ms`,
         "--hud-pop-ms": `${CONFIG.ui.hudPopMs}ms`, "--hud-letter-gap": `${CONFIG.letters.hudGapPx}px`,
         "--game-over-min": `${CONFIG.ui.gameOverMinFontPx}px`, "--game-over-max": `${CONFIG.ui.gameOverMaxFontPx}px`, "--game-over-vh": CONFIG.ui.gameOverFontVh,
         "--retry-min": `${CONFIG.ui.retryMinFontPx}px`, "--retry-max": `${CONFIG.ui.retryMaxFontPx}px`, "--retry-vh": CONFIG.ui.retryFontVh
@@ -6645,8 +6687,7 @@
       menuShell.dataset.language = CONFIG.language.code;
       menuShell.lang = CONFIG.language.code;
       menuShell.setAttribute("aria-label", CONFIG.menu.title);
-      document.getElementById("homeTitle").textContent = CONFIG.menu.title;
-      const labels = { homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
+      const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy: text.howText,
         exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
@@ -6658,23 +6699,63 @@
     }
 
     function updateMenuControls() {
-      const busy = Boolean(homePlayPending || menuActionPending);
+      const busy = menuPage === "panning" || Boolean(homePlayPending || menuActionPending);
       menuShell.querySelectorAll("button").forEach(button => { button.disabled = busy; });
     }
 
+    function syncHomePoster() {
+      const { width, height } = portraitFrame.getBoundingClientRect();
+      const scaledWidth = homePoster.naturalHeight ? height * homePoster.naturalWidth / homePoster.naturalHeight : width;
+      const shift = Math.min(0, width - scaledWidth);
+      menuShell.style.setProperty("--home-pan-x", `${shift}px`);
+      return shift;
+    }
+
     function showMenuPage(page = "home", focus = false) {
-      if (!["home", "settings", "story", "how"].includes(page)) page = "home";
+      const pages = ["intro", "home", "settings", "story", "how"];
+      if (page !== "panning" && !pages.includes(page)) page = "home";
       menuPage = page;
       document.documentElement.classList.add("menu-open");
       menuShell.hidden = false;
+      menuShell.dataset.page = page;
       viewport.inert = true;
       viewport.setAttribute("aria-hidden", "true");
-      for (const name of ["home", "settings", "story", "how"]) document.getElementById(`${name}Page`).hidden = name !== page;
+      for (const name of pages) document.getElementById(`${name}Page`).hidden = name !== page;
+      if (page !== "home") document.getElementById("homeNotice").textContent = "";
+      menuShell.scrollTop = 0;
+      syncHomePoster();
       updateMenuCopy(); updateMenuControls();
       if (focus) requestAnimationFrame(() => {
         if (menuPage !== page) return;
-        (page === "home" ? document.getElementById("homePlayButton") : document.getElementById(`${page}Page`).querySelector(".menu-back"))?.focus();
+        const action = page === "home" ? document.getElementById("homePlayButton")
+          : page === "intro" ? document.getElementById("homeStartButton")
+          : document.getElementById(`${page}Page`)?.querySelector(".menu-back");
+        action?.focus();
       });
+    }
+
+    function finishHomePan() {
+      if (menuPage !== "panning") return;
+      window.clearTimeout(homePanTimer);
+      homePanTimer = null;
+      const target = menuShell.dataset.panTarget;
+      delete menuShell.dataset.panTarget;
+      showMenuPage(target, true);
+    }
+
+    function panHomeTo(target) {
+      const back = target === "intro";
+      if (menuPage !== (back ? "home" : "intro") || homePlayPending || menuActionPending) return;
+      const shift = syncHomePoster(), duration = back ? Math.min(350, CONFIG.menu.panMs) : CONFIG.menu.panMs;
+      if (!shift || !duration || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+        showMenuPage(target, true);
+        return;
+      }
+      menuShell.dataset.panTarget = target;
+      menuShell.style.setProperty("--home-pan-ms", `${duration}ms`);
+      showMenuPage("panning");
+      // Some browsers suppress transitionend when the window is resized or hidden.
+      homePanTimer = window.setTimeout(finishHomePan, duration + 80);
     }
 
     function hideMenuForLoading() {
@@ -6810,7 +6891,10 @@
         progressInitializedLanguage = null;
         currentLevelLoadPromise = Promise.resolve();
         showMenuPage("home");
-        document.getElementById("homeNotice").textContent = menuText().cleared;
+        const noticeText = document.createElement("span");
+        noticeText.textContent = menuText().cleared;
+        noticeText.addEventListener("animationend", () => noticeText.remove(), { once: true });
+        document.getElementById("homeNotice").replaceChildren(noticeText);
       }).finally(() => { menuActionPending = null; updateMenuControls(); });
       updateMenuControls();
       return menuActionPending;
@@ -6868,16 +6952,23 @@
     function handleMenuKeys(event) {
       if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
       if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
-      else if (menuPage && menuPage !== "home") { event.preventDefault(); event.stopImmediatePropagation(); showMenuPage("home", true); }
+      else if (["settings", "story", "how"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); showMenuPage("home", true); }
       else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
     }
 
+    homePoster.addEventListener("load", syncHomePoster);
+    homePoster.addEventListener("error", () => { homePoster.hidden = true; finishHomePan(); });
+    homePoster.addEventListener("transitionend", event => {
+      if (event.propertyName === "transform" || event.propertyName === "-webkit-transform") finishHomePan();
+    });
+    document.getElementById("homeStartButton").addEventListener("click", () => panHomeTo("home"));
+    document.getElementById("homeBackButton").addEventListener("click", () => panHomeTo("intro"));
     document.getElementById("homePlayButton").addEventListener("click", beginHomePlay);
     document.getElementById("homeSettingsButton").addEventListener("click", () => showMenuPage("settings", true));
     document.getElementById("homeStoryButton").addEventListener("click", () => showMenuPage("story", true));
     document.getElementById("homeHowButton").addEventListener("click", () => showMenuPage("how", true));
     document.getElementById("homeClearButton").addEventListener("click", clearDataFromHome);
-    menuShell.querySelectorAll(".menu-back").forEach(button => button.addEventListener("click", () => showMenuPage("home", true)));
+    menuShell.querySelectorAll(".menu-back:not(#homeBackButton)").forEach(button => button.addEventListener("click", () => showMenuPage("home", true)));
     menuShell.querySelectorAll("[data-language]").forEach(button => button.addEventListener("click", () => selectMenuLanguage(button.dataset.language)));
     document.getElementById("exitStayButton").addEventListener("click", stayInLevel);
     document.getElementById("exitLeaveButton").addEventListener("click", returnToHome);
@@ -6946,7 +7037,8 @@
       else wordLoad = loadWords();
       await Promise.allSettled([roomLoad, wordLoad]);
     }
-    showMenuPage("home");
+    syncVisibleViewport();
+    showMenuPage("intro");
     homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); updateMenuCopy(); });
   </script>
 </body>
