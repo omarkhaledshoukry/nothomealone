@@ -1051,10 +1051,8 @@
     #menuShell[data-poster-position="center"] #homeBackdrop::after { opacity: 1; }
     #menuShell[data-page="panning"] #homePoster { transition: transform var(--home-pan-ms, 650ms) cubic-bezier(.16,.72,.22,1); }
     .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; z-index: 1; }
-    #introPage { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 5% max(17%, calc(env(safe-area-inset-bottom) + 40px)); }
-    #homeIntroTitle { position: absolute; top: max(12%, calc(env(safe-area-inset-top) + 12px)); left: 9%; right: 9%; margin: 0; max-width: 82%; font-family: "Dudu Calligraphy", "Game Arabic", cursive; font-size: clamp(28px, min(11vw, calc(var(--view-unit) * 7.1)), 68px); font-weight: 400; line-height: 1.05; text-transform: uppercase; text-wrap: balance; text-shadow: 0 1px 3px #000, 0 2px 14px #000; }
-    .intro-title-word { display: inline-block; white-space: nowrap; }
-    #homeStartButton { font-size: clamp(30px, calc(var(--view-unit) * 4.4), 44px); }
+    #introPage { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 5% max(20%, calc(env(safe-area-inset-bottom) + 52px)); }
+    #homeStartButton { font-size: clamp(33px, calc(var(--view-unit) * 4.8), 48px); }
     /* Keep the menu at its original vertical position after removing the heading. */
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
     .menu-page h2 { margin: 0 0 28px; font-size: clamp(32px, calc(var(--view-unit) * 5.5), 54px); font-weight: 400; line-height: 1.1; }
@@ -1216,7 +1214,6 @@
     <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro" data-poster-position="left">
       <div id="homeBackdrop" aria-hidden="true"><img id="homePoster" src="./home.png" alt="" draggable="false" fetchpriority="high" /></div>
       <div id="introPage" class="menu-page">
-        <h1 id="homeIntroTitle" dir="auto">Housemaid in Hell</h1>
         <button id="homeStartButton" class="menu-button" type="button">START</button>
       </div>
       <div id="homePage" class="menu-page" hidden>
@@ -6668,9 +6665,7 @@
       }
       batterySlots.forEach((slot, index) => slot.setAttribute("fill", CONFIG.battery.slotColors[Math.min(CONFIG.battery.slotColors.length - 1,
         Math.floor(index / BATTERY_SLOT_COUNT * CONFIG.battery.slotColors.length))]));
-      // Keep independent jitter for the loader and the opening title.
       document.querySelectorAll("#loadingWord .loading-letter").forEach(configureLoadingLetterJitter);
-      document.querySelectorAll("#homeIntroTitle .loading-letter").forEach(configureLoadingLetterJitter);
       document.fonts?.ready.then(requestViewportLayout);
     }
 
@@ -6693,30 +6688,6 @@
 
     function menuText() { return CONFIG.menu[CONFIG.language.code] || CONFIG.menu.en; }
 
-    function renderHomeIntroTitle(title) {
-      const heading = document.getElementById("homeIntroTitle");
-      if (heading.dataset.title === title) return;
-      heading.dataset.title = title;
-      heading.setAttribute("aria-label", title);
-      const contents = document.createDocumentFragment();
-      let letterIndex = 0;
-      for (const [index, word] of title.trim().split(/\s+/).entries()) {
-        if (index) contents.append(document.createTextNode(" "));
-        const group = document.createElement("span");
-        group.className = "intro-title-word";
-        group.setAttribute("aria-hidden", "true");
-        for (const character of word) {
-          const letter = document.createElement("span");
-          letter.className = "loading-letter";
-          letter.textContent = character;
-          configureLoadingLetterJitter(letter, letterIndex++);
-          group.append(letter);
-        }
-        contents.append(group);
-      }
-      heading.replaceChildren(contents);
-    }
-
     function updateMenuCopy() {
       const text = menuText();
       document.title = CONFIG.menu.title;
@@ -6724,7 +6695,6 @@
       menuShell.dataset.language = CONFIG.language.code;
       menuShell.lang = CONFIG.language.code;
       menuShell.setAttribute("aria-label", CONFIG.menu.title);
-      renderHomeIntroTitle(CONFIG.menu.title);
       const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy: text.howText,
