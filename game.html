@@ -448,23 +448,22 @@
 
     #loadingScreen {
       position: absolute;
-      z-index: 100;
+      z-index: 200;
       inset: 0;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #000;
+      opacity: 1;
       pointer-events: auto;
     }
 
-    #loadingScreen {
-      z-index: 200;
-      transition: opacity var(--loader-fade-ms, 220ms) ease;
-    }
-
+    /* Cover the outgoing room immediately. Fade only when revealing the
+       prepared screen underneath. */
     #loadingScreen.hidden {
       opacity: 0;
       pointer-events: none;
+      transition: opacity var(--loader-fade-ms, 220ms) ease;
     }
 
     #loadingWord {
@@ -6824,6 +6823,7 @@
       levelLoadFailure = null;
       document.getElementById("levelLoadDetails").hidden = true;
       message.classList.remove("show"); snapButton.classList.remove("snapping");
+      loadingScreen.classList.remove("hidden");
       viewport.classList.remove("hand-active", "hint-active", "hint-transition", "clue-intro-active", "exit-confirm-active");
       clueIntro.classList.remove("show", "dismiss", "hint-mode", "exit-mode");
       clueIntro.setAttribute("aria-hidden", "true");
@@ -6833,7 +6833,6 @@
       mediaPreparation.hidden = true;
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
-      loadingScreen.classList.remove("hidden");
       gameOver = false;
     }
 
@@ -6866,11 +6865,11 @@
       // Refresh permission on the retained element inside Next/Retry, before
       // the asynchronously loaded scene can ask for playback.
       const primed = primeRetainedScares();
+      loadingWord.hidden = false;
+      loadingScreen.classList.remove("hidden");
       gameOverScreen.classList.remove("show");
       readyButton.disabled = true;
       clueIntro.classList.remove("show");
-      loadingWord.hidden = false;
-      loadingScreen.classList.remove("hidden");
       levelTransitionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending, primed,
         ...roomMediaPool.map(room => room.preparing)]).then(() => {
         if (fresh) resetBrowserProgress();
@@ -7139,11 +7138,11 @@
       menuPage = null;
       gameplayPaused = isPageInactive();
       viewport.classList.toggle("level-paused", gameplayPaused);
+      loadingScreen.classList.remove("hidden");
       document.documentElement.classList.remove("menu-open");
       menuShell.hidden = true;
       viewport.inert = false;
       viewport.removeAttribute("aria-hidden");
-      loadingScreen.classList.remove("hidden");
       loadingWord.hidden = false;
       mediaPreparation.hidden = true;
     }
