@@ -84,6 +84,8 @@ saveHandleTimeoutMs = 1000
 wordsTimeoutMs = 15000
 resourceTimeoutMs = 6000
 jumpscareDownloadTimeoutMs = 60000
+# Retry a video load before showing its actual filename/error. Integer 1..3.
+mediaLoadAttempts = 2
 levelProbeGap = 16
 levelProbeBatchSize = 4
 deadlineWarmSeconds = 3
@@ -554,3 +556,42 @@ retreatMs = 180
 retreatExtraPx = 40
 # Optional missing/corrupt doll art never prevents the level from starting.
 loadTimeoutMs = 6000
+
+
+# Home screen copy. A saved Settings language overrides [language].code.
+[menu]
+title = "Housemaid in Hell"
+
+[menu.en]
+play = "PLAY"
+settings = "SETTINGS"
+story = "STORY"
+how = "HOW TO PLAY"
+clear = "CLEAR DATA"
+cleared = "DATA CLEARED"
+language = "LANGUAGE"
+back = "Back"
+home = "Home"
+exitTitle = "Are you sure?"
+exitText = "Return to the home screen?"
+stay = "STAY"
+leave = "LEAVE"
+howText = "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you."
+storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
+
+[menu.ar]
+play = "ابدأ اللعب"
+settings = "الإعدادات"
+story = "القصة"
+how = "طريقة اللعب"
+clear = "مسح البيانات"
+cleared = "تم مسح البيانات"
+language = "اللغة"
+back = "رجوع"
+home = "الرئيسية"
+exitTitle = "هل أنت متأكد؟"
+exitText = "العودة إلى الصفحة الرئيسية؟"
+stay = "البقاء"
+leave = "الخروج"
+howText = "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك."
+storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."

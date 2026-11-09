@@ -838,6 +838,8 @@
     }
 
     #gameOverScreen.show { display: flex; }
+    #levelLoadDetails { max-width: 86%; margin: 0; color: var(--letter-beige); font: 14px/1.4 Arial, sans-serif; overflow-wrap: anywhere; }
+    #levelLoadDetails[hidden] { display: none; }
     #gameOverScreen.show #gameOverTitle { animation: gameOverJitter var(--game-over-jitter-ms, 380ms) steps(1, end) infinite; }
     #gameOverScreen.show #retryText { animation: gameOverJitter var(--retry-jitter-ms, 430ms) steps(1, end) var(--retry-jitter-delay, 75ms) infinite; }
     #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)); line-height: 1; }
@@ -1029,6 +1031,42 @@
       outline: 2px solid var(--camera-color, #fff);
       outline-offset: 3px;
     }
+    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+    #menuShell[hidden], .menu-page[hidden] { display: none !important; }
+    html.menu-open, html.menu-open body, #menuShell { touch-action: pan-y; }
+    .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; }
+    #homePage { padding-top: 30px; padding-bottom: 30px; }
+    #homeTitle { margin: 0 auto 26px; max-width: 10ch; font-size: clamp(44px, calc(var(--view-unit) * 8.3), 84px); font-weight: 400; line-height: .98; text-transform: uppercase; }
+    .menu-page h2 { margin: 0 0 28px; font-size: clamp(32px, calc(var(--view-unit) * 5.5), 54px); font-weight: 400; line-height: 1.1; }
+    .home-actions, .language-choices { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+    .menu-button, .home-back, .paper-button { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; -webkit-text-fill-color: currentColor; font: inherit; font-weight: 400; cursor: pointer; animation: readyJitter .4s steps(1, end) infinite; touch-action: manipulation; }
+    .menu-button { min-height: 44px; padding: 7px 18px; font-size: clamp(24px, calc(var(--view-unit) * 3.7), 36px); line-height: 1.12; }
+    .menu-button:disabled { opacity: .45; cursor: default; }
+    .menu-button[aria-pressed="true"] { text-decoration: underline; text-underline-offset: .2em; }
+    .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; }
+    .menu-back svg, .home-back svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+    .menu-body { margin: 0; font-size: clamp(20px, calc(var(--view-unit) * 3.2), 28px); line-height: 1.38; text-align: start; }
+    #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: 18px; }
+    #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #menuShell[data-language="ar"] .menu-page:not(#homePage) { direction: rtl; }
+    #menuShell[data-language="ar"] .menu-body { line-height: 1.65; }
+    #menuShell [lang="en"] { font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", cursive; }
+    #menuShell button:focus-visible, .home-back:focus-visible, .paper-button:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
+    #menuShell button { -webkit-tap-highlight-color: transparent; }
+    #menuShell button:focus:not(:focus-visible) { outline: none; }
+    #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #clueIntro.hint-mode .home-back, #clueIntro.exit-mode .home-back { display: none; }
+    #clueIntro.exit-mode { visibility: visible; transition: opacity var(--hint-fade-ms, 140ms) ease; }
+    #clueIntro.exit-mode #clueTitle, #clueIntro.exit-mode #clueList, #clueIntro.exit-mode #puzzleText, #clueIntro.exit-mode #readyButton, #clueIntro.exit-mode .clue-file-controls { display: none; }
+    #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 14px; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
+    #exitConfirmContent[hidden] { display: none; }
+    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: clamp(24px, calc(var(--view-unit) * 4), 38px); line-height: 1.15; }
+    #exitConfirmContent p { margin: 0; font-size: clamp(18px, calc(var(--view-unit) * 2.7), 26px); line-height: 1.3; }
+    .paper-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.3), 32px); }
+    :root[data-game-language="ar"] #exitConfirmContent { font-family: "Game Arabic Paper", "Game Arabic", serif; direction: rtl; }
+    #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
+    @media (max-height: 580px) { #homeTitle { margin-bottom: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
   </style>
 </head>
 <body>
@@ -1063,6 +1101,7 @@
       </div>
 
       <div id="clueIntro" aria-hidden="true">
+        <button class="home-back" id="paperHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <div id="clueCard">
           <div id="cluePaperWrap">
             <img id="cluePaper"  alt="" draggable="false" />
@@ -1071,15 +1110,16 @@
               <div id="clueTitle">CLUES</div>
               <ul id="clueList"></ul>
               <p id="puzzleText" hidden></p>
+              <div id="exitConfirmContent" hidden>
+                <h2 id="exitConfirmTitle">Are you sure?</h2><p id="exitConfirmText">Return to the home screen?</p>
+                <div class="paper-actions"><button id="exitStayButton" class="paper-button" type="button">STAY</button><button id="exitLeaveButton" class="paper-button" type="button">LEAVE</button></div>
+              </div>
             </div>
           </div>
           <button id="readyButton" type="button" disabled>READY</button>
         </div>
         <div class="clue-file-controls">
           <div id="localFileControls" hidden><button id="changeLocalFilesButton" type="button">Change local files</button></div>
-          <div class="progress-actions">
-          <button type="button" class="clear-progress">CLEAR</button>
-        </div>
         </div>
       </div>
 
@@ -1136,13 +1176,41 @@
       <div id="blackFlash" aria-hidden="true"></div>
       <video id="jumpscareVideo" class="jumpscare-video" preload="auto" muted playsinline></video>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
+        <button class="home-back" id="endHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
-        <div class="progress-actions">
-          <button type="button" class="clear-progress">CLEAR</button>
-        </div>
+        <p id="levelLoadDetails" hidden></p>
       </div>
     </div>
+    <section id="menuShell" aria-label="Housemaid in Hell" data-language="en">
+      <div id="homePage" class="menu-page">
+        <h1 id="homeTitle" lang="en" dir="ltr">Housemaid in Hell</h1>
+        <nav class="home-actions" aria-label="Main menu">
+          <button id="homePlayButton" class="menu-button" type="button">PLAY</button>
+          <button id="homeSettingsButton" class="menu-button" type="button">SETTINGS</button>
+          <button id="homeStoryButton" class="menu-button" type="button">STORY</button>
+          <button id="homeHowButton" class="menu-button" type="button">HOW TO PLAY</button>
+          <button id="homeClearButton" class="menu-button" type="button">CLEAR DATA</button>
+        </nav>
+        <p id="homeNotice" role="status" aria-live="polite"></p>
+      </div>
+      <div id="settingsPage" class="menu-page" hidden>
+        <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+        <h2 id="settingsTitle">SETTINGS</h2>
+        <div id="languageChoices" class="language-choices" role="group" aria-label="Language">
+          <button class="menu-button" type="button" data-language="en" lang="en" aria-pressed="true">English</button>
+          <button class="menu-button" type="button" data-language="ar" lang="ar" aria-pressed="false">العربية</button>
+        </div>
+      </div>
+      <div id="storyPage" class="menu-page" hidden>
+        <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+        <h2 id="storyTitle">STORY</h2><p id="storyCopy" class="menu-body"></p>
+      </div>
+      <div id="howPage" class="menu-page" hidden>
+        <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+        <h2 id="howTitle">HOW TO PLAY</h2><p id="howCopy" class="menu-body"></p>
+      </div>
+    </section>
   </div>
 
   <input id="progressFileInput" type="file" accept=".txt,.json,text/plain,application/json" hidden />
@@ -1150,6 +1218,7 @@
 
     // Optional config.txt is read before choosing a level or loading its assets.
     // Runtime state (camera position, collected letters, timers) stays internal.
+    const MENU_MEDIA_PRIMER = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAWwbW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAAMgAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAwAAAmF0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAAMgAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAABAAAAAQAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAADIAAAAAAABAAAAAAHZbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAA8AAAADABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABhG1pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAURzdGJsAAAAuHN0c2QAAAAAAAAAAQAAAKhhdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAABAAEABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAALmF2Y0MBQsAK/+EAFmdCwArZHsBEAAADAAQAAAMAeDxImSABAAVoy4PLIAAAABBwYXNwAAAAAQAAAAEAAAAUYnRydAAAAAAAAGdwAABncAAAABhzdHRzAAAAAAAAAAEAAAADAAAEAAAAABRzdHNzAAAAAAAAAAEAAAABAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAABAAAAAQAAACBzdHN6AAAAAAAAAAAAAAADAAACgwAAAAkAAAAKAAAAHHN0Y28AAAAAAAAAAwAABfUAAAiEAAAImQAAAnl0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAACAAAAAAAAAMgAAAAAAAAAAAAAAAEBAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAADIAAAEAAABAAAAAAHxbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAACsRAAAJnRVxAAAAAAALWhkbHIAAAAAAAAAAHNvdW4AAAAAAAAAAAAAAABTb3VuZEhhbmRsZXIAAAABnG1pbmYAAAAQc21oZAAAAAAAAAAAAAAAJGRpbmYAAAAcZHJlZgAAAAAAAAABAAAADHVybCAAAAABAAABYHN0YmwAAAB+c3RzZAAAAAAAAAABAAAAbm1wNGEAAAAAAAAAAQAAAAAAAAAAAAEAEAAAAACsRAAAAAAANmVzZHMAAAAAA4CAgCUAAgAEgICAF0AVAAAAAAB9AAAAB/oFgICABRIIVuUABoCAgAECAAAAFGJ0cnQAAAAAAAB9AAAAB/oAAAAgc3R0cwAAAAAAAAACAAAACQAABAAAAAABAAACdAAAAChzdHNjAAAAAAAAAAIAAAABAAAAAQAAAAEAAAACAAAAAwAAAAEAAAA8c3RzegAAAAAAAAAAAAAACgAAABUAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAEAAAABAAAAAQAAAAgc3RjbwAAAAAAAAAEAAAF4AAACHgAAAiNAAAIowAAABpzZ3BkAQAAAHJvbGwAAAACAAAAAf//AAAAHHNiZ3AAAAAAcm9sbAAAAAEAAAAKAAAAAQAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNjAuMTYuMTAwAAAACGZyZWUAAALXbWRhdN4CAExhdmM2MC4zMS4xMDIAAjBADgAAAnEGBf//bdxF6b3m2Ui3lizYINkj7u94MjY0IC0gY29yZSAxNjQgcjMxMDggMzFlMTlmOSAtIEguMjY0L01QRUctNCBBVkMgY29kZWMgLSBDb3B5bGVmdCAyMDAzLTIwMjMgLSBodHRwOi8vd3d3LnZpZGVvbGFuLm9yZy94MjY0Lmh0bWwgLSBvcHRpb25zOiBjYWJhYz0wIHJlZj0zIGRlYmxvY2s9MTowOjAgYW5hbHlzZT0weDE6MHgxMTEgbWU9aGV4IHN1Ym1lPTcgcHN5PTEgcHN5X3JkPTEuMDA6MC4wMCBtaXhlZF9yZWY9MSBtZV9yYW5nZT0xNiBjaHJvbWFfbWU9MSB0cmVsbGlzPTEgOHg4ZGN0PTAgY3FtPTAgZGVhZHpvbmU9MjEsMTEgZmFzdF9wc2tpcD0xIGNocm9tYV9xcF9vZmZzZXQ9LTIgdGhyZWFkcz0xIGxvb2thaGVhZF90aHJlYWRzPTEgc2xpY2VkX3RocmVhZHM9MCBucj0wIGRlY2ltYXRlPTEgaW50ZXJsYWNlZD0wIGJsdXJheV9jb21wYXQ9MCBjb25zdHJhaW5lZF9pbnRyYT0wIGJmcmFtZXM9MCB3ZWlnaHRwPTAga2V5aW50PTI1MCBrZXlpbnRfbWluPTE1IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAACmWIhA3yYoAAtv4BGCAHARggBwEYIAcAAAAFQZo4G+oBGCAHARggBwEYIAcAAAAGQZpUBfqAARggBwEYIAcBGCAH";
     const CONFIG_FILE = "config.txt";
     const CONFIG_DEFAULTS = {
   "assets": {
@@ -1189,6 +1258,7 @@
     "wordsTimeoutMs": 15000,
     "resourceTimeoutMs": 6000,
     "jumpscareDownloadTimeoutMs": 60000,
+    "mediaLoadAttempts": 2,
     "levelProbeGap": 16,
     "levelProbeBatchSize": 4,
     "deadlineWarmSeconds": 3,
@@ -1702,6 +1772,43 @@
     "retreatMs": 180,
     "retreatExtraPx": 40,
     "loadTimeoutMs": 6000
+  },
+  "menu": {
+    "title": "Housemaid in Hell",
+    "en": {
+      "play": "PLAY",
+      "settings": "SETTINGS",
+      "story": "STORY",
+      "how": "HOW TO PLAY",
+      "clear": "CLEAR DATA",
+      "cleared": "DATA CLEARED",
+      "language": "LANGUAGE",
+      "back": "Back",
+      "home": "Home",
+      "exitTitle": "Are you sure?",
+      "exitText": "Return to the home screen?",
+      "stay": "STAY",
+      "leave": "LEAVE",
+      "howText": "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you.",
+      "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
+    },
+    "ar": {
+      "play": "ابدأ اللعب",
+      "settings": "الإعدادات",
+      "story": "القصة",
+      "how": "طريقة اللعب",
+      "clear": "مسح البيانات",
+      "cleared": "تم مسح البيانات",
+      "language": "اللغة",
+      "back": "رجوع",
+      "home": "الرئيسية",
+      "exitTitle": "هل أنت متأكد؟",
+      "exitText": "العودة إلى الصفحة الرئيسية؟",
+      "stay": "البقاء",
+      "leave": "الخروج",
+      "howText": "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك.",
+      "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."
+    }
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -1712,6 +1819,18 @@
     let localFolderImport = null;
     let folderImportBusy = false;
     let gameInitializationStarted = false;
+    const MENU_PREFERENCE_KEY = `room-word-hunt/settings/v1:${new URL(".", document.baseURI).href}`;
+    const menuShell = document.getElementById("menuShell");
+    let menuPage = "home";
+    let homeBootPromise = Promise.resolve();
+    let homePlayPending = null;
+    let menuActionPending = null;
+    let gameplayPaused = false;
+    let exitConfirmationActive = false;
+    let exitPausedElapsedMs = 0;
+    let exitVideoWasPlaying = false;
+    let fontLoadGeneration = 0;
+    let progressInitializedLanguage = null;
 
     const KEYBOARD_BINDINGS = ["leftKeys", "rightKeys", "previousRoomKeys", "nextRoomKeys", "shutterKeys", "dismissHandKeys", "advanceKeys"];
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
@@ -1730,6 +1849,7 @@
     }
 
     function configValueIsValid(path, value, fallback) {
+      if (path === "loading.mediaLoadAttempts") return Number.isInteger(value) && value >= 1 && value <= 3;
       if (path === "language.code") return value === "en" || value === "ar";
       if (/^levels\.(singleRoomSequential|singleRoomFixed)\.decoyStartLevels$/.test(path)) return Array.isArray(value) && value.length >= 1 && value.length <= 32 && value[0] === 1 &&
         value.every((level, index) => Number.isSafeInteger(level) && level >= 1 && level <= 1000000001 && (!index || level > value[index - 1]));
@@ -2090,15 +2210,45 @@
     let currentLevelLoadPromise = Promise.resolve();
     let levelGeneration = 0;
     const levelTimeouts = new Set();
+    const levelTimeoutJobs = new Map();
+    let nextLevelTimeoutId = 0;
 
     function levelTimeout(callback, delay) {
-      const generation = levelGeneration;
-      const timer = window.setTimeout(() => {
-        levelTimeouts.delete(timer);
-        if (generation === levelGeneration) callback();
-      }, delay);
-      levelTimeouts.add(timer);
-      return timer;
+      const id = ++nextLevelTimeoutId;
+      const job = { callback, generation: levelGeneration, remaining: Math.max(0, delay), timer: null, run: 0, due: 0 };
+      levelTimeouts.add(id);
+      levelTimeoutJobs.set(id, job);
+      if (!gameplayPaused) armLevelTimeout(id, job);
+      return id;
+    }
+
+    function armLevelTimeout(id, job) {
+      const run = ++job.run;
+      job.due = performance.now() + job.remaining;
+      job.timer = window.setTimeout(() => {
+        if (job.run !== run || gameplayPaused || !levelTimeoutJobs.has(id)) return;
+        levelTimeoutJobs.delete(id); levelTimeouts.delete(id);
+        if (job.generation === levelGeneration) job.callback();
+      }, job.remaining);
+    }
+
+    function clearLevelTimeout(id) {
+      const job = levelTimeoutJobs.get(id);
+      if (job) { job.run++; window.clearTimeout(job.timer); }
+      levelTimeoutJobs.delete(id); levelTimeouts.delete(id);
+    }
+
+    function pauseLevelTimeouts() {
+      const now = performance.now();
+      for (const job of levelTimeoutJobs.values()) {
+        if (job.timer === null) continue;
+        job.remaining = Math.max(0, job.due - now);
+        job.run++; window.clearTimeout(job.timer); job.timer = null;
+      }
+    }
+
+    function resumeLevelTimeouts() {
+      for (const [id, job] of levelTimeoutJobs) if (job.timer === null) armLevelTimeout(id, job);
     }
     const wordLoadError = document.getElementById("wordLoadError");
     const wordLoadTitle = document.getElementById("wordLoadTitle");
@@ -2296,6 +2446,7 @@
     let spiderFrames = [];
     let spiderMeta = null;
     let spiderAssetsReady = false;
+    let spiderAssetsLoadStarted = false;
     let spiderTimer = null;
     let spiderActive = false;
     let spiderRetreating = false;
@@ -2314,6 +2465,7 @@
     let spiderNativeAudio = null;
     let gameOver = false;
     let gameOverReason = null;
+    let levelLoadFailure = null;
     let wordsReadyForClue = false;
     let videosReadyForClue = false;
     let clueIntroShown = false;
@@ -2411,7 +2563,7 @@
         // Local HTML cannot fetch a folder, but media metadata remains readable.
         // Probe without playing, then release each temporary media element.
         return new Promise(resolve => {
-          const image = /\.png$/i.test(name);
+          const image = /\.(png|webp|jpe?g)$/i.test(name);
           const probe = document.createElement(image ? "img" : "video");
           let timer;
           const finish = exists => {
@@ -2540,7 +2692,8 @@
 
     function showLevelLoadError(error) {
       console.error("Could not load a matching room/jumpscare pair from levels/.", error);
-      beginGameOver("levels");
+      levelLoadFailure = error;
+      beginGameOver(error.failureReason || "levels");
       loadingScreen.classList.add("hidden");
       showGameOver();
     }
@@ -2551,9 +2704,7 @@
         const sameScare = pooled.scene.jumpscare === scene.jumpscare;
         const sameBackdrop = pooled.scene.roomImage === scene.roomImage && pooled.scene.roomVideo === scene.roomVideo;
         if (!sameScare) {
-          if (pooled.scareURL?.startsWith("blob:")) URL.revokeObjectURL(pooled.scareURL);
-          pooled.scareURL = null;
-          pooled.metadataReady = pooled.scareReady = false;
+          releaseRoomScareSource(pooled);
         }
         pooled.scene = scene;
         pooled.backdropReady = sameBackdrop && pooled.backdropReady;
@@ -2578,6 +2729,11 @@
       const backgroundVideo = index === 0 ? video : primary.video.cloneNode(false);
       const scare = index === 0 ? jumpscareVideo : primary.scare.cloneNode(false);
       if (index) {
+        // cloneNode copies src too. Never let a newly inserted pool element
+        // start loading another room's old (possibly revoked) Blob URL.
+        image.removeAttribute("src");
+        backgroundVideo.removeAttribute("src");
+        scare.removeAttribute("src");
         image.id = `roomImage-${index}`;
         backgroundVideo.id = `roomVideo-${index}`;
         scare.id = `jumpscareVideo-${index}`;
@@ -2602,6 +2758,7 @@
         warmAttempted: false, preparing: null, audioUnlocked: false,
         audioUnlocking: null, audioUnlockRun: 0,
         audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
+        mediaLoading: false, forceFreshDownload: false,
         dollState: null, dollActor: null, dollImage: null, dollLoaded: false,
         deadlineWarmStarted: false };
       roomMediaPool[index] = room;
@@ -2609,6 +2766,12 @@
         if (scare === jumpscareVideo && gameOver && scare.classList.contains("playing")) showGameOver();
       });
       scare.addEventListener("error", () => {
+        // The loader owns retries and final failure reporting. A queued error
+        // from a replaced source must not end a newly loading/resumed level.
+        if (!scare.error) return;
+        room.metadataReady = room.scareReady = false;
+        room.preparationError = mediaAssetError(room.scene.jumpscare, null, scare);
+        if (room.mediaLoading || !gameplayStarted) return;
         if (gameOver || roomCompleted) return;
         if (roomsReady && scare !== jumpscareVideo) return;
         beginGameOver(gameplayStarted ? "other" : "video");
@@ -2724,7 +2887,10 @@
       return new Promise((resolve, reject) => {
         const cleanup = () => { clearTimeout(timer); element.removeEventListener(successEvent, done); element.removeEventListener("error", fail); };
         const done = () => { cleanup(); resolve(); };
-        const fail = () => { cleanup(); reject(new Error(`Could not load ${element.currentSrc || element.src}`)); };
+        const fail = () => {
+          if (typeof element.readyState === "number" && !element.error) return;
+          cleanup(); reject(new Error(`Could not load ${element.currentSrc || element.src}`));
+        };
         const timer = setTimeout(fail, timeoutMs);
         element.addEventListener(successEvent, done, { once: true });
         element.addEventListener("error", fail, { once: true });
@@ -2827,11 +2993,31 @@
     }
 
     async function preloadRoomBackdrop(room) {
-      if (room.backdropReady) return;
+      let failure;
+      for (let attempt = 0; attempt < CONFIG.loading.mediaLoadAttempts; attempt++) {
+        try { await preloadRoomBackdropAttempt(room, Boolean(attempt || room.forceFreshDownload)); return; }
+        catch (error) {
+          room.backdropReady = false;
+          failure = mediaAssetError(room.scene.roomVideo || room.scene.roomImage, error, room.scene.roomVideo ? room.video : null);
+          if (!room.scene.roomVideo) failure.failureReason = "levels";
+          console.warn(`Room backdrop load attempt ${attempt + 1} failed.`, failure);
+        }
+      }
+      throw failure;
+    }
+
+    function mediaRetryURL(url, fresh) {
+      const source = new URL(url, document.baseURI);
+      if (fresh && /^https?:$/.test(source.protocol)) source.searchParams.set("__media_retry", `${Date.now()}-${levelGeneration}`);
+      return source.href;
+    }
+
+    async function preloadRoomBackdropAttempt(room, fresh = false) {
+      if (room.backdropReady && !(room.media === room.video && room.video.error)) return;
       if (room.scene.roomImage) {
         try {
           const loaded = waitForMedia(room.image, "load", CONFIG.loading.resourceTimeoutMs);
-          room.image.src = room.scene.roomImage;
+          room.image.src = mediaRetryURL(room.scene.roomImage, fresh);
           await loaded;
           if (!room.image.naturalWidth || !room.image.naturalHeight) throw new Error("Invalid room image.");
           if (room.image.decode) await room.image.decode();
@@ -2849,7 +3035,7 @@
       room.video.muted = true;
       room.video.loop = true;
       room.video.playsInline = true;
-      room.video.src = room.scene.roomVideo;
+      room.video.src = mediaRetryURL(room.scene.roomVideo, fresh);
       room.video.load();
       await loaded;
       if (!room.videoCover) {
@@ -2946,7 +3132,7 @@
     }
 
     function switchRoom(direction) {
-      if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || !roomsReady) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || !roomsReady) return;
       updateCameraTimer();
       if (gameOver) return;
       let next = activeRoomIndex + direction;
@@ -2958,14 +3144,14 @@
     // Single-room controls are HINT and an inert EXIT placeholder. Retain the
     // old navigation only for an unfinished multi-room save or re-enabled mode.
     prevRoomButton.addEventListener("click", event => { event.stopPropagation(); if (!usesSingleRoomControls()) switchRoom(-1); });
-    nextRoomButton.addEventListener("click", event => { event.stopPropagation(); if (!usesSingleRoomControls()) switchRoom(1); });
+    nextRoomButton.addEventListener("click", event => { event.stopPropagation(); if (usesSingleRoomControls()) openExitConfirmation(); else switchRoom(1); });
 
     async function loadRandomLevel() {
       if (levelLoading) return;
       levelLoading = true;
       try {
         const [catalog] = await Promise.all([discoverScenes(), discoverDollFiles()]);
-        availableScenes = [...catalog];
+        availableScenes = await resolveSavedScenes(catalog);
         // Retry/resume must retain its original scene set even after config edits.
         if (!resumedLevel) availableScenes = roomMilestonePool(availableScenes);
         if (!resumedLevel) availableScenes = nonRepeatingScenePool(availableScenes, progressState.lastSceneNumber);
@@ -2993,22 +3179,7 @@
         const loaded = await Promise.allSettled([preloadLevelDolls(), ...levelRooms.map(async room => {
           const parts = await Promise.allSettled([
             preloadRoomBackdrop(room),
-            (async () => {
-              if (!room.metadataReady || room.scare.readyState < HTMLMediaElement.HAVE_METADATA) {
-                room.scareURL = room.scareURL || await preloadJumpscareFile(room.scene.jumpscare);
-                const metadata = waitForMedia(room.scare, "loadedmetadata", CONFIG.loading.jumpscareDownloadTimeoutMs);
-                room.scare.src = room.scareURL;
-                room.scare.load();
-                await metadata;
-                room.metadataReady = true;
-              }
-              prepareJumpscareAudioGraph(room);
-              try { await prepareJumpscarePlayback({ unlockAudio: sessionMediaUnlocked }, room); }
-              catch (error) {
-                room.preparationError = error;
-                console.info("Jumpscare preparation needs another attempt before READY.", error.message);
-              }
-            })()
+            prepareRoomJumpscare(room)
           ]);
           const failed = parts.find(part => part.status === "rejected");
           if (failed) throw failed.reason;
@@ -3024,18 +3195,134 @@
       finally { levelLoading = false; }
     }
 
-    async function preloadJumpscareFile(url) {
+    async function resolveSavedScenes(catalog) {
+      if (!resumedLevel) return [...catalog];
+      const resolved = [...catalog];
+      // A saved scene can be beyond a discovery gap or absent from an old
+      // index.json. Probe its exact number, rather than treating the index as
+      // proof that the saved files no longer exist.
+      await Promise.all(resumedLevel.sceneNumbers.map(async number => {
+        let names = [`room_${number}.png`, `room_${number}.mp4`, `jumpscare_${number}.mp4`];
+        let found = (await Promise.all(names.map(async name => await levelAssetExists(name) ? name : null))).filter(Boolean);
+        if (!buildSceneCatalog(found).length) {
+          names = ["webp", "jpg", "jpeg", "webm", "m4v", "mov"].map(ext => `room_${number}.${ext}`)
+            .concat(["webm", "m4v", "mov"].map(ext => `jumpscare_${number}.${ext}`));
+          found.push(...(await Promise.all(names.map(async name => await levelAssetExists(name) ? name : null))).filter(Boolean));
+        }
+        const existing = resolved.findIndex(scene => scene.number === number);
+        const actual = buildSceneCatalog(found)[0];
+        if (actual) {
+          if (existing < 0) resolved.push(actual); else resolved[existing] = actual;
+        } else if (existing < 0) {
+          // HEAD/range discovery can itself be blocked. Actual image/video
+          // loading is authoritative; let it try the known saved filenames.
+          resolved.push({ number, roomImage: new URL(`room_${number}.png`, levelBaseURL).href,
+            roomVideo: new URL(`room_${number}.mp4`, levelBaseURL).href,
+            jumpscare: new URL(`jumpscare_${number}.mp4`, levelBaseURL).href });
+        }
+      }));
+      return resolved;
+    }
+
+    function mediaAssetError(url, cause, clip = null) {
+      const name = decodeURIComponent(new URL(url, document.baseURI).pathname.split("/").pop());
+      const code = clip?.error?.code || cause?.mediaCode || 0;
+      const details = code === 3 ? "The browser could not decode it." : code === 4 ? "The browser rejected the video source or format." : code === 2 ? "The video transfer failed." : cause?.message || "Media loading failed.";
+      const error = new Error(`Could not load ${name}. ${details}${code ? ` (media error ${code})` : ""}`);
+      error.failureReason = "video";
+      error.assetURL = url;
+      error.mediaCode = code;
+      error.cause = cause;
+      return error;
+    }
+
+    function releaseRoomScareSource(room) {
+      const oldURL = room.scareURL;
+      const loading = room.mediaLoading;
+      room.mediaLoading = true;
+      room.scare.pause();
+      room.scare.removeAttribute("src");
+      room.scare.load();
+      room.scareURL = null;
+      room.metadataReady = room.scareReady = false;
+      // Detach and reset the element before revoking the URL it used.
+      if (oldURL?.startsWith("blob:")) URL.revokeObjectURL(oldURL);
+      room.mediaLoading = loading;
+    }
+
+    function clearPreparedLevelCache() {
+      levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
+      dollFiles.clear();
+      availableScenes = [];
+      for (const room of roomMediaPool) {
+        releaseRoomScareSource(room);
+        room.video.pause();
+        room.video.removeAttribute("src");
+        room.video.load();
+        room.backdropReady = room.videoCoverReady = false;
+        room.forceFreshDownload = true;
+      }
+    }
+
+    async function prepareRoomJumpscare(room) {
+      room.mediaLoading = true;
+      let failure;
+      try {
+        for (let attempt = 0; attempt < CONFIG.loading.mediaLoadAttempts; attempt++) {
+          try {
+            if (attempt || room.forceFreshDownload || room.scare.error) releaseRoomScareSource(room);
+            if (!room.metadataReady || room.scare.readyState < HTMLMediaElement.HAVE_METADATA) {
+              const downloaded = room.scareURL || await preloadJumpscareFile(room.scene.jumpscare, { fresh: Boolean(attempt || room.forceFreshDownload) });
+              // Retry via the original same-origin media URL when a browser
+              // rejects a Blob-backed player. The full file was fetched first.
+              const source = attempt ? room.scene.jumpscare : downloaded;
+              const metadata = waitForMedia(room.scare, "loadedmetadata", CONFIG.loading.jumpscareDownloadTimeoutMs);
+              room.scareURL = source;
+              room.scare.src = source;
+              room.scare.load();
+              if (source !== downloaded && downloaded.startsWith("blob:")) URL.revokeObjectURL(downloaded);
+              await metadata;
+              room.metadataReady = true;
+              room.forceFreshDownload = false;
+            }
+            prepareJumpscareAudioGraph(room);
+            try { await prepareJumpscarePlayback({ unlockAudio: sessionMediaUnlocked }, room); }
+            catch (error) {
+              room.preparationError = error;
+              // Gesture/seek preparation failures remain behind the TAP gate.
+              // Actual source failures retry loading before showing an error.
+              if (room.scare.error) throw error;
+              console.info("Jumpscare preparation needs another attempt before READY.", error.message);
+            }
+            return;
+          } catch (error) {
+            failure = mediaAssetError(room.scene.jumpscare, error, room.scare);
+            console.warn(`Jumpscare load attempt ${attempt + 1} failed.`, failure);
+          }
+        }
+        releaseRoomScareSource(room);
+        room.forceFreshDownload = true;
+        throw failure;
+      } finally { room.mediaLoading = false; }
+    }
+
+    async function preloadJumpscareFile(url, { fresh = false } = {}) {
       // Keep direct disk playback and its native audio path for file:// games.
       if (!/^https?:$/.test(new URL(url, document.baseURI).protocol)) return url;
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), CONFIG.loading.jumpscareDownloadTimeoutMs);
       try {
-        const response = await fetch(url, { signal: controller.signal });
+        const response = await fetch(url, { signal: controller.signal, cache: fresh ? "reload" : "default" });
         if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
-          throw new Error("Could not download the selected jumpscare video.");
+          throw new Error(`Video download returned HTTP ${response.status}${/text\/html/i.test(response.headers.get("content-type") || "") ? " (a web page instead of video)" : ""}.`);
         }
-        const clip = await response.blob();
+        let clip = await response.blob();
         if (!clip.size) throw new Error("The selected jumpscare video is empty.");
+        if (!/^video\//i.test(clip.type)) {
+          const extension = new URL(url, document.baseURI).pathname.split(".").pop().toLowerCase();
+          const type = extension === "webm" ? "video/webm" : extension === "mov" ? "video/quicktime" : "video/mp4";
+          clip = new Blob([clip], { type });
+        }
         return URL.createObjectURL(clip);
       } finally { window.clearTimeout(timeout); }
     }
@@ -3177,8 +3464,13 @@
       // Cache imported settings, words and optional save text for reopening; never media.
       // Storage may be blocked for file://, so it must remain optional.
       let stored = false;
+      const cached = { ...data };
+      if (data.languageFiles) {
+        cached.version = 4;
+        for (const key of ["wordsText", "wordsSource", "puzzlesText", "puzzlesSource"]) delete cached[key];
+      }
       for (const store of ["localStorage", "sessionStorage"]) {
-        try { window[store].setItem(LOCAL_FILES_CACHE_KEY, JSON.stringify(data)); stored = true; } catch {}
+        try { window[store].setItem(LOCAL_FILES_CACHE_KEY, JSON.stringify(cached)); stored = true; } catch {}
       }
       return stored;
     }
@@ -3189,13 +3481,17 @@
         const raw = window[store].getItem(LOCAL_FILES_CACHE_KEY);
         if (!raw) continue;
         const data = JSON.parse(raw);
-        if (![1, 2, 3].includes(data.version) || typeof data.wordsText !== "string" ||
-            typeof data.wordsSource !== "string" ||
-            !(data.configText === null || typeof data.configText === "string")) throw new Error("Invalid saved local files.");
+        if (![1, 2, 3, 4].includes(data.version) || !(data.configText === null || typeof data.configText === "string")) throw new Error("Invalid saved local files.");
+        if (data.version < 4 && (typeof data.wordsText !== "string" || typeof data.wordsSource !== "string")) throw new Error("Invalid cached text files.");
+        if (data.version === 4 && (!data.languageFiles || typeof data.languageFiles !== "object" || Array.isArray(data.languageFiles))) throw new Error("Invalid cached language files.");
         let cachedLanguage = "en";
         try { cachedLanguage = parseGameConfig(data.configText || 'language.code="en"').resolved.language.code; } catch {}
-        if (data.wordsText.trim()) parseWordList(data.wordsText, "", cachedLanguage);
-        else parsePuzzleList(data.puzzlesText, "", cachedLanguage);
+        if (!data.language) data.language = cachedLanguage;
+        const selected = readLanguagePreference() || cachedLanguage;
+        if (selectLocalLanguage(data, selected)) {
+          if (data.wordsText.trim()) parseWordList(data.wordsText, "", selected);
+          else parsePuzzleList(data.puzzlesText, "", selected);
+        }
         return data;
        } catch {
         try { window[store].removeItem(LOCAL_FILES_CACHE_KEY); } catch {}
@@ -3242,11 +3538,13 @@
           try { configText = await configFile.text(); }
           catch (error) { console.warn("Could not read local config; using built-in settings.", error); }
         }
-        let selectedConfig = CONFIG_DEFAULTS;
+        let selectedConfig = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
         if (configText !== null) {
           try { selectedConfig = parseGameConfig(configText).resolved; }
           catch { /* The same built-in fallback as automatic config loading. */ }
         }
+        const preferredLanguage = readLanguagePreference();
+        if (preferredLanguage) selectedConfig.language.code = preferredLanguage;
         const wordsPath = selectedFolderPath(wordsFileFor(selectedConfig));
         const wordsFile = find(wordsPath);
         const needsWords = Object.entries(selectedConfig.levels).some(([name, level]) => !isPuzzleType(name) && level.chance > 0);
@@ -3265,8 +3563,22 @@
         } catch (error) { console.info("No readable local save.txt.", error.message); }
         const levelsPrefix = selectedFolderPath(selectedConfig.assets.levelsDirectory).replace(/\/?$/, "/");
         const levelFiles = [...entries.keys()].filter(path => path.startsWith(levelsPrefix) && !path.slice(levelsPrefix.length).includes("/")).map(path => path.slice(levelsPrefix.length));
-        const data = { version: 3, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, saveText, levelFiles };
+        const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
+        for (const language of ["en", "ar"]) {
+          if (language === selectedConfig.language.code) continue;
+          const otherConfig = { ...selectedConfig, language: { code: language } };
+          const otherWordsPath = selectedFolderPath(wordsFileFor(otherConfig)), otherPuzzlePath = selectedFolderPath(puzzlesFileFor(otherConfig));
+          const otherWords = find(otherWordsPath), otherPuzzle = find(otherPuzzlePath);
+          if (needsWords && !otherWords || needsPuzzles && !otherPuzzle) continue;
+          try {
+            const otherWordsText = otherWords ? await otherWords.text() : "", otherPuzzleText = otherPuzzle ? await otherPuzzle.text() : null;
+            if (otherWordsText.trim()) parseWordList(otherWordsText, "", language);
+            if (otherPuzzleText) parsePuzzleList(otherPuzzleText, "", language);
+            languageFiles[language] = { wordsText: otherWordsText, wordsSource: `${folderName}/${otherWordsPath}`, puzzlesText: otherPuzzleText, puzzlesSource: `${folderName}/${otherPuzzlePath}` };
+          } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
+        }
+        const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, saveText, levelFiles, languageFiles };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -3353,7 +3665,7 @@
     });
 
     function fitClueList() {
-      if (!cluePaper.naturalHeight) return;
+      if (exitConfirmationActive || !cluePaper.naturalHeight) return;
       if (isPuzzleLevel()) {
         const font = CONFIG.puzzles[CONFIG.language.code];
         let size = Math.min(font.maxFontPx, Math.max(font.minFontPx,
@@ -3409,7 +3721,7 @@
     }
 
     function maybeShowClueIntro() {
-      if (clueIntroShown || !wordsReadyForClue || !videosReadyForClue || !languageFontReady || !levelMediaIsPrepared()) return;
+      if (menuPage !== null || gameplayPaused || clueIntroShown || !wordsReadyForClue || !videosReadyForClue || !languageFontReady || !levelMediaIsPrepared()) return;
       readyButton.disabled = false;
       fitClueList();
       clueIntroShown = true;
@@ -3425,7 +3737,7 @@
     }
 
     function beginGameplayFromClues() {
-      if (!wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
+      if (menuPage !== null || gameplayPaused || !wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       if (!levelMediaIsPrepared()) { revealWhenMediaReady(); return; }
       gameplayStarting = true;
       readyButton.disabled = true;
@@ -3478,8 +3790,10 @@
     }
 
     function showPuzzleHint() {
-      if (!isPuzzleLevel() || !gameplayStarted || handVisible || gameOver || roomCompleted || !currentPuzzle) return false;
-      clearTimeout(hintHideTimer); clearTimeout(clueDismissTimer);
+      if (gameplayPaused || menuPage !== null || !isPuzzleLevel() || !gameplayStarted || handVisible || gameOver || roomCompleted || !currentPuzzle) return false;
+      clueIntro.classList.remove("exit-mode");
+      document.getElementById("exitConfirmContent").hidden = true;
+      clearLevelTimeout(hintHideTimer); clearLevelTimeout(clueDismissTimer);
       hintHideTimer = clueDismissTimer = null;
       finishPanGesture(); finishShutterGesture(); stopShutterEffect();
       hintActive = true;
@@ -3502,7 +3816,7 @@
       if (pointerId !== null) {
         try { if (control.hasPointerCapture(pointerId)) control.releasePointerCapture(pointerId); } catch {}
       }
-      clearTimeout(hintHideTimer);
+      clearLevelTimeout(hintHideTimer);
       viewport.classList.remove("hint-active");
       clueIntro.classList.remove("show", "dismiss");
       clueIntro.setAttribute("aria-hidden", "true");
@@ -3514,7 +3828,7 @@
 
     function finishHintFade() {
       if (hintActive) return;
-      clearTimeout(hintHideTimer); hintHideTimer = null;
+      clearLevelTimeout(hintHideTimer); hintHideTimer = null;
       clueIntro.classList.remove("hint-mode");
       viewport.classList.remove("hint-transition");
     }
@@ -3682,7 +3996,7 @@
     function startWord(index) {
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
-      window.clearTimeout(wordAdvanceTimer);
+      clearLevelTimeout(wordAdvanceTimer);
       wordAdvanceTimer = null;
       wordTransitionPending = false;
       wordIndex = index % words.length;
@@ -3756,7 +4070,7 @@
 
     function updateCameraControls() {
       updateLevelStatus();
-      const blocked = !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
+      const blocked = gameplayPaused || menuPage !== null || !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
       if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = blocked || hintActive || wordTransitionPending || captureInProgress;
       if (usesSingleRoomControls()) {
@@ -3885,7 +4199,7 @@
     }
 
     function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
-      if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       for (const index of visibleRoomLetterIndices()) {
         const tile = tiles[index];
         if (tile.dataset.decoy !== "true") continue;
@@ -3939,7 +4253,7 @@
     }
 
     function snapCamera(targetIndex = null) {
-      if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
       // throttled the interval while the tab was in the background.
       updateCameraTimer();
@@ -3954,7 +4268,7 @@
       void snapButton.offsetWidth;
       snapButton.classList.add("snapping");
       refreshShutterBitmap();
-      window.clearTimeout(shutterAnimationTimer);
+      clearLevelTimeout(shutterAnimationTimer);
       shutterAnimationTimer = levelTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
       if (letterIsVisible) {
@@ -3997,7 +4311,7 @@
     }
 
     function finishLetterTransfer({ reveal = true } = {}) {
-      window.clearTimeout(captureFinishTimer);
+      clearLevelTimeout(captureFinishTimer);
       captureFinishTimer = null;
       if (captureFlightAnimation) captureFlightAnimation.cancel();
       captureFlightAnimation = null;
@@ -4115,7 +4429,7 @@
         }
       });
       updateDecoyVisibilityState();
-      if (levelType.flyingLetters && gameplayStarted && !gameOver && !roomCompleted &&
+      if (levelType.flyingLetters && !gameplayPaused && menuPage === null && gameplayStarted && !gameOver && !roomCompleted &&
           !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) && visibleRoomLetterIndices().length) startButterflyFlight();
       else stopButterflyFlight();
     }
@@ -4159,7 +4473,7 @@
       if (butterflyFlightFrame || !butterflyFlightStates.size) return;
       const step = time => {
         butterflyFlightFrame = 0;
-        if (!gameplayStarted || gameOver || roomCompleted || wordTransitionPending ||
+        if (gameplayPaused || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || wordTransitionPending ||
             captureInProgress && !isSpreadLetterLevel()) {
           stopButterflyFlight();
           return;
@@ -4334,7 +4648,7 @@
     }
 
     function selectLetter(letter, tileIndex, tile) {
-      if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       updateCameraTimer();
       if (gameOver) return;
       if (tile !== tiles[tileIndex] || anchors[tileIndex].hidden || tile.classList.contains("selected")) return;
@@ -4371,7 +4685,7 @@
     }
 
     function undoLastLetter() {
-      if (!gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || handVisible || gameOver || roomCompleted || wordTransitionPending) return;
       if (selectedCount <= 0 || !selectionHistory.length) return;
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
@@ -4408,8 +4722,8 @@
         stopCameraTimer();
         video.pause();
         video.muted = true;
-        window.clearTimeout(anomalyTimer);
-        window.clearTimeout(handTimer);
+        clearLevelTimeout(anomalyTimer);
+        clearLevelTimeout(handTimer);
         stopSpiderEncounter();
       }
       if (!roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && completedWordCount >= anomalyWordThreshold()) {
@@ -4449,7 +4763,7 @@
     }
 
     function keyboardInputIsAvailable() {
-      return CONFIG.keyboard.enabled && gameplayStarted && roomsReady && !hintActive &&
+      return CONFIG.keyboard.enabled && menuPage === null && !gameplayPaused && gameplayStarted && roomsReady && !hintActive &&
         !gameOver && !roomCompleted && !document.hidden;
     }
 
@@ -4548,8 +4862,8 @@
     window.addEventListener("keydown", keyboardDown);
     window.addEventListener("keyup", keyboardUp);
     function advanceScreenFromKeyboard(event) {
-      if (!CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
-          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, .progress-actions, #localFileControls") ||
+      if (menuPage !== null || gameplayPaused || !CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+          event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, .progress-actions, #localFileControls, .home-back, #exitConfirmContent") ||
           !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
       const preparationVisible = !mediaPreparation.hidden && !prepareMediaButton.disabled && !gameplayStarted;
       const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
@@ -4599,7 +4913,7 @@
 
     function startCameraMomentum(velocity, travel) {
       stopCameraMomentum();
-      if (!gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
       if (Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
 
       const width = viewport.getBoundingClientRect().width;
@@ -4662,7 +4976,7 @@
 
     function pointerDown(event) {
       // The clue card and its READY button own their own pointer events.
-      if (!gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
+      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
       if (event.isPrimary === false) return;
       if (event.button !== undefined && event.button !== 0) return;
       stopKeyboardInput();
@@ -4750,7 +5064,8 @@
     }
 
     async function loadSpiderAssets() {
-      if (!CONFIG.spider.enabled) return;
+      if (!CONFIG.spider.enabled || spiderAssetsLoadStarted) return;
+      spiderAssetsLoadStarted = true;
       const AudioContextClass = window.AudioContext || window.webkitAudioContext;
       if (/^https?:$/.test(location.protocol) && AudioContextClass) {
         // Fetch now, decode after READY has unlocked an audio context. Buffer
@@ -4892,7 +5207,7 @@
     }
 
     function scheduleSpiderCheck() {
-      window.clearTimeout(spiderTimer);
+      clearLevelTimeout(spiderTimer);
       spiderTimer = null;
       if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
       spiderTimer = levelTimeout(() => {
@@ -4964,7 +5279,7 @@
     }
 
     function stopSpiderEncounter() {
-      window.clearTimeout(spiderTimer);
+      clearLevelTimeout(spiderTimer);
       spiderTimer = null;
       if (spiderRetreatFrame) cancelAnimationFrame(spiderRetreatFrame);
       spiderRetreatFrame = 0;
@@ -4979,7 +5294,7 @@
     }
 
     function scheduleAnomalyCheck() {
-      window.clearTimeout(anomalyTimer);
+      clearLevelTimeout(anomalyTimer);
       anomalyTimer = null;
       if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
       const generation = levelGeneration;
@@ -5052,12 +5367,12 @@
     }
 
     async function spawnAnomalyOffscreen() {
-      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      if (gameplayPaused || menuPage !== null || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
       const generation = levelGeneration;
       const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (generation !== levelGeneration || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      if (generation !== levelGeneration || gameplayPaused || menuPage !== null || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -5126,9 +5441,9 @@
       stopSpiderEncounter();
       updateCameraControls();
       stopCameraTimer();
-      window.clearTimeout(wordAdvanceTimer);
-      window.clearTimeout(anomalyTimer);
-      window.clearTimeout(handTimer);
+      clearLevelTimeout(wordAdvanceTimer);
+      clearLevelTimeout(anomalyTimer);
+      clearLevelTimeout(handTimer);
       finishPanGesture();
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
@@ -5221,6 +5536,9 @@
       if (jumpscareAudioGain) jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
+      const details = document.getElementById("levelLoadDetails");
+      details.hidden = !levelLoadFailure;
+      details.textContent = levelLoadFailure?.message || "";
       if (!roomCompleted) {
         const failure = CONFIG.failures[gameOverReason] || CONFIG.failures.other;
         document.getElementById("gameOverTitle").textContent = failure.title;
@@ -5236,7 +5554,7 @@
     gameOverScreen.addEventListener("keydown", retryOrContinue);
 
     function scheduleNextHandCheck() {
-      window.clearTimeout(handTimer);
+      clearLevelTimeout(handTimer);
       handTimer = null;
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || gameOver || roomCompleted) return;
       const delay = CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
@@ -5463,12 +5781,12 @@
     function levelMediaIsPrepared() {
       return roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
         room.backdropReady && room.metadataReady && room.scareReady && room.audioUnlocked &&
-        !room.preparing && !room.audioUnlocking && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
+        !room.preparing && !room.audioUnlocking && !room.scare.error && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
         room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
     }
 
     function revealWhenMediaReady() {
-      if (gameOver || gameplayStarted) return;
+      if (menuPage !== null || gameOver || gameplayStarted) return;
       videosReadyForClue = levelMediaIsPrepared();
       readyButton.disabled = !videosReadyForClue;
       if (videosReadyForClue) {
@@ -5485,7 +5803,7 @@
     }
 
     function showMediaPreparationPrompt(error = null) {
-      if (gameOver || gameplayStarted) return;
+      if (menuPage !== null || gameOver || gameplayStarted) return;
       videosReadyForClue = false;
       readyButton.disabled = true;
       loadingScreen.classList.remove("hidden");
@@ -5504,7 +5822,15 @@
       // Invoke every play()/AudioContext.resume() synchronously in this loading
       // screen gesture. No gesture-dependent media work is deferred to READY.
       const attempts = levelRooms.map(room => {
-        try { return prepareJumpscarePlayback({ unlockAudio: true }, room); }
+        try {
+          if (room.scare.error || !room.metadataReady) {
+            // A decoder can fail after the paper was revealed. Reload that
+            // source rather than repeatedly trying play() on a failed player.
+            const audio = unlockJumpscareAudio(room);
+            return Promise.all([audio, prepareRoomJumpscare(room)]).then(() => prepareJumpscarePlayback({ unlockAudio: true }, room));
+          }
+          return prepareJumpscarePlayback({ unlockAudio: true }, room);
+        }
         catch (error) { return Promise.reject(error); }
       });
       mediaPreparationPending = Promise.allSettled(attempts).then(results => {
@@ -5523,7 +5849,7 @@
     }
     // The single TAP prompt owns the entire page, including desktop margins.
     window.addEventListener("click", event => {
-      if (mediaPreparation.hidden || prepareMediaButton.disabled || event.button > 0) return;
+      if (menuPage !== null || mediaPreparation.hidden || prepareMediaButton.disabled || event.button > 0) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       prepareMediaBeforeReady();
@@ -5758,6 +6084,7 @@
     let progressStorageAvailable = true;
     let progressSaveHandle = null;
     let progressWriteQueue = Promise.resolve();
+    let progressWriteGeneration = 0;
     let progressMessage = "";
 
     function emptyProgress() {
@@ -5901,12 +6228,15 @@
             if (settled) { db.close(); return; }
             let tx, request;
             try {
-              tx = db.transaction("files", mode === "put" ? "readwrite" : "readonly");
+              tx = db.transaction("files", mode === "put" || mode === "delete" ? "readwrite" : "readonly");
               const store = tx.objectStore("files");
-              request = mode === "put" ? store.put(value, PROGRESS_STORAGE_KEY) : store.get(PROGRESS_STORAGE_KEY);
+              if (mode === "delete") {
+                store.delete(PROGRESS_STORAGE_BASE_KEY);
+                request = store.delete(PROGRESS_STORAGE_BASE_KEY + ":ar");
+              } else request = mode === "put" ? store.put(value, PROGRESS_STORAGE_KEY) : store.get(PROGRESS_STORAGE_KEY);
             } catch { db.close(); finish(null); return; }
             let result = null;
-            request.onsuccess = () => { result = mode === "put" ? true : request.result || null; };
+            request.onsuccess = () => { result = mode === "put" || mode === "delete" ? true : request.result || null; };
             tx.oncomplete = () => { db.close(); finish(result); };
             tx.onerror = tx.onabort = () => { db.close(); finish(null); };
           };
@@ -5958,11 +6288,19 @@
     function queueSaveFile(text) {
       if (!progressSaveHandle) return progressWriteQueue;
       const handle = progressSaveHandle;
+      const generation = progressWriteGeneration;
       progressWriteQueue = progressWriteQueue.catch(() => {}).then(async () => {
         try {
+          if (generation !== progressWriteGeneration) return;
           if (await handle.queryPermission({ mode: "readwrite" }) !== "granted") throw new Error("Save permission expired.");
+          if (generation !== progressWriteGeneration) return;
           const writable = await handle.createWritable();
-          try { await writable.write(text); await writable.close(); }
+          try {
+            if (generation !== progressWriteGeneration) { await writable.abort(); return; }
+            await writable.write(text);
+            if (generation !== progressWriteGeneration) { await writable.abort(); return; }
+            await writable.close();
+          }
           catch (error) { if (writable.abort) await writable.abort().catch(() => {}); throw error; }
           progressMessage = "save.txt updated";
         } catch (error) {
@@ -6014,8 +6352,13 @@
 
     function resetLevelState() {
       levelGeneration++;
-      for (const timer of levelTimeouts) window.clearTimeout(timer);
+      for (const timer of levelTimeouts) clearLevelTimeout(timer);
       levelTimeouts.clear();
+      levelTimeoutJobs.clear();
+      gameplayPaused = exitConfirmationActive = false;
+      exitPausedElapsedMs = 0;
+      document.getElementById("exitConfirmContent").hidden = true;
+      clueIntro.removeAttribute("role"); clueIntro.removeAttribute("aria-modal"); clueIntro.removeAttribute("aria-labelledby");
       gameplayStarted = gameplayStarting = false;
       gameOver = true;
       roomsReady = wordsReadyForClue = videosReadyForClue = clueIntroShown = false;
@@ -6030,7 +6373,7 @@
       stopShutterEffect();
       stopSpiderEncounter();
       hideDolls();
-      for (const timer of [wordAdvanceTimer, anomalyTimer, handTimer, clueDismissTimer, hintHideTimer, shutterAnimationTimer]) window.clearTimeout(timer);
+      for (const timer of [wordAdvanceTimer, anomalyTimer, handTimer, clueDismissTimer, hintHideTimer, shutterAnimationTimer]) clearLevelTimeout(timer);
       wordAdvanceTimer = anomalyTimer = handTimer = clueDismissTimer = hintHideTimer = shutterAnimationTimer = null;
       if (jumpscareFrameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(jumpscareFrameRequest);
       jumpscareFrameRequest = null;
@@ -6089,9 +6432,11 @@
       wordsLoading = levelLoading = false;
       hintActive = false; hintPointerId = hintPointerControl = hintKey = null;
       gameOverReason = null;
+      levelLoadFailure = null;
+      document.getElementById("levelLoadDetails").hidden = true;
       message.classList.remove("show"); snapButton.classList.remove("snapping");
-      viewport.classList.remove("hand-active", "hint-active", "hint-transition", "clue-intro-active");
-      clueIntro.classList.remove("show", "dismiss", "hint-mode");
+      viewport.classList.remove("hand-active", "hint-active", "hint-transition", "clue-intro-active", "exit-confirm-active");
+      clueIntro.classList.remove("show", "dismiss", "hint-mode", "exit-mode");
       clueIntro.setAttribute("aria-hidden", "true");
       cameraOverlay.setAttribute("aria-hidden", "true");
       gameOverScreen.classList.remove("show");
@@ -6113,15 +6458,22 @@
         } catch (error) { console.info("Could not clear browser progress.", error.message); }
       }
       progressSaveHandle = null;
+      progressWriteGeneration++;
+      void saveHandleStore("delete");
       progressMessage = "";
       progressState = emptyProgress();
       progressState.updatedAt = new Date().toISOString();
-      if (localFolderImport) { localFolderImport.saveText = null; rememberLocalFiles(localFolderImport); }
+      if (localFolderImport) {
+        localFolderImport.saveText = null;
+        delete localFolderImport.levelFiles;
+        rememberLocalFiles(localFolderImport);
+      }
       saveProgress();
     }
 
     function transitionToLevel({ fresh = false } = {}) {
       if (levelTransitionPending) return levelTransitionPending;
+      const refreshMedia = fresh || Boolean(levelLoadFailure);
       // Resume within the actual Next/Retry/Clear gesture. Retain the unlocked
       // media elements and AudioContexts while changing only level state.
       resumeJumpscareAudio();
@@ -6135,6 +6487,7 @@
         ...roomMediaPool.flatMap(room => [room.preparing, room.audioUnlocking])]).then(() => {
         if (fresh) resetBrowserProgress();
         resetLevelState();
+        if (refreshMedia) clearPreparedLevelCache();
         resumedLevel = progressState.currentLevel ? validateProgress(progressState).currentLevel : null;
         currentRoomNumber = progressState.completedRooms + 1;
         currentLevelLoadPromise = prepareCurrentLevel();
@@ -6151,7 +6504,7 @@
     }
 
     function retryOrContinue(event) {
-      if (!gameOverScreen.classList.contains("show")) return;
+      if (menuPage !== null || !gameOverScreen.classList.contains("show")) return;
       if (event?.target.closest?.("button, input, .progress-actions")) return;
       if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
       // Reuse this exact unfinished room; completed rooms already cleared it.
@@ -6234,11 +6587,12 @@
       }
       if (document.fonts) {
         languageFontReady = false;
+        const generation = ++fontLoadGeneration;
         let deadline;
         const pending = [document.fonts.load('40px "Dudu Calligraphy"', "Riddle")];
         if (isArabic()) pending.push(document.fonts.load('40px "Game Arabic"', "العربية"), document.fonts.load('40px "Game Arabic Paper"', "العربية"));
         Promise.race([Promise.allSettled(pending), new Promise(resolve => { deadline = setTimeout(resolve, CONFIG.loading.resourceTimeoutMs); })])
-          .finally(() => { clearTimeout(deadline); languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
+          .finally(() => { clearTimeout(deadline); if (generation !== fontLoadGeneration) return; languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
       }
       if (BATTERY_SLOT_COUNT !== batterySlots.length) {
         const svg = cameraBattery.querySelector("svg");
@@ -6265,24 +6619,299 @@
       document.fonts?.ready.then(requestViewportLayout);
     }
 
+    function readLanguagePreference() {
+      let selected = null;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try {
+          const value = JSON.parse(window[store].getItem(MENU_PREFERENCE_KEY) || "null");
+          if (!value || !["en", "ar"].includes(value.language) || !Number.isFinite(value.updatedAt) || value.updatedAt > Date.now() + 60000) continue;
+          if (!selected || value.updatedAt >= selected.updatedAt) selected = value;
+        } catch {}
+      }
+      return selected?.language || null;
+    }
+
+    function applyLanguagePreference() {
+      const selected = readLanguagePreference();
+      if (selected) CONFIG.language.code = selected;
+    }
+
+    function menuText() { return CONFIG.menu[CONFIG.language.code] || CONFIG.menu.en; }
+
+    function updateMenuCopy() {
+      const text = menuText();
+      document.title = CONFIG.menu.title;
+      document.documentElement.lang = CONFIG.language.code;
+      menuShell.dataset.language = CONFIG.language.code;
+      menuShell.lang = CONFIG.language.code;
+      menuShell.setAttribute("aria-label", CONFIG.menu.title);
+      document.getElementById("homeTitle").textContent = CONFIG.menu.title;
+      const labels = { homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
+        homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
+        storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy: text.howText,
+        exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
+      for (const [id, label] of Object.entries(labels)) document.getElementById(id).textContent = label;
+      document.getElementById("languageChoices").setAttribute("aria-label", text.language);
+      menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
+      document.querySelectorAll(".home-back").forEach(button => button.setAttribute("aria-label", text.home));
+      menuShell.querySelectorAll("[data-language]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.language === CONFIG.language.code)));
+    }
+
+    function updateMenuControls() {
+      const busy = Boolean(homePlayPending || menuActionPending);
+      menuShell.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+    }
+
+    function showMenuPage(page = "home", focus = false) {
+      if (!["home", "settings", "story", "how"].includes(page)) page = "home";
+      menuPage = page;
+      document.documentElement.classList.add("menu-open");
+      menuShell.hidden = false;
+      viewport.inert = true;
+      viewport.setAttribute("aria-hidden", "true");
+      for (const name of ["home", "settings", "story", "how"]) document.getElementById(`${name}Page`).hidden = name !== page;
+      updateMenuCopy(); updateMenuControls();
+      if (focus) requestAnimationFrame(() => {
+        if (menuPage !== page) return;
+        (page === "home" ? document.getElementById("homePlayButton") : document.getElementById(`${page}Page`).querySelector(".menu-back"))?.focus();
+      });
+    }
+
+    function hideMenuForLoading() {
+      menuPage = null;
+      document.documentElement.classList.remove("menu-open");
+      menuShell.hidden = true;
+      viewport.inert = false;
+      viewport.removeAttribute("aria-hidden");
+      loadingScreen.classList.remove("hidden");
+      loadingWord.hidden = false;
+      mediaPreparation.hidden = true;
+    }
+
+    function selectMenuLanguage(language) {
+      if (!["en", "ar"].includes(language) || homePlayPending || menuActionPending) return;
+      const preference = JSON.stringify({ language, updatedAt: Date.now() });
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { window[store].setItem(MENU_PREFERENCE_KEY, preference); } catch {}
+      }
+      CONFIG.language.code = language;
+      puzzleTextOverride = null;
+      gameInitializationStarted = false;
+      refreshConfigBindings();
+      configureGamePresentation();
+      updateMenuCopy();
+      document.getElementById("homeNotice").textContent = "";
+    }
+
+    function selectLocalLanguage(data, language) {
+      if (!data) return false;
+      const entry = data.languageFiles?.[language];
+      if (entry && typeof entry.wordsText === "string" && typeof entry.wordsSource === "string") {
+        Object.assign(data, entry, { language });
+        return true;
+      }
+      return data.language === language && typeof data.wordsText === "string";
+    }
+
+    async function bootstrapHome() {
+      if (location.protocol === "file:") localFolderImport = restoreLocalFiles();
+      if (location.protocol !== "file:" || localFolderImport) await loadGameConfig();
+      applyLanguagePreference();
+      refreshConfigBindings();
+      configureGamePresentation();
+      updateMenuCopy();
+      cluePaper.src = CONFIG.assets.paperFile;
+      handImage.src = CONFIG.assets.handFile;
+    }
+
+    function primeMediaFromMenuGesture() {
+      resumeJumpscareAudio(); resumeSpiderSound();
+      let room = roomMediaPool[0];
+      if (!room) {
+        const count = levelRoomCount;
+        levelRoomCount = 1;
+        try { room = makeLevelRoom({ number: 0, roomImage: null, roomVideo: null, jumpscare: new URL("media-unlock.mp4", document.baseURI).href }, 0); }
+        finally { levelRoomCount = count; }
+      }
+      const clip = room.scare;
+      let attempt;
+      try {
+        if (room.metadataReady && !clip.error && clip.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+          const audio = unlockJumpscareAudio(room);
+          attempt = Promise.all([audio, prepareJumpscarePlayback({ unlockAudio: true }, room)]);
+        } else {
+          releaseRoomScareSource(room);
+          room.mediaLoading = true;
+          room.scareURL = MENU_MEDIA_PRIMER;
+          clip.src = MENU_MEDIA_PRIMER;
+          clip.muted = clip.defaultMuted = false;
+          clip.classList.add("priming");
+          const audio = unlockJumpscareAudio(room);
+          const playing = waitForMedia(clip, "playing", CONFIG.loading.resourceTimeoutMs);
+          clip.load();
+          // Same native player, silent AAC track: Play supplies this trusted
+          // gesture before any asynchronous level/config loading is awaited.
+          const played = clip.play();
+          attempt = Promise.all([audio, playing, played]);
+        }
+      } catch (error) { attempt = Promise.reject(error); }
+      return attempt.then(() => {
+        room.audioUnlocked = sessionMediaUnlocked = true;
+        return true;
+      }).catch(error => {
+        console.info("Media unlock will use the loading-screen fallback if needed.", error.message);
+        return false;
+      }).finally(() => {
+        room.mediaLoading = false;
+        clip.pause(); clip.volume = 1; clip.muted = false;
+        clip.classList.remove("priming");
+      });
+    }
+
+    function beginHomePlay() {
+      if (menuPage !== "home" || homePlayPending || menuActionPending) return homePlayPending;
+      const primed = primeMediaFromMenuGesture();
+      hideMenuForLoading();
+      document.getElementById("homeNotice").textContent = "";
+      homePlayPending = Promise.all([homeBootPromise, primed]).then(() => initializeGame())
+        .catch(showLevelLoadError).finally(() => { homePlayPending = null; updateMenuControls(); });
+      updateMenuControls();
+      return homePlayPending;
+    }
+
+    function returnToHome() {
+      if (menuActionPending) return menuActionPending;
+      if (progressInitializedLanguage === CONFIG.language.code) saveProgress();
+      gameplayPaused = true;
+      pauseLevelTimeouts();
+      stopCameraTimer(); stopKeyboardInput(); stopButterflyFlight(); stopSpiderSound();
+      showMenuPage("home");
+      menuActionPending = Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending,
+        ...roomMediaPool.flatMap(room => [room.preparing, room.audioUnlocking])]).then(() => {
+        resetLevelState();
+        gameInitializationStarted = false;
+        progressInitializedLanguage = null;
+        currentLevelLoadPromise = Promise.resolve();
+        showMenuPage("home", true);
+      }).finally(() => { menuActionPending = null; updateMenuControls(); });
+      updateMenuControls();
+      return menuActionPending;
+    }
+
+    function clearDataFromHome() {
+      if (menuPage !== "home" || homePlayPending || menuActionPending) return menuActionPending;
+      menuActionPending = homeBootPromise.then(async () => {
+        await Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending]);
+        resetLevelState();
+        PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
+        resetBrowserProgress();
+        clearPreparedLevelCache();
+        gameInitializationStarted = false;
+        progressInitializedLanguage = null;
+        currentLevelLoadPromise = Promise.resolve();
+        showMenuPage("home");
+        document.getElementById("homeNotice").textContent = menuText().cleared;
+      }).finally(() => { menuActionPending = null; updateMenuControls(); });
+      updateMenuControls();
+      return menuActionPending;
+    }
+
+    function openExitConfirmation() {
+      if (menuPage !== null || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
+      updateCameraTimer();
+      if (gameOver) return;
+      hidePuzzleHint({ immediate: true });
+      clearLevelTimeout(clueDismissTimer); clueDismissTimer = null;
+      exitPausedElapsedMs = cameraStartedAt === null ? null : performance.now() - cameraStartedAt;
+      exitVideoWasPlaying = !video.paused;
+      stopCameraTimer();
+      gameplayPaused = exitConfirmationActive = true;
+      pauseLevelTimeouts();
+      stopKeyboardInput(); stopButterflyFlight(); finishPanGesture(); finishShutterGesture();
+      finishLetterTransfer({ reveal: false }); stopShutterEffect();
+      video.pause(); video.muted = true;
+      clueIntro.classList.remove("hint-mode", "dismiss");
+      clueIntro.classList.add("exit-mode", "show");
+      clueIntro.setAttribute("aria-hidden", "false");
+      clueIntro.setAttribute("role", "dialog"); clueIntro.setAttribute("aria-modal", "true");
+      clueIntro.setAttribute("aria-labelledby", "exitConfirmTitle");
+      document.getElementById("exitConfirmContent").hidden = false;
+      viewport.classList.add("hint-active", "hint-transition", "exit-confirm-active");
+      updateMenuCopy(); updateCameraControls();
+      document.getElementById("exitStayButton").focus();
+    }
+
+    function stayInLevel() {
+      if (!exitConfirmationActive) return;
+      exitConfirmationActive = gameplayPaused = false;
+      clueIntro.classList.remove("show");
+      clueIntro.setAttribute("aria-hidden", "true");
+      clueIntro.removeAttribute("role"); clueIntro.removeAttribute("aria-modal"); clueIntro.removeAttribute("aria-labelledby");
+      viewport.classList.remove("hint-active", "exit-confirm-active");
+      resumeLevelTimeouts();
+      if (exitPausedElapsedMs !== null && !gameOver && !roomCompleted) {
+        cameraStartedAt = performance.now() - exitPausedElapsedMs;
+        updateCameraTimer();
+        cameraTimerInterval = window.setInterval(updateCameraTimer, CONFIG.camera.timerRefreshMs);
+      }
+      if (exitVideoWasPlaying && !gameOver && !roomCompleted) showRoomVideo(levelRooms[activeRoomIndex], { withAudio: true });
+      showCurrentLetter({ animate: false }); updateCameraControls();
+      levelTimeout(() => {
+        if (exitConfirmationActive || hintActive) return;
+        clueIntro.classList.remove("exit-mode");
+        document.getElementById("exitConfirmContent").hidden = true;
+        viewport.classList.remove("hint-transition");
+      }, CONFIG.puzzles.hintFadeMs * 2);
+      nextRoomButton.focus();
+    }
+
+    function handleMenuKeys(event) {
+      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
+      if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
+      else if (menuPage && menuPage !== "home") { event.preventDefault(); event.stopImmediatePropagation(); showMenuPage("home", true); }
+      else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
+    }
+
+    document.getElementById("homePlayButton").addEventListener("click", beginHomePlay);
+    document.getElementById("homeSettingsButton").addEventListener("click", () => showMenuPage("settings", true));
+    document.getElementById("homeStoryButton").addEventListener("click", () => showMenuPage("story", true));
+    document.getElementById("homeHowButton").addEventListener("click", () => showMenuPage("how", true));
+    document.getElementById("homeClearButton").addEventListener("click", clearDataFromHome);
+    menuShell.querySelectorAll(".menu-back").forEach(button => button.addEventListener("click", () => showMenuPage("home", true)));
+    menuShell.querySelectorAll("[data-language]").forEach(button => button.addEventListener("click", () => selectMenuLanguage(button.dataset.language)));
+    document.getElementById("exitStayButton").addEventListener("click", stayInLevel);
+    document.getElementById("exitLeaveButton").addEventListener("click", returnToHome);
+    document.getElementById("paperHomeButton").addEventListener("click", returnToHome);
+    document.getElementById("endHomeButton").addEventListener("click", event => { event.stopPropagation(); returnToHome(); });
+    window.addEventListener("keydown", handleMenuKeys, true);
+
     async function initializeGame(importedFiles = null) {
-      if (gameInitializationStarted) return;
+      if (gameInitializationStarted) return currentLevelLoadPromise;
+      await homeBootPromise;
       if (location.protocol === "file:") {
-        localFolderImport = importedFiles || restoreLocalFiles();
+        localFolderImport = importedFiles || localFolderImport || restoreLocalFiles();
         if (!localFolderImport) {
           showLocalFolderPrompt();
-          return;
+          return false;
         }
         localFileControls.hidden = false;
       }
-      gameInitializationStarted = true;
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
-      await loadGameConfig();
+      if (importedFiles) await loadGameConfig();
+      applyLanguagePreference();
       refreshConfigBindings();
+      if (location.protocol === "file:" && !selectLocalLanguage(localFolderImport, CONFIG.language.code)) {
+        showLocalFolderPrompt(`Choose the game folder containing ${puzzlesFileFor()} and ${wordsFileFor()} for the selected language.`);
+        return false;
+      }
+      gameInitializationStarted = true;
       // Separate language profiles preserve English retries when switching to Arabic.
       PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
+      progressSaveHandle = null;
+      progressWriteGeneration++;
       await initializeProgress();
+      progressInitializedLanguage = CONFIG.language.code;
       levelBaseURL = new URL(LEVELS_DIRECTORY.replace(/\/?$/, "/"), document.baseURI);
       cluePaper.src = CONFIG.assets.paperFile;
       handImage.src = CONFIG.assets.handFile;
@@ -6317,7 +6946,8 @@
       else wordLoad = loadWords();
       await Promise.allSettled([roomLoad, wordLoad]);
     }
-    initializeGame();
+    showMenuPage("home");
+    homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); updateMenuCopy(); });
   </script>
 </body>
 </html>
