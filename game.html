@@ -2533,15 +2533,12 @@
     let spiderWorldFraction = 0;
     let spiderLastViewOffset = 0;
     let spiderSoundURL = null;
-    let spiderSoundDataPromise = null;
+    let spiderSoundObjectURL = null;
     let spiderSoundPreparing = null;
     let spiderSoundReady = false;
-    let spiderAudioContext = null;
-    let spiderAudioBuffer = null;
-    let spiderAudioSource = null;
+    let spiderSoundPlaying = false;
+    let spiderSoundRun = 0;
     let spiderSoundOffset = 0;
-    let spiderPlaybackStart = 0;
-    let spiderPlaybackOffset = 0;
     let pausedSpiderSoundOffset = null;
     let spiderNativeAudio = null;
     let gameOver = false;
@@ -2562,10 +2559,6 @@
     let jumpscareMetadataReady = jumpscareVideo.readyState >= HTMLMediaElement.HAVE_METADATA;
     let jumpscareFrameRequest = null;
     let pendingScareCentre = null;
-    let jumpscareAudioContext = null;
-    let jumpscareAudioGain = null;
-    let jumpscareAudioSource = null;
-    let jumpscareAudioUnlocked = false;
 
     const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 
@@ -2838,7 +2831,7 @@
         backdropReady: false, metadataReady: false, scareReady: false,
         warmAttempted: false, preparing: null, audioUnlocked: false,
         cancelScarePreparation: null,
-        audioGain: null, audioSource: null, cameraFraction: .5, standbySeekCancel: null,
+        cameraFraction: .5, standbySeekCancel: null,
         mediaLoading: false, forceFreshDownload: false,
         dollState: null, dollActor: null, dollImage: null, dollLoaded: false,
         deadlineWarmStarted: false };
@@ -3153,9 +3146,6 @@
       jumpscareWarmAttempted = room.warmAttempted;
       jumpscarePreparing = room.preparing;
       jumpscareMetadataReady = room.metadataReady;
-      jumpscareAudioUnlocked = room.audioUnlocked;
-      jumpscareAudioGain = room.audioGain;
-      jumpscareAudioSource = room.audioSource;
     }
 
     function activateRoom(index, { initial = false } = {}) {
@@ -3373,8 +3363,9 @@
               room.forceFreshDownload = false;
             }
             if (isPageInactive() || menuPage !== null) return;
-            prepareJumpscareAudioGraph(room);
-            try { await prepareJumpscarePlayback({ unlockAudio: sessionMediaUnlocked }, room); }
+            // The retained native player keeps the permission granted by its
+            // earlier tap. A newly created player still needs its own tap.
+            try { await prepareJumpscarePlayback({ unlockAudio: room.audioUnlocked }, room); }
             catch (error) {
               room.preparationError = error;
               // Gesture/seek preparation failures remain behind the TAP gate.
@@ -3827,7 +3818,7 @@
 
     function beginGameplayFromClues() {
       if (menuPage !== null || gameplayPaused || !wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
-      if (!levelMediaIsPrepared()) { prepareMediaBeforeReady(); return; }
+      if (!levelMediaIsPrepared()) { prepareMediaBeforeReady({ gesture: true }); return; }
       gameplayStarting = true;
       readyButton.disabled = true;
       const activeRoom = levelRooms[activeRoomIndex];
@@ -3836,7 +3827,7 @@
       // Download, buffering, decoded-frame parking and the silent audio-unlock
       // playback all succeeded before this button became visible. READY does
       // no video warm-up, rewind, download or asynchronous preparation.
-      resumeJumpscareAudio();
+      unmuteParkedScares();
       unlockSpiderSound();
       if (gameOver) return;
       gameplayStarting = false;
@@ -4981,7 +4972,7 @@
       event.preventDefault(); event.stopPropagation();
       if (event.repeat) return true;
       if (endVisible) retryOrContinue();
-      else if (preparationVisible) prepareMediaBeforeReady();
+      else if (preparationVisible) prepareMediaBeforeReady({ gesture: true });
       else beginGameplayFromClues();
       return true;
     }
@@ -5172,31 +5163,107 @@
       finishPanGesture();
     }
 
-    function preloadSpiderSound() {
-      if (!spiderSoundURL || spiderSoundReady || spiderSoundDataPromise || spiderNativeAudio) return;
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (/^https?:$/.test(location.protocol) && AudioContextClass) {
-        spiderSoundDataPromise = fetch(spiderSoundURL).then(response => {
-          if (!response.ok) throw new Error(`Spider sound HTTP ${response.status}`);
-          return response.arrayBuffer();
-        }).catch(error => {
-          // A failed fetch must not be cached across Play, Ready or a retry.
-          spiderSoundDataPromise = null;
-          console.warn("Could not preload spider sound.", error);
-          return null;
-        });
-      } else {
-        // Browsers block fetch(file://); native local audio still works.
-        spiderNativeAudio = new Audio(spiderSoundURL);
-        spiderNativeAudio.preload = "auto";
+    function spiderWavStart(bytes) {
+      // Inspect the WAV header for the optional quiet lead-in skip. Playback
+      // still uses the original file and the browser's native audio decoder.
+      const wav = new DataView(bytes);
+      if (wav.byteLength < 44 || wav.getUint32(0) !== 0x52494646 || wav.getUint32(8) !== 0x57415645) return 0;
+      let format, channels, sampleRate, frameSize, bits, start, end;
+      for (let chunk = 12; chunk + 8 <= wav.byteLength;) {
+        const type = wav.getUint32(chunk), size = wav.getUint32(chunk + 4, true);
+        const data = chunk + 8;
+        const limit = Math.min(wav.byteLength, data + size);
+        if (type === 0x666d7420 && limit - data >= 16) {
+          format = wav.getUint16(data, true);
+          channels = wav.getUint16(data + 2, true);
+          sampleRate = wav.getUint32(data + 4, true);
+          frameSize = wav.getUint16(data + 12, true);
+          bits = wav.getUint16(data + 14, true);
+          if (format === 0xfffe && limit - data >= 40) format = wav.getUint32(data + 24, true);
+        } else if (type === 0x64617461) {
+          start = data;
+          end = limit;
+        }
+        if (format && start) break;
+        chunk = data + size + (size % 2);
       }
+      const width = bits / 8;
+      if (!start || !sampleRate || !channels || frameSize < channels * width) return 0;
+      const sample = format === 3 && bits === 32 ? i => wav.getFloat32(i, true)
+        : format !== 1 ? null
+        : bits === 8 ? i => (wav.getUint8(i) - 128) / 128
+        : bits === 16 ? i => wav.getInt16(i, true) / 32768
+        : bits === 24 ? i => (wav.getUint8(i) | wav.getUint8(i + 1) << 8 | wav.getInt8(i + 2) << 16) / 8388608
+        : bits === 32 ? i => wav.getInt32(i, true) / 2147483648 : null;
+      if (!sample) return 0;
+      for (let frame = start; frame + frameSize <= end; frame += frameSize) {
+        for (let channel = 0; channel < channels; channel++) {
+          if (Math.abs(sample(frame + channel * width)) > CONFIG.spider.silenceThreshold) {
+            const onset = (frame - start) / frameSize;
+            return Math.max(0, (onset - CONFIG.spider.soundPreRollSamples) / sampleRate);
+          }
+        }
+      }
+      return 0;
+    }
+
+    function preloadSpiderSound() {
+      if (!spiderSoundURL || spiderNativeAudio) return;
+      const audio = spiderNativeAudio = new Audio();
+      const source = spiderSoundURL;
+      audio.preload = "auto";
+      audio.muted = true;
+      audio.addEventListener("ended", () => {
+        if (audio !== spiderNativeAudio || !audio.ended) return;
+        spiderSoundPlaying = false;
+        audio.currentTime = spiderSoundOffset;
+      });
+      audio.addEventListener("error", () => {
+        if (audio !== spiderNativeAudio || !audio.error) return;
+        stopSpiderSound();
+        spiderSoundReady = false;
+        if (spiderSoundObjectURL && audio.src === spiderSoundObjectURL) {
+          audio.src = source;
+          URL.revokeObjectURL(spiderSoundObjectURL);
+          spiderSoundObjectURL = null;
+        }
+      });
+      if (!CONFIG.spider.skipLeadingSilence || !/^https?:$/.test(location.protocol)) {
+        audio.src = source;
+        return;
+      }
+      fetch(source).then(async response => {
+        if (!response.ok) throw new Error(`Spider sound HTTP ${response.status}`);
+        const bytes = await response.arrayBuffer();
+        if (audio !== spiderNativeAudio) return;
+        spiderSoundOffset = spiderWavStart(bytes);
+        // Reuse the preload bytes. If Play came first, the same player is
+        // already loading the URL from the gesture, so leave its source alone.
+        if (!audio.hasAttribute("src")) {
+          spiderSoundObjectURL = URL.createObjectURL(new Blob([bytes], { type: response.headers.get("Content-Type") || "audio/wav" }));
+          audio.src = spiderSoundObjectURL;
+        }
+      }).catch(() => {
+        if (audio === spiderNativeAudio && !audio.hasAttribute("src")) audio.src = source;
+      });
     }
 
     async function loadSpiderAssets() {
       if (!CONFIG.spider.enabled) return;
-      spiderSoundURL = SPIDER_SOUND_FILE;
+      if (spiderSoundURL !== SPIDER_SOUND_FILE) {
+        stopSpiderSound();
+        if (spiderNativeAudio) {
+          spiderNativeAudio.removeAttribute("src");
+          spiderNativeAudio.load();
+          spiderNativeAudio = null;
+        }
+        if (spiderSoundObjectURL) URL.revokeObjectURL(spiderSoundObjectURL);
+        spiderSoundURL = SPIDER_SOUND_FILE;
+        spiderSoundObjectURL = null;
+        spiderSoundOffset = 0;
+        spiderSoundReady = false;
+      }
       preloadSpiderSound();
-      prepareSpiderBuffer();
       if (spiderAssetsLoadStarted || spiderAssetsReady) return;
       spiderAssetsLoadStarted = true;
       try {
@@ -5216,115 +5283,77 @@
       }
     }
 
-    function prepareSpiderBuffer() {
-      if (!spiderAudioContext || !spiderSoundDataPromise || spiderSoundReady || spiderSoundPreparing) return;
-      const context = spiderAudioContext;
-      const download = spiderSoundDataPromise;
-      // Decoding can finish after the tap. It must not wait on resume(), which
-      // may remain pending until Safari receives another gesture.
-      spiderSoundPreparing = download.then(bytes => bytes
-        ? new Promise((resolve, reject) => context.decodeAudioData(bytes.slice(0), resolve, reject))
-        : null
-      ).then(buffer => {
-        if (!buffer) return;
-        spiderAudioBuffer = buffer;
-        // Skip the WAV's quiet lead-in so it plays with the upward motion.
-        const channels = Array.from({ length: buffer.numberOfChannels }, (_, i) => buffer.getChannelData(i));
-        let first = 0;
-        while (first < buffer.length && !channels.some(channel => Math.abs(channel[first]) > CONFIG.spider.silenceThreshold)) first++;
-        spiderSoundOffset = CONFIG.spider.skipLeadingSilence && first < buffer.length ? Math.max(0, (first - CONFIG.spider.soundPreRollSamples) / buffer.sampleRate) : 0;
+    function unlockSpiderSound({ refreshAudio = false } = {}) {
+      if (!CONFIG.spider.enabled || isPageInactive()) return;
+      preloadSpiderSound();
+      const audio = spiderNativeAudio;
+      if (!audio || spiderSoundPlaying || pausedSpiderSoundOffset !== null ||
+          !refreshAudio && (spiderSoundReady || spiderSoundPreparing)) return;
+      if (spiderSoundPreparing) stopSpiderSound();
+      const run = ++spiderSoundRun;
+      spiderSoundReady = false;
+      let played;
+      try {
+        if (!audio.hasAttribute("src")) audio.src = spiderSoundURL;
+        else if (audio.error) audio.load();
+        // Start this exact player during the tap, silently. It will be
+        // unmuted when the spider actually retreats.
+        audio.muted = true;
+        played = audio.play();
+      } catch { return; }
+      const current = () => audio === spiderNativeAudio && run === spiderSoundRun;
+      spiderSoundPreparing = boundedMediaAction(Promise.resolve(played)).then(() => {
+        if (!current()) return;
+        audio.pause();
+        audio.currentTime = spiderSoundOffset;
         spiderSoundReady = true;
-      }).catch(error => console.warn("Could not decode spider sound.", error)).finally(() => {
-        if (spiderSoundDataPromise === download) spiderSoundDataPromise = null;
-        spiderSoundPreparing = null;
+      }).catch(() => {
+        if (current()) audio.pause();
+      }).finally(() => {
+        if (current()) spiderSoundPreparing = null;
       });
     }
 
-    function unlockSpiderSound({ refreshAudio = false } = {}) {
-      if (!CONFIG.spider.enabled) return;
-      preloadSpiderSound();
-      if (spiderNativeAudio) {
-        if (spiderSoundReady || spiderSoundPreparing) return;
-        spiderNativeAudio.volume = 0;
-        spiderNativeAudio.muted = false;
-        const played = spiderNativeAudio.play();
-        spiderSoundPreparing = Promise.resolve(played).then(() => {
-          spiderNativeAudio.pause();
-          spiderNativeAudio.currentTime = 0;
-          spiderNativeAudio.volume = CONFIG.spider.volume;
-          spiderSoundReady = true;
-        }).catch(() => {}).finally(() => { spiderSoundPreparing = null; });
-        return;
-      }
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      if (!AudioContextClass || !/^https?:$/.test(location.protocol)) return;
-      try {
-        // Keep this sound independent of the video primer and resume it
-        // synchronously on Play/Ready, even when the WAV is still downloading.
-        if (!spiderAudioContext || spiderAudioContext.state === "closed") spiderAudioContext = new AudioContextClass();
-        resumeSpiderSound({ refreshAudio });
-        prepareSpiderBuffer();
-      } catch (error) { /* Keep the rest of the game available without optional audio. */ }
-    }
-
-    function resumeSpiderSound({ refreshAudio = false } = {}) {
-      const context = spiderAudioContext;
-      if (!context || context.state === "closed" || (!refreshAudio && context.state === "running")) return;
-      if (refreshAudio) suspendGameAudioContext(context);
-      try { return Promise.resolve(context.resume()).catch(() => {}); } catch {}
-    }
-
     function stopSpiderSound() {
+      ++spiderSoundRun;
+      spiderSoundPlaying = false;
+      spiderSoundPreparing = null;
       pausedSpiderSoundOffset = null;
-      if (spiderAudioSource) {
-        try { spiderAudioSource.stop(); } catch (error) {}
-        spiderAudioSource.disconnect();
-        spiderAudioSource = null;
-      }
-      if (spiderNativeAudio) spiderNativeAudio.pause();
+      spiderNativeAudio?.pause();
     }
 
     function pauseSpiderSound() {
-      let offset;
-      if (spiderAudioSource && spiderAudioContext) {
-        offset = spiderPlaybackOffset + Math.max(0, spiderAudioContext.currentTime - spiderPlaybackStart);
-        if (offset >= spiderAudioBuffer.duration) return stopSpiderSound();
-      } else if (spiderNativeAudio && !spiderNativeAudio.paused) {
-        offset = spiderNativeAudio.currentTime;
-      } else return;
+      if (spiderSoundPreparing) return stopSpiderSound();
+      if (!spiderSoundPlaying || !spiderNativeAudio) return;
+      const offset = spiderNativeAudio.ended ? null : spiderNativeAudio.currentTime;
       stopSpiderSound();
       pausedSpiderSoundOffset = offset;
     }
 
     function resumePausedSpiderSound({ fromResumeTap = false } = {}) {
       if (pausedSpiderSoundOffset === null || (gameplayPaused && !fromResumeTap) || isPageInactive() || menuPage !== null) return;
-      if (spiderAudioContext && spiderAudioContext.state !== "running") return;
       playSpiderSound(pausedSpiderSoundOffset);
     }
 
     function playSpiderSound(offset = null) {
+      const audio = spiderNativeAudio;
+      if (!audio || !spiderSoundReady && offset === null) return;
       stopSpiderSound();
-      if (spiderAudioBuffer && spiderAudioContext?.state === "running") {
-        const source = spiderAudioContext.createBufferSource();
-        source.buffer = spiderAudioBuffer;
-        const gain = spiderAudioContext.createGain();
-        gain.gain.value = CONFIG.spider.volume;
-        source.connect(gain);
-        gain.connect(spiderAudioContext.destination);
-        source.onended = () => {
-          source.disconnect();
-          gain.disconnect();
-          if (spiderAudioSource === source) spiderAudioSource = null;
-        };
-        spiderAudioSource = source;
-        spiderPlaybackStart = spiderAudioContext.currentTime;
-        spiderPlaybackOffset = offset ?? spiderSoundOffset;
-        source.start(0, spiderPlaybackOffset);
-      } else if (spiderNativeAudio && spiderSoundReady) {
-        spiderNativeAudio.currentTime = offset ?? 0;
-        const played = spiderNativeAudio.play();
-        if (played) played.catch(() => {});
-      }
+      const run = spiderSoundRun;
+      const failed = () => {
+        if (run !== spiderSoundRun || audio !== spiderNativeAudio) return;
+        spiderSoundPlaying = spiderSoundReady = false;
+        pausedSpiderSoundOffset = offset;
+      };
+      try {
+        const start = offset ?? spiderSoundOffset;
+        if (audio.ended || Math.abs(audio.currentTime - start) > .001) audio.currentTime = start;
+        audio.volume = CONFIG.spider.volume;
+        audio.muted = CONFIG.spider.volume === 0;
+        spiderSoundPlaying = true;
+        const played = audio.play();
+        if (played) played.catch(failed);
+      } catch { failed(); }
     }
 
     function drawSpiderFrame(index) {
@@ -5374,7 +5403,6 @@
 
     function spawnSpiderOffscreen() {
       if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || !gameplayStarted || gameOver || roomCompleted || spiderActive || !spiderAssetsReady || !spiderSoundReady) return false;
-      if (spiderAudioContext && spiderAudioContext.state !== "running") return false;
       const width = spiderMeta.width * SPIDER_SCALE;
       const visible = currentVisibleWorldRange();
       const ranges = [];
@@ -5450,13 +5478,7 @@
         spiderRetreatPausedAt = null;
         spiderRetreatFrame = requestAnimationFrame(spiderRetreatStep);
       }
-      if (pausedSpiderSoundOffset === null) return;
-      const generation = levelGeneration, revision = playbackRevision;
-      const resumed = resumeSpiderSound();
-      if (resumed) resumed.then(() => {
-        if (generation === levelGeneration && revision === playbackRevision) resumePausedSpiderSound();
-      });
-      else resumePausedSpiderSound();
+      resumePausedSpiderSound();
     }
 
     function stopSpiderEncounter() {
@@ -5662,8 +5684,6 @@
       jumpscareVideo.style.display = "block";
       jumpscareVideo.classList.remove("priming");
       jumpscareVideo.classList.add("playing");
-      jumpscareVideo.muted = false;
-      jumpscareVideo.volume = 1;
       retreatActiveDoll();
 
       let movementStarted = false;
@@ -5705,7 +5725,7 @@
       } else jumpscareVideo.addEventListener("playing", onScareFrame, { once: true });
       const room = levelRooms[activeRoomIndex], revision = playbackRevision;
       try {
-        const played = playActiveScare(room, { gesture: reason !== "timeout" });
+        const played = playActiveScare(room);
         if (played) boundedMediaAction(played).catch(error => handleScarePlaybackFailure(room, revision, error));
       } catch (error) { handleScarePlaybackFailure(room, revision, error); }
     }
@@ -5716,23 +5736,15 @@
       else showPlaybackResumePrompt();
     }
 
-    function playActiveScare(room, { gesture = false, refreshAudio = false } = {}) {
-      const revision = playbackRevision;
-      const audio = requireScareAudio(room, { refreshAudio });
-      const start = () => {
-        if (revision !== playbackRevision || isPageInactive() || menuPage !== null || activeScareRoom() !== room) return;
-        const clip = room.scare;
-        if (refreshAudio) clip.pause();
-        clip.muted = clip.defaultMuted = false;
-        clip.volume = 1;
-        if (room.audioGain) room.audioGain.gain.setValueAtTime(1, jumpscareAudioContext.currentTime);
-        return clip.paused ? clip.play() : undefined;
-      };
-      // A timer has no user activation to preserve. Wait for audio before
-      // starting the clip so an interrupted context cannot consume the scare silently.
-      if (audio && !gesture) return audio.then(start);
-      const playing = start();
-      return audio ? Promise.all([audio, playing]) : playing;
+    function playActiveScare(room, { refreshAudio = false } = {}) {
+      if (isPageInactive() || menuPage !== null || activeScareRoom() !== room) return;
+      const clip = room.scare;
+      if (refreshAudio) clip.pause();
+      // The MP4's soundtrack stays on this same native player, just like
+      // the room video. Timer scares use the permission granted at warm-up.
+      clip.muted = clip.defaultMuted = false;
+      clip.volume = 1;
+      return clip.paused ? clip.play() : undefined;
     }
 
     function showResultsScreen() {
@@ -5772,7 +5784,7 @@
         jumpscareFrameRequest = null;
       }
       jumpscareVideo.pause();
-      if (jumpscareAudioGain) jumpscareAudioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
+      jumpscareVideo.muted = true;
       jumpscareVideo.classList.remove("playing");
       jumpscareVideo.style.display = "none";
     }
@@ -6095,29 +6107,28 @@
         if (!gameplayStarted && !gameOver) recoverLoadingPlayback();
         return;
       }
-      // iOS can resolve play() or report a running audio context while the
-      // output is still silent. Don't let an automatic return spend game time
-      // in that state; use the same real user gesture as the READY button.
+      // Restore native playback on iOS with a real tap, as on READY, before
+      // resuming the clock. A paused scare resumes at its existing position.
       const refreshAudio = appleForegroundAudioPending;
       if (refreshAudio && !gesture) { showPlaybackResumePrompt(); return; }
       const revision = playbackRevision;
       const room = levelRooms[activeRoomIndex];
       const attempts = [];
       try {
-        if (gesture) unlockSpiderSound({ refreshAudio });
-        else resumeSpiderSound();
         if (scareRoom) {
-          const playing = playActiveScare(scareRoom, { gesture, refreshAudio });
+          const playing = playActiveScare(scareRoom, { refreshAudio });
           if (playing) attempts.push(playing);
         } else {
-          const audio = requireScareAudio(room, { refreshAudio });
-          if (audio) attempts.push(audio);
           if (room && room.media === room.video && (refreshAudio || room.video.paused || room.video.muted)) {
             if (refreshAudio) room.video.pause();
             const playing = showRoomVideo(room, { withAudio: true });
             if (playing) attempts.push(playing);
           }
-          if (refreshAudio && spiderNativeAudio) resumePausedSpiderSound({ fromResumeTap: true });
+          if (gesture) {
+            unmuteParkedScares();
+            if (pausedSpiderSoundOffset !== null) resumePausedSpiderSound({ fromResumeTap: true });
+            else unlockSpiderSound({ refreshAudio });
+          }
         }
       } catch (error) { attempts.push(Promise.reject(error)); }
       if (!attempts.length) { resumeLevelSimulation({ audioRestored: true }); return; }
@@ -6144,11 +6155,6 @@
       return pending;
     }
 
-    function suspendGameAudioContext(context) {
-      if (!context || context.state === "closed" || context.state === "suspended") return;
-      try { Promise.resolve(context.suspend()).catch(() => {}); } catch {}
-    }
-
     function holdAppleForegroundAudio() {
       if (!IS_APPLE_MOBILE || menuPage !== null) return;
       const scareRoom = activeScareRoom();
@@ -6159,9 +6165,15 @@
       if (!scareRoom && (!gameplayStarted || gameOver || roomCompleted)) return;
       const room = levelRooms[activeRoomIndex];
       if (room && room.media === room.video) room.video.muted = true;
-      if (scareRoom) scareRoom.scare.muted = true;
-      suspendGameAudioContext(jumpscareAudioContext);
-      suspendGameAudioContext(spiderAudioContext);
+      for (const room of levelRooms) room.scare.muted = true;
+    }
+
+    function unmuteParkedScares() {
+      // READY/Resume can restore sound permission on the same paused players
+      // without starting them or moving their cached first frames.
+      for (const room of levelRooms) {
+        if (room.scare.paused) room.scare.muted = room.scare.defaultMuted = false;
+      }
     }
 
     function syncPageActivity() {
@@ -6201,7 +6213,6 @@
     function levelMediaIsPrepared() {
       return !isPageInactive() && roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
         room.backdropReady && room.metadataReady && room.scareReady && room.audioUnlocked &&
-        (!room.audioGain || jumpscareAudioContext?.state === "running") &&
         !room.preparing && !room.scare.error && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
         room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
     }
@@ -6235,26 +6246,25 @@
       mediaPreparation.hidden = false;
     }
 
-    function prepareMediaBeforeReady() {
+    function prepareMediaBeforeReady({ gesture = false } = {}) {
       if (mediaPreparationPending || isPageInactive() || menuPage !== null || gameOver || gameplayStarted || !roomsReady) return mediaPreparationPending;
       prepareMediaButton.disabled = true;
       mediaPreparation.hidden = true;
       loadingWord.hidden = false;
-      unlockSpiderSound();
-      // Invoke every play()/AudioContext.resume() synchronously in this loading
-      // screen gesture. No gesture-dependent media work is deferred to READY.
+      if (gesture) unlockSpiderSound();
+      // Start each retained media element synchronously on the loading tap.
+      // A muted warm-up by itself does not grant autoplay with sound.
       const attempts = levelRooms.map(room => {
         try {
           if (room.scare.error || !room.metadataReady) {
             // A decoder can fail after the paper was revealed. Reload that
             // source rather than repeatedly trying play() on a failed player.
-            const audio = boundedMediaAction(unlockJumpscareAudio(room));
-            return Promise.all([audio, prepareRoomJumpscare(room)]).then(() => {
+            return prepareRoomJumpscare(room).then(() => {
               if (menuPage !== null || isPageInactive()) throw mediaPreparationInterrupted();
-              return prepareJumpscarePlayback({ unlockAudio: true }, room);
+              return prepareJumpscarePlayback({ unlockAudio: room.audioUnlocked }, room);
             });
           }
-          return prepareJumpscarePlayback({ unlockAudio: true }, room);
+          return prepareJumpscarePlayback({ unlockAudio: gesture || room.audioUnlocked }, room);
         }
         catch (error) { return Promise.reject(error); }
       });
@@ -6277,29 +6287,8 @@
       if (menuPage !== null || mediaPreparation.hidden || prepareMediaButton.disabled || event.button > 0) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      prepareMediaBeforeReady();
+      prepareMediaBeforeReady({ gesture: true });
     }, true);
-
-    function resumeJumpscareAudio({ refreshAudio = false } = {}) {
-      const context = jumpscareAudioContext;
-      if (!context || context.state === "closed" || (!refreshAudio && context.state === "running")) return;
-      // Queue both operations within the tap. Waiting for suspend here could
-      // put resume outside the user activation Safari needs.
-      if (refreshAudio) suspendGameAudioContext(context);
-      try {
-        return Promise.resolve(context.resume()).catch(error => console.info("Could not resume jumpscare audio.", error));
-      } catch (error) { console.info("Could not resume jumpscare audio.", error); }
-    }
-
-    function requireScareAudio(room, { refreshAudio = false } = {}) {
-      if (!room?.audioGain || (!refreshAudio && jumpscareAudioContext?.state === "running")) return;
-      return Promise.resolve(resumeJumpscareAudio({ refreshAudio })).then(() => {
-        if (jumpscareAudioContext?.state === "running") return;
-        const error = new Error("Jumpscare audio needs a player interaction.");
-        error.name = "NotAllowedError";
-        throw error;
-      });
-    }
 
     function cancelJumpscareStandbySeek() {
       for (const room of levelRooms) {
@@ -6338,64 +6327,29 @@
       } finally { clip.classList.remove("priming"); }
     }
 
-    // Keep desktop audio in the native media player. Routing file:// media
-    // through Web Audio can produce CORS silence even when video playback works.
-    // Touch devices use gain zero to unlock sound without an audible warm-up.
-    function prepareJumpscareAudioGraph(room) {
-      const clip = room.scare;
-      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-      const needsAudioGraph = location.protocol !== "file:" && window.matchMedia("(pointer: coarse)").matches;
-      if (!needsAudioGraph || !AudioContextClass) return false;
-      if (!jumpscareAudioContext) jumpscareAudioContext = new AudioContextClass();
-      if (!room.audioSource) {
-        room.audioGain = jumpscareAudioContext.createGain();
-        room.audioGain.gain.value = 0;
-        room.audioSource = jumpscareAudioContext.createMediaElementSource(clip);
-        room.audioSource.connect(room.audioGain);
-        room.audioGain.connect(jumpscareAudioContext.destination);
-      }
-      room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
-      syncActiveScare(room);
-      return true;
-    }
-
-    function unlockJumpscareAudio(room, audioRestart) {
-      if (!prepareJumpscareAudioGraph(room)) { room.scare.volume = 0; return Promise.resolve(); }
-      room.scare.volume = 1;
-      return audioRestart ?? Promise.resolve(requireScareAudio(room));
-    }
-
     function recoverLevelAudioFromGesture(event) {
       if (!event.isTrusted || gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || gameOver || roomCompleted) return;
-      resumeJumpscareAudio();
-      if (spiderNativeAudio && !spiderSoundReady) unlockSpiderSound();
-      else if (pausedSpiderSoundOffset !== null) resumeSpiderEncounter();
-      else resumeSpiderSound();
+      if (pausedSpiderSoundOffset !== null) resumeSpiderEncounter();
+      else if (!spiderSoundReady) unlockSpiderSound();
       const room = levelRooms[activeRoomIndex];
       if (room && room.media === room.video && (room.video.paused || room.video.muted)) {
         watchRoomPlayback(room, showRoomVideo(room, { withAudio: true }));
       }
     }
 
-    function prepareJumpscarePlayback({ unlockAudio = false, refreshAudio = false, audioRestart } = {}, room = levelRooms[activeRoomIndex]) {
+    function prepareJumpscarePlayback({ unlockAudio = false, refreshAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
       const jumpscareVideo = room.scare;
       if (isPageInactive()) return Promise.reject(mediaPreparationInterrupted());
-      if (!refreshAudio && room.scareReady && (!unlockAudio || room.audioUnlocked && (!room.audioGain || jumpscareAudioContext?.state === "running")) && jumpscareVideo.paused &&
+      if (!refreshAudio && room.scareReady && (!unlockAudio || room.audioUnlocked) && jumpscareVideo.paused &&
           !jumpscareVideo.seeking && jumpscareVideo.currentTime <= 0.05 &&
           jumpscareVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return Promise.resolve();
       if (room.preparing) return room.preparing;
       room.scareReady = false;
-      if (unlockAudio) room.audioUnlocked = false;
       room.preparationError = null;
-      let audioReady;
-      try { audioReady = unlockAudio ? unlockJumpscareAudio(room, audioRestart) : Promise.resolve(); }
-      catch (error) { audioReady = Promise.reject(error); }
       jumpscareVideo.classList.add("priming");
-      // Unlock the same video behind the loader. Desktop uses volume zero during
-      // warm-up; mobile uses its gain node, since system volume is user-owned.
-      const audibleWarmup = unlockAudio;
-      jumpscareVideo.muted = !audibleWarmup;
-      if (audibleWarmup) jumpscareVideo.defaultMuted = false;
+      // A tap authorizes play on this element. Muting keeps the existing
+      // buffer/decode warm-up silent, even where element volume is ignored.
+      jumpscareVideo.muted = true;
       let frameRequest = null;
       let frameFallback = null;
       let frameFallbackTimer = null;
@@ -6452,7 +6406,7 @@
       catch (error) { playPromise = Promise.reject(error); }
       const prepare = (async () => {
         try {
-          await Promise.race([interruption, Promise.all([playPromise, buffered, decoded, audioReady]), new Promise((_, reject) => {
+          await Promise.race([interruption, Promise.all([playPromise, buffered, decoded]), new Promise((_, reject) => {
             preparationTimer = setTimeout(() => reject(new Error("Jumpscare warm-up timed out.")), CONFIG.loading.resourceTimeoutMs);
           })]);
           jumpscareVideo.pause();
@@ -6477,8 +6431,6 @@
           if (frameRequest !== null) jumpscareVideo.cancelVideoFrameCallback?.(frameRequest);
           if (frameFallback) jumpscareVideo.removeEventListener("playing", frameFallback);
           jumpscareVideo.pause();
-          jumpscareVideo.volume = 1;
-          jumpscareVideo.muted = false;
           jumpscareVideo.classList.remove("priming");
         }
       })();
@@ -6860,8 +6812,7 @@
         room.videoRun++;
         room.videoFrameCancel?.();
         room.video.pause(); room.video.muted = true;
-        room.scare.pause();
-        if (room.audioGain) room.audioGain.gain.setValueAtTime(0, jumpscareAudioContext.currentTime);
+        room.scare.pause(); room.scare.muted = true;
         room.scare.classList.remove("playing", "priming", "snapping");
         room.image.classList.remove("snapping"); room.video.classList.remove("snapping");
         room.image.style.display = room.video.style.display = room.scare.style.display = "none";
@@ -6885,8 +6836,6 @@
       snapPoints = [0];
       roomMediaReady = jumpscareReady = jumpscareWarmAttempted = jumpscareMetadataReady = jumpscareDeadlineWarmStarted = false;
       jumpscarePreparing = jumpscareStandbySeekCancel = null;
-      jumpscareAudioGain = jumpscareAudioSource = null;
-      jumpscareAudioUnlocked = false;
       mediaPreparationPending = null;
       wordsLoading = levelLoading = false;
       hintActive = false; hintPointerId = hintPointerControl = hintKey = null;
@@ -7260,21 +7209,15 @@
       unlockSpiderSound({ refreshAudio });
       const rooms = roomMediaPool.filter(room => room.metadataReady && !room.scare.error &&
         !room.scare.classList.contains("playing"));
-      const audioRestart = refreshAudio
-        ? requireScareAudio(rooms.find(room => room.audioGain), { refreshAudio: true })
-        : undefined;
-      if (audioRestart) audioRestart.catch(() => {});
-      else resumeJumpscareAudio({ refreshAudio });
       return Promise.allSettled(rooms.map(room => {
-        // The existing warm-up can wait for audio, but play() itself must
-        // still be called inside the Retry gesture.
-        try { return prepareJumpscarePlayback({ unlockAudio: true, refreshAudio: true, audioRestart }, room); }
+        // Keep play() inside the Retry/Next gesture on the retained element.
+        try { return prepareJumpscarePlayback({ unlockAudio: true, refreshAudio: true }, room); }
         catch (error) { return Promise.reject(error); }
       }));
     }
 
     function primeMediaFromMenuGesture() {
-      unlockSpiderSound();
+      unlockSpiderSound({ refreshAudio: true });
       let room = roomMediaPool[0];
       if (!room) {
         const count = levelRoomCount;
@@ -7296,7 +7239,6 @@
           clip.src = MENU_MEDIA_PRIMER;
           clip.muted = clip.defaultMuted = false;
           clip.classList.add("priming");
-          const audio = unlockJumpscareAudio(room);
           const playing = waitForMedia(clip, "playing", CONFIG.loading.resourceTimeoutMs);
           clip.load();
           // Same native player, silent AAC track: Play supplies this trusted
@@ -7305,7 +7247,7 @@
           const interrupted = new Promise((_, reject) => {
             cancelMenuPrimer = () => reject(mediaPreparationInterrupted());
           });
-          attempt = boundedMediaAction(Promise.race([Promise.all([audio, playing, played]), interrupted]));
+          attempt = boundedMediaAction(Promise.race([Promise.all([playing, played]), interrupted]));
         }
       } catch (error) { attempt = Promise.reject(error); }
       return attempt.then(() => {
@@ -7318,7 +7260,7 @@
       }).finally(() => {
         cancelMenuPrimer = null;
         room.mediaLoading = false;
-        clip.pause(); clip.volume = 1; clip.muted = false;
+        clip.pause(); clip.muted = true;
         clip.classList.remove("priming");
       });
     }
