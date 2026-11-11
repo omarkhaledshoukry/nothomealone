@@ -30,6 +30,9 @@
       --ink: #090909;
       --game-height: 100vh;
       --view-unit: 1vh;
+      --ui-text-scale: 1.5;
+      --paper-text-scale: 1.5;
+      --menu-text-scale: 2;
     }
 
     @supports (height: 100dvh) {
@@ -268,7 +271,7 @@
     #status {
       position: absolute;
       top: max(5%, calc(env(safe-area-inset-top) + 12px));
-      font-size: var(--ui-font-size, 18px);
+      font-size: calc(var(--ui-font-size, 18px) * var(--ui-text-scale));
       line-height: 1;
     }
 
@@ -367,7 +370,7 @@
       color: var(--camera-color, #fff);
       -webkit-text-fill-color: var(--camera-color, #fff);
       font: inherit;
-      font-size: var(--ui-font-size, 18px);
+      font-size: calc(var(--ui-font-size, 18px) * var(--ui-text-scale));
       line-height: 1;
       white-space: nowrap;
       cursor: pointer;
@@ -575,7 +578,7 @@
 
     #clueCard {
       position: relative;
-      width: min(78%, 420px);
+      width: min(92%, 480px, var(--paper-card-limit, 480px));
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -634,7 +637,8 @@
     #clueTitle {
       margin: 0 0 10% 0;
       text-align: center;
-      font-size: clamp(31px, calc(var(--view-unit) * 5.2), 48px);
+      font-size: calc(clamp(31px, calc(var(--view-unit) * 5.2), 48px) * var(--paper-text-scale));
+      overflow-wrap: anywhere;
       font-weight: 400;
       line-height: 1;
       letter-spacing: .04em;
@@ -655,7 +659,7 @@
       list-style: none;
       display: grid;
       gap: clamp(13px, calc(var(--view-unit) * 2.3), 24px);
-      font-size: clamp(22px, calc(var(--view-unit) * 3.5), 34px);
+      font-size: calc(clamp(22px, calc(var(--view-unit) * 3.5), 34px) * var(--paper-text-scale));
       line-height: 1.05;
       text-transform: uppercase;
     }
@@ -665,7 +669,7 @@
     #puzzleText {
       margin: 0;
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      font-size: var(--puzzle-font-size, 25px);
+      font-size: calc(var(--puzzle-font-size, 25px) * var(--paper-text-scale));
       line-height: 1.3;
       overflow-wrap: anywhere;
       white-space: pre-wrap;
@@ -689,7 +693,7 @@
       background: transparent;
       color: var(--letter-beige);
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      font-size: clamp(26px, calc(var(--view-unit) * 4.2), 40px);
+      font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -867,8 +871,8 @@
     #levelLoadDetails[hidden] { display: none; }
     #gameOverScreen.show #gameOverTitle { animation: gameOverJitter var(--game-over-jitter-ms, 380ms) steps(1, end) infinite; }
     #gameOverScreen.show #retryText { animation: gameOverJitter var(--retry-jitter-ms, 430ms) steps(1, end) var(--retry-jitter-delay, 75ms) infinite; }
-    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)); line-height: 1; }
-    #retryText { max-width: 94%; font-size: clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)); opacity: .78; }
+    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: calc(clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)) * var(--ui-text-scale)); line-height: 1; }
+    #retryText { max-width: 94%; font-size: calc(clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)) * var(--ui-text-scale)); opacity: .78; }
 
     @keyframes gameOverJitter {
       0%, 100% { transform: translate(0, 0); }
@@ -946,7 +950,7 @@
       display: grid;
       place-items: center;
       color: var(--tarantino-yellow);
-      font-size: clamp(34px, calc(var(--view-unit) * 6), 62px);
+      font-size: calc(clamp(34px, calc(var(--view-unit) * 6), 62px) * var(--ui-text-scale));
       font-weight: 1000;
       letter-spacing: .04em;
       text-transform: uppercase;
@@ -1068,13 +1072,19 @@
     #menuShell[data-page="panning"] #homePoster { transition: transform var(--home-pan-ms, 650ms) cubic-bezier(.16,.72,.22,1); }
     .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; z-index: 1; }
     #introPage { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 5% max(20%, calc(env(safe-area-inset-bottom) + 52px)); }
-    #homeStartButton { font-size: clamp(33px, calc(var(--view-unit) * 4.8), 48px); }
+    #homeStartButton { font-size: calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale)); }
     /* Keep the menu at its original vertical position after removing the heading. */
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
-    .menu-page h2 { margin: 0 0 28px; font-size: clamp(32px, calc(var(--view-unit) * 5.5), 54px); font-weight: 400; line-height: 1.1; }
+    .menu-page h2 { margin: 0 0 28px; font-size: calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
     .home-actions, .language-choices { display: flex; flex-direction: column; align-items: center; gap: 9px; }
     .menu-button, .home-back, .paper-button { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; -webkit-text-fill-color: currentColor; font: inherit; font-weight: 400; cursor: pointer; animation: readyJitter .4s steps(1, end) infinite; touch-action: manipulation; }
-    .menu-button { min-height: 44px; padding: 7px 18px; font-size: clamp(24px, calc(var(--view-unit) * 3.7), 36px); line-height: 1.12; }
+    .menu-button { min-height: 44px; max-width: 100%; padding: 7px 12px; font-size: calc(clamp(24px, calc(var(--view-unit) * 3.7), 36px) * var(--menu-text-scale)); line-height: 1.12; }
+    .menu-button > .menu-label { display: inline-block; }
+    .menu-button > .menu-label, .menu-back > svg { transition: transform 180ms ease; }
+    .menu-button[data-selected] > .menu-label, .menu-back[data-selected] > svg { transform: scale(1.08); }
+    @media (prefers-reduced-motion: reduce) {
+      .menu-button > .menu-label, .menu-back > svg { transition: none; }
+    }
     .home-actions > button, .language-choices > button, .paper-actions > button { animation-delay: calc(var(--jitter-phase, 0) * var(--menu-jitter-stagger, 75ms)); }
     .home-actions > :nth-child(2), .language-choices > :nth-child(2), .paper-actions > :nth-child(2) { --jitter-phase: -1; }
     .home-actions > :nth-child(3) { --jitter-phase: -2; }
@@ -1102,12 +1112,12 @@
     #clueIntro.hint-mode .home-back, #clueIntro.exit-mode .home-back { display: none; }
     #clueIntro.exit-mode { visibility: visible; transition: opacity var(--hint-fade-ms, 140ms) ease; }
     #clueIntro.exit-mode #clueTitle, #clueIntro.exit-mode #clueList, #clueIntro.exit-mode #puzzleText, #clueIntro.exit-mode #readyButton, #clueIntro.exit-mode .clue-file-controls { display: none; }
-    #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; gap: 14px; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
+    #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; justify-content: safe center; gap: 12px; overflow: auto; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
     #exitConfirmContent[hidden] { display: none; }
-    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: clamp(24px, calc(var(--view-unit) * 4), 38px); line-height: 1.15; }
-    #exitConfirmContent p { margin: 0; font-size: clamp(18px, calc(var(--view-unit) * 2.7), 26px); line-height: 1.3; }
+    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: calc(clamp(24px, calc(var(--view-unit) * 4), 38px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.15; }
+    #exitConfirmContent p { margin: 0; font-size: calc(clamp(18px, calc(var(--view-unit) * 2.7), 26px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.3; }
     .paper-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
-    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.3), 32px); }
+    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: calc(clamp(22px, calc(var(--view-unit) * 3.3), 32px) * var(--paper-text-scale) * var(--exit-fit, 1)); }
     :root[data-game-language="ar"] #exitConfirmContent { font-family: "Game Arabic Paper", "Game Arabic", serif; direction: rtl; }
     #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
     @media (max-height: 580px) { #homePage { --home-menu-gap: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
@@ -1231,16 +1241,16 @@
     <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro" data-poster-position="left">
       <div id="homeBackdrop" aria-hidden="true"><img id="homePoster" src="./home.png" alt="" draggable="false" fetchpriority="high" /></div>
       <div id="introPage" class="menu-page">
-        <button id="homeStartButton" class="menu-button" type="button">START</button>
+        <button id="homeStartButton" class="menu-button" type="button"><span class="menu-label">START</span></button>
       </div>
       <div id="homePage" class="menu-page" hidden>
         <button id="homeBackButton" class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <nav class="home-actions" aria-label="Main menu">
-          <button id="homePlayButton" class="menu-button" type="button">PLAY</button>
-          <button id="homeSettingsButton" class="menu-button" type="button">SETTINGS</button>
-          <button id="homeStoryButton" class="menu-button" type="button">STORY</button>
-          <button id="homeHowButton" class="menu-button" type="button">HOW TO PLAY</button>
-          <button id="homeClearButton" class="menu-button" type="button">CLEAR DATA</button>
+          <button id="homePlayButton" class="menu-button" type="button"><span class="menu-label">PLAY</span></button>
+          <button id="homeSettingsButton" class="menu-button" type="button"><span class="menu-label">SETTINGS</span></button>
+          <button id="homeStoryButton" class="menu-button" type="button"><span class="menu-label">STORY</span></button>
+          <button id="homeHowButton" class="menu-button" type="button"><span class="menu-label">HOW TO PLAY</span></button>
+          <button id="homeClearButton" class="menu-button" type="button"><span class="menu-label">CLEAR DATA</span></button>
         </nav>
         <p id="homeNotice" role="status" aria-live="polite"></p>
       </div>
@@ -1248,8 +1258,8 @@
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <h2 id="settingsTitle">SETTINGS</h2>
         <div id="languageChoices" class="language-choices" role="group" aria-label="Language">
-          <button class="menu-button" type="button" data-language="en" lang="en" aria-pressed="true">English</button>
-          <button class="menu-button" type="button" data-language="ar" lang="ar" aria-pressed="false">العربية</button>
+          <button class="menu-button" type="button" data-language="en" lang="en" aria-pressed="true"><span class="menu-label">English</span></button>
+          <button class="menu-button" type="button" data-language="ar" lang="ar" aria-pressed="false"><span class="menu-label">العربية</span></button>
         </div>
       </div>
       <div id="storyPage" class="menu-page" hidden>
@@ -1361,6 +1371,15 @@
       "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 120000,
+      "decoyLetterChance": 0,
+      "flyingLetters": true,
+      "evadesCamera": false,
+      "startLevel": 1
+    },
+    "puzzleFlying": {
+      "chance": 0,
+      "wordCount": 1,
+      "timeLimitMs": 60000,
       "decoyLetterChance": 0,
       "flyingLetters": true,
       "evadesCamera": false,
@@ -1634,6 +1653,7 @@
   },
   "ui": {
     "viewportAspectRatio": 0.625,
+    "textScale": 1.5,
     "minFontPx": 14,
     "maxFontPx": 21,
     "fontHeightFraction": 0.026,
@@ -1698,6 +1718,7 @@
   "puzzles": {
     "minAnswerLength": 3,
     "maxAnswerLength": 10,
+    "paperTextScale": 1.5,
     "hintFadeMs": 140,
     "hintBlurPx": 5,
     "minFontPx": 18,
@@ -1749,6 +1770,11 @@
       "maxSceneNumbers": [
         5,
         10,
+        0
+      ],
+      "roomCounts": [
+        0,
+        0,
         0
       ]
     }
@@ -1826,6 +1852,7 @@
   },
   "menu": {
     "title": "Housemaid in Hell",
+    "textScale": 2,
     "panMs": 650,
     "jitterStaggerMs": 75,
     "en": {
@@ -1881,6 +1908,7 @@
     const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "story", "how"], settings: ["home"], story: ["home"], how: ["home"] };
     const MENU_PAGES = Object.keys(MENU_ROUTES);
     let menuPage = "intro";
+    let selectedMenuButton = null;
     let homePanTimer = null;
     let menuSwipe = null;
     let suppressMenuClick = false;
@@ -1907,9 +1935,10 @@
 
     Object.assign(CONFIG_LIMITS, {
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
-      "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true]
+      "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true],
+      "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5]
     });
-    for (const name of ["singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
+    for (const name of ["puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
       CONFIG_LIMITS[`levels.${name}.wordCount`] = [1, 1, true];
       CONFIG_LIMITS[`levels.${name}.timeLimitMs`] = [1000, 86400000, true];
@@ -1947,6 +1976,8 @@
       if (path === "milestones.rooms.maxSceneNumbers") return Array.isArray(value) && value.length === 3 &&
         value.every((number, index) => Number.isSafeInteger(number) && number >= 0 && number <= 2000000000 &&
           (!index || (number || Infinity) >= (value[index - 1] || Infinity)));
+      if (path === "milestones.rooms.roomCounts") return Array.isArray(value) && value.length === 3 &&
+        value.every(count => Number.isInteger(count) && count >= 0 && count <= CONFIG_LIMITS["rooms.count"][1]);
       if (path.startsWith("assets.") && path !== "assets.letterFontLocalNames") {
         try {
           for (const file of Array.isArray(value) ? value : [value]) {
@@ -2039,8 +2070,9 @@
       // Older files should keep their explicitly selected modes when new types
       // are added. The updated config explicitly sets both new mode weights.
       const hasNewMode = ["singleRoomSequential", "singleRoomSpread", "singleRoomFixed"].some(name => values.has(`levels.${name}.chance`));
-      const hasLegacyMode = ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => values.has(`levels.${name}.chance`));
-      if (hasLegacyMode && !hasNewMode && ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "flyingPuzzle"].some(name => resolved.levels[name].chance > 0)) {
+      const multiRoomModes = ["standard", "decoy", "butterfly", "flyingDecoy", "puzzle", "puzzleFlying", "flyingPuzzle"];
+      const hasLegacyMode = multiRoomModes.some(name => values.has(`levels.${name}.chance`));
+      if (hasLegacyMode && !hasNewMode && multiRoomModes.some(name => resolved.levels[name].chance > 0)) {
         resolved.levels.singleRoomSequential.chance = 0;
         resolved.levels.singleRoomSpread.chance = 0;
         resolved.levels.singleRoomFixed.chance = 0;
@@ -2098,7 +2130,7 @@
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
     function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
     function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
-    function isPuzzleType(name) { return name === "puzzle" || name === "flyingPuzzle" || isSingleRoomType(name); }
+    function isPuzzleType(name) { return name === "puzzle" || name === "puzzleFlying" || name === "flyingPuzzle" || isSingleRoomType(name); }
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
     function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
     function progressionLevel() { return Math.max(1, currentRoomNumber); }
@@ -2107,6 +2139,11 @@
       let stage = 0;
       for (let index = 1; index < startLevels.length; index++) if (progressionLevel() >= startLevels[index]) stage = index;
       return stage;
+    }
+    function stagedRoomCount() {
+      if (!CONFIG.milestones.enabled || isSingleRoomLevel()) return 0;
+      const { startLevels, roomCounts } = CONFIG.milestones.rooms;
+      return roomCounts[milestoneStage(startLevels)];
     }
     const milestoneSelectionInfo = { words: null, puzzles: null, rooms: null };
     function contentMilestonePool(entries, kind) {
@@ -3233,7 +3270,7 @@
         if (!resumedLevel) availableScenes = nonRepeatingScenePool(availableScenes, progressState.lastSceneNumber);
         if (!resumedLevel && CONFIG.milestones.enabled && availableScenes.length < levelRoomCount) {
           wordLoadInfo.url = new URL(levelDataFile(), document.baseURI).href;
-          showWordLoadError(new Error(`The scene milestone at level ${progressionLevel()} allows ${availableScenes.length} complete room/jumpscare pairs, but rooms.count requires ${levelRoomCount}. Raise milestones.rooms.maxSceneNumbers, lower rooms.count, or add the matching scene files, then reload.`));
+          showWordLoadError(new Error(`Level ${progressionLevel()} needs ${levelRoomCount} distinct rooms, but only ${availableScenes.length} complete room/jumpscare pairs are eligible. Check milestones.rooms.roomCounts, maxSceneNumbers and the matching scene files.`));
           return;
         }
         if (availableScenes.length < levelRoomCount) throw new Error(`This level needs ${levelRoomCount} complete numbered room/jumpscare pairs; found ${availableScenes.length}.`);
@@ -3465,12 +3502,15 @@
           text = await response.text(); type = response.headers.get("content-type") || ""; source = response.url;
         }
         const scoped = contentMilestonePool(parsePuzzleList(text, type), "puzzles");
+        const exactCount = stagedRoomCount();
         const eligible = scoped.filter(puzzle =>
           puzzle.answer.length >= CONFIG.puzzles.minAnswerLength && puzzle.answer.length <= CONFIG.puzzles.maxAnswerLength &&
+          (!exactCount || puzzle.answer.length === exactCount) &&
           (isSingleRoomLevel() || puzzle.answer.length <= availableScenes.length));
+        if (!eligible.length && exactCount) throw new Error(`Level ${progressionLevel()} needs a ${exactCount}-letter answer. Add one to the active pool in ${file} or adjust the room and answer-length settings.`);
         if (!eligible.length) throw new Error(`No riddle in the current file pool fits ${CONFIG.puzzles.minAnswerLength}–${CONFIG.puzzles.maxAnswerLength} letters and the ${availableScenes.length} room/jumpscare pairs unlocked at level ${progressionLevel()}. Check your content and scene milestones.`);
         currentPuzzle = { ...eligible[Math.floor(Math.random() * eligible.length)] };
-        levelRoomCount = isSingleRoomLevel() ? 1 : Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
+        levelRoomCount = isSingleRoomLevel() ? 1 : exactCount || Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
         acceptWordList(currentPuzzle.answer, source, "text/plain");
         wordLoadInfo.count = eligible.length;
       } finally { clearTimeout(timeout); wordsLoading = false; }
@@ -3744,25 +3784,54 @@
     });
 
     function fitClueList() {
-      if (exitConfirmationActive || !cluePaper.naturalHeight) return;
+      if (!cluePaper.naturalHeight || !cluePaper.naturalWidth) return;
+      const viewHeight = viewport.getBoundingClientRect().height;
+      const card = document.getElementById("clueCard");
+      card.style.setProperty("--paper-card-limit", `${viewHeight * .78 * cluePaper.naturalWidth / cluePaper.naturalHeight}px`);
+      if (exitConfirmationActive) {
+        const dialog = document.getElementById("exitConfirmContent");
+        dialog.style.setProperty("--exit-fit", "1");
+        let fit = 1;
+        for (let attempt = 0; attempt < 5 && dialog.clientHeight && dialog.scrollHeight > dialog.clientHeight; attempt++) {
+          fit = Math.max(.55, fit * Math.min(.93, dialog.clientHeight / dialog.scrollHeight));
+          dialog.style.setProperty("--exit-fit", String(fit));
+        }
+        return;
+      }
+      const text = document.getElementById("cluePaperText"), title = document.getElementById("clueTitle");
+      if (!text.clientWidth || !text.clientHeight) return;
+      title.style.fontSize = "";
+      title.style.whiteSpace = "nowrap";
+      const titleSize = parseFloat(getComputedStyle(title).fontSize);
+      if (title.scrollWidth > text.clientWidth) {
+        const fitted = titleSize * text.clientWidth / title.scrollWidth;
+        if (fitted >= titleSize * .65) title.style.fontSize = `${fitted}px`;
+        else title.style.whiteSpace = "normal";
+      }
+      const available = Math.max(1, text.clientHeight - title.offsetHeight - (parseFloat(getComputedStyle(title).marginBottom) || 0));
       if (isPuzzleLevel()) {
         const font = CONFIG.puzzles[CONFIG.language.code];
-        let size = Math.min(font.maxFontPx, Math.max(font.minFontPx,
-          viewport.getBoundingClientRect().height * font.fontHeightFraction));
-        puzzleText.style.fontSize = `${size}px`;
-        const text = document.getElementById("cluePaperText"), title = document.getElementById("clueTitle");
-        const available = Math.max(1, text.clientHeight - title.offsetHeight - parseFloat(getComputedStyle(title).marginBottom));
-        for (let attempt = 0; attempt < 8 && (puzzleText.scrollHeight > available || puzzleText.scrollWidth > text.clientWidth); attempt++) {
-          size *= Math.min(.95, available / Math.max(1, puzzleText.scrollHeight), text.clientWidth / Math.max(1, puzzleText.scrollWidth));
-          puzzleText.style.fontSize = `${Math.max(4, size)}px`;
+        const target = Math.min(font.maxFontPx, Math.max(font.minFontPx, viewHeight * font.fontHeightFraction)) * CONFIG.puzzles.paperTextScale;
+        const fits = size => {
+          puzzleText.style.fontSize = `${size}px`;
+          return puzzleText.scrollHeight <= available && puzzleText.scrollWidth <= text.clientWidth;
+        };
+        if (!fits(target)) {
+          // Wrapping changes in steps. Find the largest size that fits rather
+          // than shrinking the text in proportion to its first wrapped height.
+          let low = 4, high = target;
+          for (let attempt = 0; attempt < 8 && high - low > .15; attempt++) {
+            const middle = (low + high) / 2;
+            if (fits(middle)) low = middle;
+            else high = middle;
+          }
+          puzzleText.style.fontSize = `${low}px`;
         }
         return;
       }
       if (!clueList.children.length) return;
       clueList.style.fontSize = "";
       clueList.style.gap = "";
-      const text = document.getElementById("cluePaperText"), title = document.getElementById("clueTitle");
-      const available = Math.max(1, text.clientHeight - title.offsetHeight - parseFloat(getComputedStyle(title).marginBottom));
       const current = getComputedStyle(clueList);
       const scale = Math.min(1, available / Math.max(1, clueList.scrollHeight), clueList.clientWidth / Math.max(1, clueList.scrollWidth));
       if (scale < 1) {
@@ -4133,9 +4202,10 @@
 
     function fitHudWord() {
       const width = wordDisplay.getBoundingClientRect().width;
+      const maximum = CONFIG.letters.hudMaxFontPx * CONFIG.ui.textScale;
+      const minimum = CONFIG.letters.hudMinFontPx * CONFIG.ui.textScale;
       if (isArabic()) {
         const measure = document.createElement("canvas").getContext("2d");
-        const maximum = CONFIG.letters.hudMaxFontPx;
         measure.font = `${maximum}px "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
         const prefixWidths = Array.from({ length: currentWord.length + 1 }, (_, count) => measure.measureText(currentWord.slice(0, count)).width);
         measure.font = `${maximum}px "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
@@ -4143,12 +4213,12 @@
         for (let count = 0; count <= currentWord.length; count++) {
           widest = Math.max(widest, prefixWidths[count] + measure.measureText("·".repeat(currentWord.length - count)).width + CONFIG.letters.hudGapPx * 2);
         }
-        wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, Math.min(maximum, maximum * width / widest))}px`);
+        wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(minimum, Math.min(maximum, maximum * width / widest))}px`);
         return;
       }
-      const size = Math.min(CONFIG.letters.hudMaxFontPx, (width - Math.max(0, currentWord.length - 1) * CONFIG.letters.hudGapPx) /
+      const size = Math.min(maximum, (width - Math.max(0, currentWord.length - 1) * CONFIG.letters.hudGapPx) /
         Math.max(1, currentWord.length * CONFIG.letters.hudGlyphWidthRatio));
-      wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(CONFIG.letters.hudMinFontPx, size)}px`);
+      wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(minimum, size)}px`);
     }
 
     function updateCameraControls() {
@@ -4962,9 +5032,15 @@
     window.addEventListener("keydown", keyboardDown);
     window.addEventListener("keyup", keyboardUp);
     function advanceScreenFromKeyboard(event) {
-      if (menuPage !== null || gameplayPaused || !CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
+      if (menuPage !== null || !CONFIG.keyboard.enabled || event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey ||
           event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, .progress-actions, #localFileControls, .home-back, #exitConfirmContent") ||
           !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
+      const focusedButton = event.target?.closest?.("button, a[href]");
+      if (focusedButton && focusedButton !== readyButton && focusedButton !== prepareMediaButton) {
+        if (event.repeat) event.preventDefault();
+        return false; // Let the focused native control handle Enter.
+      }
+      if (gameplayPaused) return false;
       const preparationVisible = !mediaPreparation.hidden && !prepareMediaButton.disabled && !gameplayStarted;
       const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
       const endVisible = gameOverScreen.classList.contains("show");
@@ -6958,6 +7034,8 @@
         "--doll-blur": `${CONFIG.doll.blurPx}px`, "--doll-opacity": CONFIG.doll.opacity,
         "--letter-beige": CONFIG.ui.letterColor, "--tarantino-yellow": CONFIG.ui.foundColor,
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
+        "--ui-text-scale": CONFIG.ui.textScale, "--paper-text-scale": CONFIG.puzzles.paperTextScale,
+        "--menu-text-scale": CONFIG.menu.textScale,
         "--shutter-color": CONFIG.shutter.color, "--shutter-min": `${CONFIG.shutter.minSizePx}px`,
         "--shutter-max": `${CONFIG.shutter.maxSizePx}px`, "--shutter-size-vh": CONFIG.shutter.heightVh,
         "--shutter-bottom": `${CONFIG.shutter.bottomPercent}%`, "--shutter-ring": `${CONFIG.shutter.ringPx}px`,
@@ -7058,7 +7136,10 @@
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy: text.howText,
         exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
-      for (const [id, label] of Object.entries(labels)) document.getElementById(id).textContent = label;
+      for (const [id, label] of Object.entries(labels)) {
+        const element = document.getElementById(id);
+        (element.querySelector(".menu-label") || element).textContent = label;
+      }
       document.getElementById("languageChoices").setAttribute("aria-label", text.language);
       menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
       document.querySelectorAll(".home-back").forEach(button => button.setAttribute("aria-label", text.home));
@@ -7068,6 +7149,16 @@
     function updateMenuControls() {
       const busy = menuPage === "panning" || Boolean(homePlayPending || menuActionPending);
       menuShell.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+    }
+
+    function selectMenuButton(button, { focus = false } = {}) {
+      if (button && button.closest(".menu-page")?.id !== `${menuPage}Page`) return;
+      if (button !== selectedMenuButton) {
+        selectedMenuButton?.removeAttribute("data-selected");
+        selectedMenuButton = button;
+        selectedMenuButton?.setAttribute("data-selected", "");
+      }
+      if (focus && button && !button.disabled) button.focus();
     }
 
     function syncHomePoster() {
@@ -7094,12 +7185,13 @@
       menuShell.scrollTop = 0;
       syncHomePoster();
       updateMenuCopy(); updateMenuControls();
-      if (focus) requestAnimationFrame(() => {
-        if (menuPage !== page) return;
-        const action = page === "home" ? document.getElementById("homePlayButton")
-          : page === "intro" ? document.getElementById("homeStartButton")
-          : document.getElementById(`${page}Page`)?.querySelector(".menu-back");
-        action?.focus();
+      const screen = document.getElementById(`${page}Page`);
+      const action = page === "home" ? document.getElementById("homePlayButton")
+        : page === "intro" ? document.getElementById("homeStartButton")
+        : screen?.querySelector('[data-language][aria-pressed="true"]') || screen?.querySelector(".menu-back") || null;
+      selectMenuButton(action);
+      if (focus && action) requestAnimationFrame(() => {
+        if (menuPage === page && selectedMenuButton === action) selectMenuButton(action, { focus: true });
       });
     }
 
@@ -7331,6 +7423,7 @@
       document.getElementById("exitConfirmContent").hidden = false;
       viewport.classList.add("hint-active", "hint-transition", "exit-confirm-active");
       updateMenuCopy(); updateCameraControls();
+      fitClueList();
       document.getElementById("exitStayButton").focus();
     }
 
@@ -7352,10 +7445,31 @@
     }
 
     function handleMenuKeys(event) {
-      if (event.key !== "Escape" || event.defaultPrevented || event.isComposing) return;
-      if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
-      else if (["settings", "story", "how"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
-      else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
+      if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+      const code = keyboardEventCode(event);
+      if (code === "Escape") {
+        if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
+        else if (["settings", "story", "how"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
+        else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
+        return;
+      }
+      if (menuPage === null || !CONFIG.keyboard.enabled) return;
+      const direction = ["ArrowUp", "Numpad8"].includes(code) ? -1 : ["ArrowDown", "Numpad2"].includes(code) ? 1 : 0;
+      if (!direction && !CONFIG.keyboard.advanceKeys.includes(code)) return;
+      event.preventDefault(); event.stopPropagation();
+      const screen = document.getElementById(`${menuPage}Page`);
+      const buttons = screen ? [...screen.querySelectorAll("button:not(:disabled)")] : [];
+      if (!buttons.length) return;
+      const focused = event.target?.closest?.("button");
+      const selected = buttons.includes(selectedMenuButton) ? selectedMenuButton : focused;
+      if (direction) {
+        const index = buttons.indexOf(selected);
+        const next = index < 0 ? (direction > 0 ? 0 : buttons.length - 1) : (index + direction + buttons.length) % buttons.length;
+        selectMenuButton(buttons[next], { focus: true });
+      } else if (!event.repeat && buttons.includes(selected)) {
+        selectMenuButton(selected);
+        selected.click();
+      }
     }
 
     homePoster.addEventListener("load", syncHomePoster);
@@ -7363,14 +7477,26 @@
     homePoster.addEventListener("transitionend", event => {
       if (event.propertyName === "transform" || event.propertyName === "-webkit-transform") finishHomePan();
     });
-    menuShell.addEventListener("pointerdown", startMenuSwipe);
+    menuShell.addEventListener("pointerdown", event => {
+      startMenuSwipe(event);
+      const button = event.target.closest("button:not(:disabled)");
+      if (event.isPrimary && event.button === 0 && button) selectMenuButton(button);
+    });
+    menuShell.addEventListener("focusin", event => {
+      const button = event.target.closest("button:not(:disabled)");
+      if (button) selectMenuButton(button);
+    });
     window.addEventListener("pointerup", finishMenuSwipe, true);
     window.addEventListener("pointercancel", finishMenuSwipe, true);
     menuShell.addEventListener("click", event => {
-      if (!suppressMenuClick || event.detail === 0) return;
-      suppressMenuClick = false;
-      event.preventDefault();
-      event.stopImmediatePropagation();
+      if (suppressMenuClick && event.detail > 0) {
+        suppressMenuClick = false;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+      const button = event.target.closest("button:not(:disabled)");
+      if (button) selectMenuButton(button);
     }, true);
     document.getElementById("homeStartButton").addEventListener("click", () => panHomeTo("home"));
     document.getElementById("homeBackButton").addEventListener("click", () => panHomeTo("intro"));
@@ -7430,7 +7556,7 @@
         levelType.flyingLetters = CONFIG.levels.puzzle.flyingLetters;
         resumedLevel.rules.flyingLetters = levelType.flyingLetters;
       }
-      levelRoomCount = resumedLevel?.rules.roomCount || (isSingleRoomLevel() ? 1 : CONFIG.rooms.count);
+      levelRoomCount = resumedLevel?.rules.roomCount || (isSingleRoomLevel() ? 1 : stagedRoomCount() || CONFIG.rooms.count);
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       batterySlotsRemaining = BATTERY_SLOT_COUNT;

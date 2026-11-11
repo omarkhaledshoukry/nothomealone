@@ -11,7 +11,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# New levels: flying sequential riddles at levels 1-3; 60% flying / 40% fixed from level 4.
+# New levels: equal weights for stationary and flying multi-room riddles.
 # Unfinished saved levels retain their original mode, rooms and riddle until completed.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
@@ -38,9 +38,12 @@ mode = "stage"
 [milestones.rooms]
 startLevels = [1,10,20]
 maxSceneNumbers = [5,10,0]
+# Exact count at each stage. Multi-room riddles need an answer of that length.
+# Use 0 for a stage to keep the [rooms] count and normal answer-length rules.
+roomCounts = [3,4,5]
 
 # Standard levels use this many distinct rooms; word lengths may be this number or fewer.
-# Multi-room puzzle levels treat count as a minimum and add rooms to fit the answer.
+# When no staged room count applies, multi-room riddles add rooms to fit the answer.
 # singleRoomSequential, singleRoomSpread and singleRoomFixed always use ONE room, regardless of count or answer length.
 # Requires at least count complete room_N / jumpscare_N pairs in levels/.
 # Short words use a subset of rooms; the other rooms contain no letter for that word.
@@ -113,9 +116,19 @@ startLevel = 1
 chance = 1
 wordCount = 1
 timeLimitMs = 60000
-decoyStartLevels = [1,6,11]
-decoyChances = [0,0.05,0.1]
+decoyLetterChance = 0
 flyingLetters = false
+evadesCamera = false
+
+# Same multi-room riddle and time limit, with flying letters.
+# A weight of 1 matches levels.puzzle, giving each a 50% chance.
+[levels.puzzleFlying]
+startLevel = 1
+chance = 1
+wordCount = 1
+timeLimitMs = 60000
+decoyLetterChance = 0
+flyingLetters = true
 evadesCamera = false
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
@@ -179,6 +192,7 @@ decoyChances = [0,0.05,0.1]
 [puzzles]
 minAnswerLength = 3
 maxAnswerLength = 10
+paperTextScale = 1.5
 hintFadeMs = 140
 hintBlurPx = 5
 
@@ -470,6 +484,7 @@ color = "#ffffff"
 
 # Responsive font sizes and effects. Vh values are a percentage of the visible height, including mobile toolbar resizing.
 [ui]
+textScale = 1.5
 wordTopGapPx = 8
 viewportAspectRatio = 0.625
 minFontPx = 14
@@ -562,6 +577,8 @@ loadTimeoutMs = 6000
 # Home screen copy. A saved Settings language overrides [language].code.
 [menu]
 title = "Housemaid in Hell"
+# Multiplier for menu titles and buttons, before the selected-button highlight.
+textScale = 1.5
 # How long Start takes to pan home.png to the right edge; 0 skips the pan.
 panMs = 650
 # Time offset between adjacent menu buttons and between Stay and Leave.
