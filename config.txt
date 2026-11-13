@@ -192,7 +192,7 @@ decoyChances = [0,0.05,0.1]
 [puzzles]
 minAnswerLength = 3
 maxAnswerLength = 10
-paperTextScale = 1.5
+paperTextScale = 1.2
 hintFadeMs = 140
 hintBlurPx = 5
 
@@ -484,7 +484,7 @@ color = "#ffffff"
 
 # Responsive font sizes and effects. Vh values are a percentage of the visible height, including mobile toolbar resizing.
 [ui]
-textScale = 1.5
+textScale = 1.2
 wordTopGapPx = 8
 viewportAspectRatio = 0.625
 minFontPx = 14
@@ -578,7 +578,7 @@ loadTimeoutMs = 6000
 [menu]
 title = "Housemaid in Hell"
 # Multiplier for menu titles and buttons, before the selected-button highlight.
-textScale = 1.5
+textScale = 1.2
 # How long Start takes to pan home.png to the right edge; 0 skips the pan.
 panMs = 650
 # Time offset between adjacent menu buttons and between Stay and Leave.
