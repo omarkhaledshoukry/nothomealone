@@ -11,8 +11,9 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# New levels: equal weights for stationary and flying multi-room riddles.
-# Unfinished saved levels retain their original mode, rooms and riddle until completed.
+# Only endless fixed riddles are enabled. Each solved riddle banks one level and adds 10 seconds.
+# Room count and riddle pool are chosen at the start of a run and stay fixed until the next run.
+# Switching to the endless-only config keeps completed levels and starts a fresh endless run.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -113,7 +114,7 @@ flyingLetters = false
 [levels.puzzle]
 # First progression level at which this feature may be selected.
 startLevel = 1
-chance = 1
+chance = 0
 wordCount = 1
 timeLimitMs = 60000
 decoyLetterChance = 0
@@ -124,11 +125,23 @@ evadesCamera = false
 # A weight of 1 matches levels.puzzle, giving each a 50% chance.
 [levels.puzzleFlying]
 startLevel = 1
-chance = 1
+chance = 0
 wordCount = 1
 timeLimitMs = 60000
 decoyLetterChance = 0
 flyingLetters = true
+evadesCamera = false
+
+# One fixed letter per room; collect in any order. A new riddle follows each solve
+# in the same run. The base countdown restarts only on Retry or a new run.
+[levels.puzzleEndless]
+startLevel = 1
+chance = 1
+wordCount = 1
+timeLimitMs = 60000
+timeBonusSeconds = 10
+decoyLetterChance = 0
+flyingLetters = false
 evadesCamera = false
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
@@ -253,7 +266,7 @@ jumpscareChance = 0.5
 title = "Battery Died"
 jumpscareChance = 0.5
 
-# Photographing a letter while the monster anomaly is active.
+# Missing the active anomaly while taking a photo in its room.
 [failures.anomaly]
 title = "Anomaly Undetected"
 jumpscareChance = 1
@@ -307,6 +320,7 @@ panSpeedScreensPerSecond = 1.2
 [camera]
 dragGain = 1.2
 momentumMinSpeed = 0.25
+# Fast horizontal swipes travel between the left, centre, and right stops.
 flickSpeed = 0.75
 velocityWindowMs = 100
 dragThresholdPx = 6
@@ -412,9 +426,9 @@ allowedRooms = [1,2,5,7,10,12,14]
 # Single-riddle modes have no completed word before the level ends.
 # Start their anomaly checks from READY by default; multiword modes retain afterWords.
 riddleAfterWords = 0
-# First progression level at which this feature may be selected.
-startLevel = 1
-enabled = false
+# Checks are allowed from progression level 5, subject to allowedRooms.
+startLevel = 5
+enabled = true
 afterWords = 1
 checkMs = 15000
 spawnChance = 0.5
@@ -599,7 +613,7 @@ exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
-howText = "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you."
+howText = "Drag to look around, or swipe quickly between the left, centre and right views. Use Prev and Next to switch rooms. Collect letters in any order by tapping them or using the shutter. Hold Hint to read the current riddle. Each answer gives you 10 extra seconds and a new riddle. If you find an anomaly, photograph it before anything else in that room."
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
 
 [menu.ar]
@@ -617,5 +631,5 @@ exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
-howText = "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك."
+howText = "اسحب لتنظر حولك، أو مرّر بسرعة للتنقل بين اليسار والوسط واليمين. استخدم زرّي السابق والتالي للتنقل بين الغرف. اجمع الحروف بأي ترتيب بالضغط عليها أو باستخدام زر التصوير. اضغط مطولًا على التلميح لقراءة اللغز الحالي. كل إجابة صحيحة تمنحك عشر ثوانٍ إضافية ولغزًا جديدًا. إذا ظهر شيء غريب في الغرفة، فصوّره قبل تصوير أي شيء آخر فيها."
 storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."
