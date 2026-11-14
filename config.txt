@@ -11,7 +11,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Only endless fixed riddles are enabled. Each solved riddle banks one level and adds 10 seconds.
+# Only endless fixed riddles are enabled. Each solved riddle banks one level and adds time.
 # Room count and riddle pool are chosen at the start of a run and stay fixed until the next run.
 # Switching to the endless-only config keeps completed levels and starts a fresh endless run.
 
@@ -132,14 +132,16 @@ decoyLetterChance = 0
 flyingLetters = true
 evadesCamera = false
 
-# One fixed letter per room; collect in any order. A new riddle follows each solve
-# in the same run. The base countdown restarts only on Retry or a new run.
+# One fixed letter per room; collect in any order. A new riddle follows each solve.
+# The countdown pauses until Ready on the next riddle; the remaining time carries over.
 [levels.puzzleEndless]
 startLevel = 1
 chance = 1
 wordCount = 1
 timeLimitMs = 60000
+# Regular bonus, or the larger bonus when the captured letters spell the answer in order.
 timeBonusSeconds = 10
+inOrderTimeBonusSeconds = 20
 decoyLetterChance = 0
 flyingLetters = false
 evadesCamera = false
@@ -434,6 +436,8 @@ checkMs = 15000
 spawnChance = 0.5
 offscreenMarginPx = 8
 alphaThreshold = 8
+# Android anomaly artwork multiplier. 1 uses the original colours, 1.3 brightens by 30%.
+androidBrightness = 1.3
 
 # afterWords=0 starts at READY. scale=0.2 is 20% of source size; topPx=-10 is 10px above the viewport.
 [spider]
@@ -613,7 +617,7 @@ exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
-howText = "Drag to look around, or swipe quickly between the left, centre and right views. Use Prev and Next to switch rooms. Collect letters in any order by tapping them or using the shutter. Hold Hint to read the current riddle. Each answer gives you 10 extra seconds and a new riddle. If you find an anomaly, photograph it before anything else in that room."
+howText = "Drag to look around. Use Prev and Next to switch rooms. Tap or photograph letters in any order. Collect them in spelling order for a bigger time bonus. Hold the # counter to reread the clue. The clock waits for Ready on each new riddle. If you see an anomaly, photograph it first."
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
 
 [menu.ar]
@@ -631,5 +635,5 @@ exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
-howText = "اسحب لتنظر حولك، أو مرّر بسرعة للتنقل بين اليسار والوسط واليمين. استخدم زرّي السابق والتالي للتنقل بين الغرف. اجمع الحروف بأي ترتيب بالضغط عليها أو باستخدام زر التصوير. اضغط مطولًا على التلميح لقراءة اللغز الحالي. كل إجابة صحيحة تمنحك عشر ثوانٍ إضافية ولغزًا جديدًا. إذا ظهر شيء غريب في الغرفة، فصوّره قبل تصوير أي شيء آخر فيها."
+howText = "اسحب لتنظر حولك. تنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. اجمعها بترتيب الكلمة لتحصل على وقت إضافي أطول. اضغط مطولًا على رقم اللغز لقراءته مجددًا. يتوقف الوقت عند كل لغز جديد حتى تضغط «جاهز». إذا رأيت شيئًا غريبًا، فصوّره أولًا."
 storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."

@@ -33,6 +33,7 @@
       --ui-text-scale: 1.5;
       --paper-text-scale: 1.5;
       --menu-text-scale: 2;
+      --time-bonus-ms: 820ms;
     }
 
     @supports (height: 100dvh) {
@@ -49,6 +50,8 @@
     * { box-sizing: border-box; }
 
     html, body {
+      color-scheme: light;
+      color-scheme: only light;
       margin: 0;
       width: 100%;
       height: 100%;
@@ -60,6 +63,13 @@
 
     body { cursor: grab; }
     body.grabbing { cursor: grabbing; }
+
+    /* Keep image and bitmap colours out of the browser's forced colour palette. */
+    #game img, #game canvas {
+      color-scheme: light;
+      color-scheme: only light;
+      forced-color-adjust: none;
+    }
 
     #game {
       color-scheme: light;
@@ -255,11 +265,12 @@
     }
 
     #cameraOverlay {
+      --camera-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
       position: absolute;
       z-index: 10;
       inset: 0;
       color: var(--camera-color, #fff);
-      font-family: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
+      font-family: var(--camera-font);
       font-variant-numeric: tabular-nums;
       pointer-events: none;
       text-shadow: none;
@@ -304,7 +315,7 @@
       opacity: 0;
       transform-origin: right top;
     }
-    #cameraTimeBonus.show { animation: timeBonus .82s ease-out both; }
+    #cameraTimeBonus.show { animation: timeBonus var(--time-bonus-ms) ease-out both; }
     @keyframes timeBonus {
       0% { opacity: 0; transform: translateY(0) scale(.6); }
       24% { opacity: 1; transform: translateY(2px) scale(1.2); }
@@ -513,7 +524,9 @@
     #portraitViewport.level-paused #sceneEffects *,
     #portraitViewport.level-paused #handBlocker,
     #portraitViewport.level-paused #handBlocker *,
-    #portraitViewport.level-paused #message { animation-play-state: paused; }
+    #portraitViewport.level-paused #message,
+    #portraitViewport.level-paused #cameraTimeBonus { animation-play-state: paused; }
+    #portraitViewport.riddle-intermission #handBlocker * { animation-play-state: paused; }
     #wordLoadError {
       width: min(88%, 440px);
       max-height: 90%;
@@ -734,11 +747,14 @@
     }
 
     /* During the clue card, keep the prepared room soft and hide gameplay UI. */
-    #portraitViewport.clue-intro-active .room-image,
-    #portraitViewport.clue-intro-active .room-video,
-    #portraitViewport.clue-intro-active .room-video-cover {
+    #portraitViewport.clue-intro-active:not(.next-riddle) .room-image,
+    #portraitViewport.clue-intro-active:not(.next-riddle) .room-video,
+    #portraitViewport.clue-intro-active:not(.next-riddle) .room-video-cover {
       filter: blur(var(--clue-blur, 5px));
     }
+
+    #portraitViewport.next-riddle #sceneEffects { --scene-hint-blur: var(--clue-blur, 5px); }
+    #portraitViewport.next-riddle #handBlocker { filter: blur(var(--clue-blur, 5px)); }
 
     #letterWorld,
     #hud {
@@ -833,6 +849,8 @@
       pointer-events: none;
       user-select: none;
       -webkit-user-drag: none;
+      -webkit-filter: var(--anomaly-color-filter, none);
+      filter: var(--anomaly-color-filter, none);
     }
 
     /* An opaque surface above the room and below the scare. It stays in place
@@ -1049,7 +1067,12 @@
       line-height: 1.5;
       direction: rtl;
     }
-    .arabic-hud-remaining { color: rgba(255,255,255,.58); direction: rtl; unicode-bidi: isolate; }
+    .arabic-hud-dots {
+      color: rgba(255,255,255,.58);
+      font-family: var(--camera-font);
+      direction: rtl;
+      unicode-bidi: isolate;
+    }
 
     /* Include the outer page too: older Android browsers can highlight a
        touch target's ancestor while the visible room is being replaced. */
@@ -1132,15 +1155,11 @@
     #menuShell[data-language="ar"] .menu-body { line-height: 1.65; }
     #menuShell [lang="en"] { font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", cursive; }
     .home-back:focus-visible, .paper-button:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
-    #menuShell button { -webkit-tap-highlight-color: transparent; }
-    #menuShell button:focus:not(:focus-visible) { outline: none; }
-    @media (hover: hover) and (pointer: fine) {
-      #menuShell button:focus-visible, #menuShell button.menu-button[data-selected] {
-        outline: 1px solid currentColor; outline-offset: 5px;
-      }
-    }
+    #menuShell button { -webkit-tap-highlight-color: transparent; outline: none; }
+    #menuShell button:focus-visible { color: #ffd986; }
     #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #clueIntro.hint-mode .home-back, #clueIntro.exit-mode .home-back { display: none; }
+    #portraitViewport.next-riddle .clue-file-controls, #clueIntro.dismiss .clue-file-controls { display: none; }
     #clueIntro.exit-mode { visibility: visible; transition: opacity var(--hint-fade-ms, 140ms) ease; }
     #clueIntro.exit-mode #clueTitle, #clueIntro.exit-mode #clueList, #clueIntro.exit-mode #puzzleText, #clueIntro.exit-mode #readyButton, #clueIntro.exit-mode .clue-file-controls { display: none; }
     #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; justify-content: safe center; gap: 12px; overflow: auto; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
@@ -1424,6 +1443,7 @@
       "wordCount": 1,
       "timeLimitMs": 60000,
       "timeBonusSeconds": 10,
+      "inOrderTimeBonusSeconds": 20,
       "decoyLetterChance": 0,
       "flyingLetters": false,
       "evadesCamera": false,
@@ -1628,6 +1648,7 @@
     "spawnChance": 0.5,
     "offscreenMarginPx": 8,
     "alphaThreshold": 8,
+    "androidBrightness": 1.3,
     "startLevel": 1,
     "allowedRooms": [
       1,
@@ -1965,6 +1986,7 @@
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let appleForegroundAudioPending = false;
     let gameplayPaused = pageSuspended;
+    let endlessIntermission = null; // "found" until the message ends, then "paper" until Ready.
     let exitConfirmationActive = false;
     let playbackRevision = 0;
     let levelResumePending = null;
@@ -1981,7 +2003,9 @@
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
       "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true],
       "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5],
-      "levels.puzzleEndless.timeBonusSeconds": [1, 600, true]
+      "levels.puzzleEndless.timeBonusSeconds": [1, 600, true],
+      "levels.puzzleEndless.inOrderTimeBonusSeconds": [1, 600, true],
+      "anomaly.androidBrightness": [1, 2]
     });
     for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
@@ -2318,7 +2342,7 @@
     refreshConfigBindings();
     let levelType = LEVEL_TYPES.standard;
     let ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
-    const USE_ANDROID_BITMAPS = /Android/i.test(navigator.userAgent);
+    const USE_ANDROID_BITMAPS = /Android/i.test(navigator.userAgent) || navigator.userAgentData?.platform === "Android";
 
     const viewport = document.getElementById("portraitViewport");
     const usePointerControls = () => viewport.classList.remove("keyboard-controls");
@@ -2371,12 +2395,12 @@
     const levelTimeoutJobs = new Map();
     let nextLevelTimeoutId = 0;
 
-    function levelTimeout(callback, delay) {
+    function levelTimeout(callback, delay, { riddleTransition = false } = {}) {
       const id = ++nextLevelTimeoutId;
-      const job = { callback, generation: levelGeneration, remaining: Math.max(0, delay), timer: null, run: 0, due: 0 };
+      const job = { callback, generation: levelGeneration, remaining: Math.max(0, delay), timer: null, run: 0, due: 0, riddleTransition };
       levelTimeouts.add(id);
       levelTimeoutJobs.set(id, job);
-      if (!gameplayPaused) armLevelTimeout(id, job);
+      if (!gameplayPaused && (!endlessIntermission || job.riddleTransition)) armLevelTimeout(id, job);
       return id;
     }
 
@@ -2406,7 +2430,9 @@
     }
 
     function resumeLevelTimeouts() {
-      for (const [id, job] of levelTimeoutJobs) if (job.timer === null) armLevelTimeout(id, job);
+      for (const [id, job] of levelTimeoutJobs) {
+        if (job.timer === null && (!endlessIntermission || job.riddleTransition)) armLevelTimeout(id, job);
+      }
     }
     const wordLoadError = document.getElementById("wordLoadError");
     const wordLoadTitle = document.getElementById("wordLoadTitle");
@@ -2453,8 +2479,8 @@
     const gameOverScreen = document.getElementById("gameOverScreen");
     const body = document.body;
 
-    function preserveOverlayImageColors(image, bitmap) {
-      const context = USE_ANDROID_BITMAPS ? bitmap.getContext("2d") : null;
+    function preserveOverlayImageColors(image, bitmap, getBrightness) {
+      const context = USE_ANDROID_BITMAPS ? bitmap.getContext("2d", getBrightness ? { willReadFrequently: true } : undefined) : null;
       if (!context) return;
       const paint = () => {
         if (!image.naturalWidth || !image.naturalHeight) return;
@@ -2462,6 +2488,25 @@
           bitmap.width = image.naturalWidth;
           bitmap.height = image.naturalHeight;
           context.drawImage(image, 0, 0);
+          bitmap.style.filter = "";
+          if (getBrightness) {
+            try {
+              const brightness = getBrightness();
+              if (brightness !== 1) {
+                const pixels = context.getImageData(0, 0, bitmap.width, bitmap.height);
+                const data = pixels.data;
+                // Adjust RGB only so translucent edges keep their original alpha.
+                for (let i = 0; i < data.length; i += 4) {
+                  if (!data[i + 3]) continue;
+                  data[i] *= brightness;
+                  data[i + 1] *= brightness;
+                  data[i + 2] *= brightness;
+                }
+                context.putImageData(pixels, 0, 0);
+              }
+              bitmap.style.filter = "none";
+            } catch {} // Cross-origin images keep the CSS brightness fallback.
+          }
           bitmap.style.display = getComputedStyle(image).display;
           bitmap.style.visibility = "visible";
           image.style.visibility = "hidden";
@@ -2476,11 +2521,18 @@
     // Keep the original images for decoding, dimensions and fallback. Their
     // canvas twins share every animation and drag transform, with untinted pixels.
     preserveOverlayImageColors(handImage, handBitmap);
-    preserveOverlayImageColors(anomalyImage, anomalyBitmap);
+    preserveOverlayImageColors(anomalyImage, anomalyBitmap, () => CONFIG.anomaly.androidBrightness);
 
     function setOverlayImageStyles(image, bitmap, styles) {
       Object.assign(image.style, styles);
       if (USE_ANDROID_BITMAPS) Object.assign(bitmap.style, styles);
+    }
+
+    function clearAnomalyArtwork() {
+      anomalyImage.style.visibility = "";
+      anomalyBitmap.style.visibility = "hidden";
+      setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
+      anomalyImage.removeAttribute("src");
     }
 
     function refreshMessageBitmap() {
@@ -2557,6 +2609,7 @@
     let wordAdvanceTimer = null;
     let cameraStartedAt = null;
     let cameraBonusMs = 0;
+    const TIME_BONUS_ANIMATION_MS = 820;
     let pausedCameraElapsedMs = null;
     let cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
     let cameraTimerInterval = null;
@@ -3296,7 +3349,7 @@
     }
 
     function switchRoom(direction) {
-      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || !roomsReady) return;
+      if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || !roomsReady) return;
       updateCameraTimer();
       if (gameOver) return;
       let next = activeRoomIndex + direction;
@@ -3947,6 +4000,7 @@
     }
 
     function beginGameplayFromClues() {
+      if (endlessIntermission === "paper") { resumeEndlessRiddle(); return; }
       if (menuPage !== null || gameplayPaused || !wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       if (!levelMediaIsPrepared()) { prepareMediaBeforeReady({ gesture: true }); return; }
       gameplayStarting = true;
@@ -3966,21 +4020,27 @@
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
       startCameraTimer();
-      clueIntro.classList.add("dismiss");
-      viewport.classList.remove("clue-intro-active");
+      dismissClueIntro();
       anchors.forEach(anchor => { anchor.hidden = true; });
       showCurrentLetter();
-      clueDismissTimer = levelTimeout(() => {
-        clueDismissTimer = null;
-        clueIntro.classList.remove("show", "dismiss");
-        clueIntro.setAttribute("aria-hidden", "true");
-      }, CONFIG.ui.clueDismissMs);
       if (CONFIG.anomaly.enabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
       scheduleNextHandCheck();
       scheduleSpiderCheck();
+    }
+
+    function dismissClueIntro() {
+      readyButton.disabled = true;
+      clueIntro.classList.add("dismiss");
+      clueIntro.setAttribute("aria-hidden", "true");
+      viewport.classList.remove("clue-intro-active", "next-riddle");
+      clearLevelTimeout(clueDismissTimer);
+      clueDismissTimer = levelTimeout(() => {
+        clueDismissTimer = null;
+        clueIntro.classList.remove("show", "dismiss");
+      }, CONFIG.ui.clueDismissMs);
     }
 
     readyButton.addEventListener("click", beginGameplayFromClues);
@@ -3990,7 +4050,9 @@
 
     function updateLevelStatus() {
       const single = usesSingleRoomControls(), control = puzzleHintControl();
-      status.textContent = isPuzzleLevel() ? CONFIG.text.hunt : gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
+      const riddleNumber = `#${completedWordCount + 1}`;
+      status.textContent = isEndlessPuzzle() ? riddleNumber : isPuzzleLevel() ? CONFIG.text.hunt :
+        gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       status.classList.toggle("puzzle-hint", isPuzzleLevel() && !single);
       prevRoomButton.classList.toggle("hold-hint", isPuzzleLevel() && single);
       prevRoomButton.textContent = single ? CONFIG.text.hint : CONFIG.text.previousRoom;
@@ -3999,13 +4061,14 @@
       if (isPuzzleLevel()) {
         if (control === status) { control.setAttribute("role", "button"); control.setAttribute("tabindex", "0"); }
         control.setAttribute("aria-controls", "clueIntro");
-        control.setAttribute("aria-label", `${CONFIG.text.hint}: hold to read the puzzle`);
+        const label = isArabic() ? "اضغط مطولًا لقراءة اللغز" : "Hold to read the riddle";
+        control.setAttribute("aria-label", isEndlessPuzzle() ? `${riddleNumber}: ${label}` : `${CONFIG.text.hint}: ${label}`);
         control.setAttribute("aria-expanded", String(hintActive));
       }
     }
 
     function showPuzzleHint() {
-      if (gameplayPaused || menuPage !== null || !isPuzzleLevel() || !gameplayStarted || handVisible || gameOver || roomCompleted || !currentPuzzle) return false;
+      if (gameplayPaused || endlessIntermission || menuPage !== null || !isPuzzleLevel() || !gameplayStarted || handVisible || gameOver || roomCompleted || !currentPuzzle) return false;
       clueIntro.classList.remove("exit-mode");
       document.getElementById("exitConfirmContent").hidden = true;
       clearLevelTimeout(hintHideTimer); clearLevelTimeout(clueDismissTimer);
@@ -4226,10 +4289,6 @@
       wordDisplay.dir = isArabic() ? "rtl" : "ltr";
       wordDisplay.classList.toggle("unordered-hud", isEndlessPuzzle());
       if (isArabic()) {
-        const prefix = document.createElement("span"), remaining = document.createElement("span");
-        prefix.className = "arabic-hud-prefix";
-        remaining.className = "arabic-hud-remaining";
-        wordDisplay.append(prefix, remaining);
         renderArabicHud();
         fitHudWord();
         return;
@@ -4245,22 +4304,38 @@
     }
 
     function renderArabicHud(count = selectedCount) {
-      // One text node is essential: separate flex letters interrupt Arabic shaping.
-      const unordered = isEndlessPuzzle();
-      const found = unordered ? new Set(selectionHistory) : null;
-      const shown = unordered ? [...currentWord].map((letter, index) => found.has(index) ? letter : "·").join("") : currentWord.slice(0, count);
-      wordDisplay.querySelector(".arabic-hud-prefix").textContent = shown;
-      wordDisplay.querySelector(".arabic-hud-remaining").textContent = unordered ? "" : "·".repeat(Math.max(0, currentWord.length - count));
+      const found = isEndlessPuzzle() ? new Set(selectionHistory) : null;
+      const runs = document.createDocumentFragment();
+      let run = null, shown = "";
+      for (const [index, letter] of [...currentWord].entries()) {
+        const visible = found ? found.has(index) : index < count;
+        const className = visible ? "arabic-hud-prefix" : "arabic-hud-dots";
+        if (run?.className !== className) {
+          run = document.createElement("span");
+          run.className = className;
+          run.dataset.start = index;
+          runs.append(run);
+        }
+        const glyph = visible ? letter : "·";
+        run.textContent += glyph;
+        shown += glyph;
+      }
+      // Adjacent Arabic letters share a text node, so they can still join.
+      wordDisplay.replaceChildren(runs);
       wordDisplay.setAttribute("aria-label", `${shown} ${count}/${currentWord.length}`);
     }
 
     function arabicHudCaptureTarget(index) {
-      const prefix = wordDisplay.querySelector(".arabic-hud-prefix");
-      const range = document.createRange();
-      range.setStart(prefix.firstChild, index);
-      range.setEnd(prefix.firstChild, index + 1);
-      const rect = range.getBoundingClientRect();
-      return rect.height ? rect : prefix.getBoundingClientRect();
+      for (const run of wordDisplay.children) {
+        const offset = index - Number(run.dataset.start);
+        if (offset < 0 || offset >= run.textContent.length) continue;
+        const range = document.createRange();
+        range.setStart(run.firstChild, offset);
+        range.setEnd(run.firstChild, offset + 1);
+        const rect = range.getBoundingClientRect();
+        return rect.width && rect.height ? rect : run.getBoundingClientRect();
+      }
+      return wordDisplay.getBoundingClientRect();
     }
 
     function fitHudWord() {
@@ -4269,18 +4344,19 @@
       const minimum = CONFIG.letters.hudMinFontPx * CONFIG.ui.textScale;
       if (isArabic()) {
         const measure = document.createElement("canvas").getContext("2d");
+        const gap = parseFloat(getComputedStyle(wordDisplay).columnGap) || 0;
+        measure.font = `${maximum}px ${getComputedStyle(cameraOverlay).getPropertyValue("--camera-font").trim() || "monospace"}`;
+        const dotWidth = measure.measureText("·").width;
         measure.font = `${maximum}px "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
-        const prefixWidths = Array.from({ length: currentWord.length + 1 }, (_, count) => measure.measureText(currentWord.slice(0, count)).width);
-        measure.font = `${maximum}px "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
         let widest = 1;
-        for (let count = 0; count <= currentWord.length; count++) {
-          widest = Math.max(widest, prefixWidths[count] + measure.measureText("·".repeat(currentWord.length - count)).width + CONFIG.letters.hudGapPx * 2);
-        }
         if (isEndlessPuzzle()) {
-          measure.font = `${maximum}px "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
-          const dotWidth = measure.measureText("·").width;
-          widest = Math.max(widest, [...currentWord].reduce((total, letter) =>
-            total + Math.max(dotWidth, measure.measureText(letter).width), CONFIG.letters.hudGapPx * 2));
+          widest = Math.max(1, measure.measureText(currentWord).width, [...currentWord].reduce((total, letter) =>
+            total + Math.max(dotWidth, measure.measureText(letter).width), Math.max(0, currentWord.length - 1) * gap));
+        } else {
+          for (let count = 0; count <= currentWord.length; count++) {
+            const missing = currentWord.length - count;
+            widest = Math.max(widest, measure.measureText(currentWord.slice(0, count)).width + dotWidth * missing + (count && missing ? gap : 0));
+          }
         }
         wordDisplay.style.setProperty("--hud-letter-size", `${Math.max(minimum, Math.min(maximum, maximum * width / widest))}px`);
         return;
@@ -4292,7 +4368,7 @@
 
     function updateCameraControls() {
       updateLevelStatus();
-      const blocked = gameplayPaused || menuPage !== null || !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
+      const blocked = gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
       if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = blocked || hintActive || wordTransitionPending || captureInProgress;
       if (usesSingleRoomControls()) {
@@ -4338,8 +4414,8 @@
       cameraTimerInterval = window.setInterval(updateCameraTimer, CONFIG.camera.timerRefreshMs);
     }
 
-    function stopCameraTimer() {
-      cancelJumpscareStandbySeek();
+    function stopCameraTimer({ keepStandby = false } = {}) {
+      if (!keepStandby) cancelJumpscareStandbySeek();
       if (cameraStartedAt !== null) {
         cameraRemainingSeconds = Math.max(0, Math.ceil(
           (ROOM_TIME_LIMIT_MS + cameraBonusMs - (performance.now() - cameraStartedAt)) / 1000));
@@ -4351,15 +4427,15 @@
       updateCameraTimer();
     }
 
-    function pauseCameraTimer() {
+    function pauseCameraTimer(options) {
       if (cameraStartedAt === null) return;
       const elapsed = clamp(performance.now() - cameraStartedAt, 0, ROOM_TIME_LIMIT_MS + cameraBonusMs);
-      stopCameraTimer();
+      stopCameraTimer(options);
       pausedCameraElapsedMs = elapsed;
     }
 
     function resumeCameraTimer() {
-      if (pausedCameraElapsedMs === null || gameOver || roomCompleted) return;
+      if (pausedCameraElapsedMs === null || endlessIntermission || gameOver || roomCompleted) return;
       cameraStartedAt = performance.now() - pausedCameraElapsedMs;
       pausedCameraElapsedMs = null;
       updateCameraTimer();
@@ -4953,9 +5029,14 @@
     }
 
     function awardEndlessRiddle() {
-      const seconds = CONFIG.levels.puzzleEndless.timeBonusSeconds;
+      const { timeBonusSeconds, inOrderTimeBonusSeconds } = CONFIG.levels.puzzleEndless;
+      // The capture sequence must spell the answer. Identical letters are interchangeable.
+      const inOrder = selectionHistory.length === currentWord.length &&
+        selectionHistory.every((slot, index) => currentWord[slot] === currentWord[index]);
+      const seconds = inOrder ? inOrderTimeBonusSeconds : timeBonusSeconds;
       cameraBonusMs += seconds * 1000;
-      updateCameraTimer();
+      // Leave any near-deadline media warm-up intact; only the game clock is held.
+      pauseCameraTimer({ keepStandby: true });
       cameraTimeBonus.classList.remove("show");
       cameraTimeBonus.textContent = `+${seconds} ${isArabic() ? "ث" : "sec"}`;
       void cameraTimeBonus.offsetWidth;
@@ -4983,26 +5064,62 @@
       return { ...endlessDeck.pop() };
     }
 
-    function nextEndlessRiddle() {
+    function showNextEndlessRiddle() {
+      endlessIntermission = "paper";
+      message.classList.remove("show");
+      finishLetterTransfer({ reveal: false });
+      stopShutterEffect();
+      currentPuzzle = drawEndlessRiddle();
+      populateClueList();
+      clearLevelTimeout(clueDismissTimer);
+      clueDismissTimer = null;
+      viewport.classList.add("clue-intro-active", "next-riddle");
+      cameraOverlay.inert = true;
+      cameraOverlay.setAttribute("aria-hidden", "true");
+      clueIntro.classList.remove("dismiss");
+      clueIntro.classList.add("show");
+      clueIntro.setAttribute("aria-hidden", "false");
+      readyButton.disabled = false;
+      if (viewport.classList.contains("keyboard-controls")) readyButton.focus();
+    }
+
+    function resumeEndlessRiddle() {
+      if (endlessIntermission !== "paper" || readyButton.disabled || gameplayPaused || isPageInactive() || menuPage !== null || gameOver) return;
+      endlessIntermission = null;
+      viewport.classList.remove("riddle-intermission");
+      dismissClueIntro();
+      cameraOverlay.inert = false;
+      cameraOverlay.setAttribute("aria-hidden", "false");
       words = [currentPuzzle.answer];
       wordLetterRooms = [makeWordRoomOrder(currentPuzzle.answer)];
       startWord(0);
+      resumeLevelTimeouts();
+      resumeCameraTimer();
+      resumeSpiderEncounter();
     }
 
     function completeWord() {
       if (wordTransitionPending || gameOver || roomCompleted) return;
       wordTransitionPending = true;
-      updateCameraControls();
+      const endless = isEndlessPuzzle();
+      if (endless) {
+        endlessIntermission = "found";
+        // The Found animation advances, but encounter checks wait for Ready.
+        viewport.classList.add("riddle-intermission");
+        pauseLevelTimeouts();
+        pauseSpiderEncounter();
+        finishPanGesture();
+        finishShutterGesture();
+      }
       completedWordCount++;
+      updateCameraControls();
       // Correct words use power, but reserve at least the last slot for misses.
-      const reserve = isEndlessPuzzle() ? Math.max(1, CONFIG.battery.wordReserve) : CONFIG.battery.wordReserve;
+      const reserve = endless ? Math.max(1, CONFIG.battery.wordReserve) : CONFIG.battery.wordReserve;
       const cost = Math.min(CONFIG.battery.wordCost, Math.max(0, batterySlotsRemaining - reserve));
       if (cost) drainBatterySlot(cost);
       if (gameOver) return;
-      if (isEndlessPuzzle()) {
+      if (endless) {
         awardEndlessRiddle();
-        currentPuzzle = drawEndlessRiddle();
-        populateClueList();
       } else if (completedWordCount >= words.length) {
         roomCompleted = true;
         hidePuzzleHint({ immediate: true });
@@ -5019,12 +5136,12 @@
         scheduleAnomalyCheck();
       }
       if (!roomCompleted && !spiderActive && spiderTimer === null) scheduleSpiderCheck();
-      updateLevelStatus();
       message.classList.remove("show");
       refreshMessageBitmap();
       void message.offsetWidth;
       message.classList.add("show");
       wordAdvanceTimer = levelTimeout(() => {
+        wordAdvanceTimer = null;
         if (gameOver) return;
         if (roomCompleted) {
           document.getElementById("gameOverTitle").textContent = CONFIG.text.roomComplete;
@@ -5033,9 +5150,10 @@
           showResultsScreen();
           return;
         }
-        if (isEndlessPuzzle()) nextEndlessRiddle();
+        if (endless) showNextEndlessRiddle();
         else startWord(wordIndex + 1);
-      }, CONFIG.letters.wordTransitionMs);
+      }, endless ? Math.max(CONFIG.letters.wordTransitionMs, CONFIG.ui.foundFlashMs, TIME_BONUS_ANIMATION_MS) : CONFIG.letters.wordTransitionMs,
+      { riddleTransition: endless });
     }
 
     function keyboardEventCode(event) {
@@ -5052,7 +5170,7 @@
     }
 
     function keyboardInputIsAvailable() {
-      return CONFIG.keyboard.enabled && menuPage === null && !gameplayPaused && gameplayStarted && roomsReady && !hintActive &&
+      return CONFIG.keyboard.enabled && menuPage === null && !gameplayPaused && !endlessIntermission && gameplayStarted && roomsReady && !hintActive &&
         !gameOver && !roomCompleted && !document.hidden;
     }
 
@@ -5154,7 +5272,8 @@
           event.target?.isContentEditable || event.target?.closest?.("input, textarea, select, .progress-actions, #localFileControls, .home-back, #exitConfirmContent") ||
           !CONFIG.keyboard.advanceKeys.includes(keyboardEventCode(event))) return false;
       const focusedButton = event.target?.closest?.("button, a[href]");
-      if (focusedButton && focusedButton !== readyButton && focusedButton !== prepareMediaButton) {
+      const nextRiddleReady = endlessIntermission === "paper" && clueIntro.classList.contains("show") && !readyButton.disabled;
+      if (focusedButton && focusedButton !== readyButton && focusedButton !== prepareMediaButton && !nextRiddleReady) {
         if (event.repeat) event.preventDefault();
         return false; // Let the focused native control handle Enter.
       }
@@ -5162,7 +5281,7 @@
       const preparationVisible = !mediaPreparation.hidden && !prepareMediaButton.disabled && !gameplayStarted;
       const readyVisible = !gameplayStarted && !hintActive && clueIntro.classList.contains("show") && !readyButton.disabled;
       const endVisible = gameOverScreen.classList.contains("show");
-      if (!preparationVisible && !readyVisible && !endVisible) return false;
+      if (!preparationVisible && !readyVisible && !nextRiddleReady && !endVisible) return false;
       event.preventDefault(); event.stopPropagation();
       if (event.repeat) return true;
       if (endVisible) retryOrContinue();
@@ -5207,7 +5326,7 @@
 
     function startCameraMomentum(velocity, travel, swipeOrigin = null) {
       stopCameraMomentum();
-      if (gameplayPaused || menuPage !== null || !gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
+      if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
       if (Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
 
       const width = viewport.getBoundingClientRect().width;
@@ -5277,7 +5396,7 @@
 
     function pointerDown(event) {
       // The clue card and its READY button own their own pointer events.
-      if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
+      if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
       if (event.isPrimary === false) return;
       if (event.button !== undefined && event.button !== 0) return;
       stopKeyboardInput();
@@ -5778,12 +5897,12 @@
     }
 
     async function spawnAnomalyOffscreen() {
-      if (gameplayPaused || menuPage !== null || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+      if (gameplayPaused || endlessIntermission || menuPage !== null || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
       const generation = levelGeneration;
       const spawnRoomIndex = activeRoomIndex;
       const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
       const meta = await readAlphaBounds(src);
-      if (generation !== levelGeneration || gameplayPaused || menuPage !== null || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      if (generation !== levelGeneration || gameplayPaused || endlessIntermission || menuPage !== null || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
 
       // The anomaly PNG is authored against the same full 1280x720 scene as
       // the video. Keep the PNG fixed at the scene origin so its opaque pixels
@@ -5839,8 +5958,7 @@
       anomalyMeta = null;
       anomalyWorldBox = null;
       anomalyRoomIndex = -1;
-      setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
-      anomalyImage.removeAttribute("src");
+      clearAnomalyArtwork();
       anomalyWorld.classList.remove("captured");
       if (!gameOver && !roomCompleted) scheduleAnomalyCheck();
     }
@@ -6254,7 +6372,7 @@
       resumeCameraTimer();
       if (gameplayStarted && !gameOver && !roomCompleted) {
         showCurrentLetter({ animate: false });
-        resumeSpiderEncounter();
+        if (!endlessIntermission) resumeSpiderEncounter();
       }
       if (dollRetreatAnimation?.playState === "paused") dollRetreatAnimation.play();
       pendingScareCentre?.();
@@ -6339,7 +6457,9 @@
           }
           if (gesture) {
             unmuteParkedScares();
-            if (pausedSpiderSoundOffset !== null) resumePausedSpiderSound({ fromResumeTap: true });
+            if (pausedSpiderSoundOffset !== null) {
+              if (!endlessIntermission) resumePausedSpiderSound({ fromResumeTap: true });
+            }
             else unlockSpiderSound({ refreshAudio });
           }
         }
@@ -6536,13 +6656,17 @@
       clip.classList.add("priming");
       try {
         const ready = await seekJumpscareStandbyFrame(Math.min(CONFIG.loading.standbySeekSeconds, clip.duration / 2), room);
-        if (ready && !gameOver && !roomCompleted && cameraStartedAt !== null) await seekJumpscareStandbyFrame(0, room);
+        if (ready && !gameOver && !roomCompleted && (cameraStartedAt !== null || endlessIntermission)) {
+          await seekJumpscareStandbyFrame(0, room);
+        }
       } finally { clip.classList.remove("priming"); }
     }
 
     function recoverLevelAudioFromGesture(event) {
       if (!event.isTrusted || gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || gameOver || roomCompleted) return;
-      if (pausedSpiderSoundOffset !== null) resumeSpiderEncounter();
+      if (pausedSpiderSoundOffset !== null) {
+        if (!endlessIntermission) resumeSpiderEncounter();
+      }
       else if (!spiderSoundReady) unlockSpiderSound();
       const room = levelRooms[activeRoomIndex];
       if (room && room.media === room.video && (room.video.paused || room.video.muted)) {
@@ -6978,6 +7102,7 @@
       levelTimeouts.clear();
       levelTimeoutJobs.clear();
       exitConfirmationActive = false;
+      endlessIntermission = null;
       gameplayPaused = isPageInactive();
       viewport.classList.toggle("level-paused", gameplayPaused);
       document.getElementById("exitConfirmContent").hidden = true;
@@ -7014,8 +7139,7 @@
       anomalyFadeTimer = null;
       anomalyRoomIndex = spiderRoomIndex = -1;
       anomalyMeta = anomalyWorldBox = null;
-      anomalyImage.removeAttribute("src");
-      setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
+      clearAnomalyArtwork();
       anomalyWorld.style.display = "";
       anomalyWorld.classList.remove("captured");
       spiderWorld.style.display = "";
@@ -7062,10 +7186,11 @@
       levelLoadFailure = null;
       document.getElementById("levelLoadDetails").hidden = true;
       message.classList.remove("show"); snapButton.classList.remove("snapping");
-      viewport.classList.remove("scene-blackout", "hand-active", "hint-active", "hint-transition", "clue-intro-active", "exit-confirm-active");
+      viewport.classList.remove("scene-blackout", "hand-active", "hint-active", "hint-transition", "clue-intro-active", "exit-confirm-active", "next-riddle", "riddle-intermission");
       clueIntro.classList.remove("show", "dismiss", "hint-mode", "exit-mode");
       clueIntro.setAttribute("aria-hidden", "true");
       cameraOverlay.setAttribute("aria-hidden", "true");
+      cameraOverlay.inert = false;
       gameOverScreen.classList.remove("show");
       readyButton.disabled = true;
       mediaPreparation.hidden = true;
@@ -7192,12 +7317,13 @@
         "--hint-fade-ms": `${CONFIG.puzzles.hintFadeMs}ms`, "--hint-blur": `${CONFIG.puzzles.hintBlurPx}px`,
         "--game-over-jitter-ms": `${CONFIG.ui.gameOverJitterMs}ms`, "--retry-jitter-ms": `${CONFIG.ui.retryJitterMs}ms`,
         "--retry-jitter-delay": `${CONFIG.ui.retryJitterDelayMs}ms`, "--found-flash-ms": `${CONFIG.ui.foundFlashMs}ms`,
-        "--menu-jitter-stagger": `${CONFIG.menu.jitterStaggerMs}ms`,
+        "--menu-jitter-stagger": `${CONFIG.menu.jitterStaggerMs}ms`, "--time-bonus-ms": `${TIME_BONUS_ANIMATION_MS}ms`,
         "--hud-pop-ms": `${CONFIG.ui.hudPopMs}ms`, "--hud-letter-gap": `${CONFIG.letters.hudGapPx}px`,
         "--game-over-min": `${CONFIG.ui.gameOverMinFontPx}px`, "--game-over-max": `${CONFIG.ui.gameOverMaxFontPx}px`, "--game-over-vh": CONFIG.ui.gameOverFontVh,
         "--retry-min": `${CONFIG.ui.retryMinFontPx}px`, "--retry-max": `${CONFIG.ui.retryMaxFontPx}px`, "--retry-vh": CONFIG.ui.retryFontVh
       };
       for (const [key, value] of Object.entries(cssSettings)) style.setProperty(key, String(value));
+      if (USE_ANDROID_BITMAPS) anomalyWorld.style.setProperty("--anomaly-color-filter", `brightness(${CONFIG.anomaly.androidBrightness})`);
       document.documentElement.dataset.gameLanguage = CONFIG.language.code;
       clueList.lang = CONFIG.language.code;
       clueList.dir = isArabic() ? "rtl" : "ltr";
@@ -7551,7 +7677,7 @@
     }
 
     function openExitConfirmation() {
-      if (menuPage !== null || gameplayPaused || isPageInactive() || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
+      if (menuPage !== null || gameplayPaused || endlessIntermission || isPageInactive() || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
       updateCameraTimer();
       if (gameOver) return;
       hidePuzzleHint({ immediate: true });
