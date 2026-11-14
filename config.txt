@@ -579,7 +579,7 @@ minXFraction = 0
 maxXFraction = 1
 # >1 moves the doll faster than the room, so it feels closer to the player.
 parallaxMultiplier = 1.35
-blurPx = 1.2
+blurPx = 0
 opacity = 1
 # Any jumpscare sends the active doll upwards over the playing video.
 retreatMs = 180
