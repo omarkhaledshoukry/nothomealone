@@ -782,6 +782,12 @@
     /* Deepest scene overlay: above the room pixels, below letters and props.
        It remains inside sceneEffects so all existing blur triggers still apply. */
     #anomalyWorld { z-index: 1; }
+    /* This variant sits above all scene props, still below the hand and UI. */
+    #anomalyWorld.foreground-anomaly {
+      z-index: 6;
+      -webkit-filter: blur(var(--anomaly2-blur, 1.2px));
+      filter: blur(var(--anomaly2-blur, 1.2px));
+    }
     #dollWorld {
       position: absolute;
       z-index: 4;
@@ -1448,6 +1454,10 @@
       "decoyLetterChance": 0,
       "flyingLetters": false,
       "evadesCamera": false,
+      "flyingLetterStartLevel": 5,
+      "flyingLetterChance": 0.25,
+      "evadingLetterStartLevel": 10,
+      "evadingLetterChance": 0.10,
       "startLevel": 1
     },
     "flyingPuzzle": {
@@ -1650,7 +1660,7 @@
     "offscreenMarginPx": 8,
     "alphaThreshold": 8,
     "androidBrightness": 1.3,
-    "startLevel": 1,
+    "startLevel": 12,
     "allowedRooms": [
       1,
       2,
@@ -1663,8 +1673,9 @@
   },
   "anomaly2": {
     "enabled": true,
-    "startLevel": 10,
-    "allowedRooms": "all"
+    "startLevel": 24,
+    "allowedRooms": "all",
+    "blurPx": 1.2
   },
   "spider": {
     "enabled": true,
@@ -1679,10 +1690,10 @@
     "offscreenMarginPx": 8,
     "retreatExtraPx": 4,
     "volume": 1,
-    "skipLeadingSilence": true,
+    "skipLeadingSilence": false,
     "silenceThreshold": 0.001,
     "soundPreRollSamples": 256,
-    "startLevel": 1
+    "startLevel": 2
   },
   "hand": {
     "enabled": true,
@@ -1701,7 +1712,7 @@
     "exitViewportMultiplier": 1.15,
     "exitImageMultiplier": 1.1,
     "blurPx": 3,
-    "startLevel": 1
+    "startLevel": 4
   },
   "shutter": {
     "durationMs": 240,
@@ -2015,7 +2026,10 @@
       "levels.puzzleEndless.inOrderBatteryBonusSlots": [0, 12, true],
       "levels.puzzleEndless.tapTimeBonusSeconds": [0, 600, true],
       "levels.puzzleEndless.roomRotationEvery": [0, 1000000000, true],
+      "levels.puzzleEndless.flyingLetterStartLevel": [1, 1000000001, true],
+      "levels.puzzleEndless.evadingLetterStartLevel": [1, 1000000001, true],
       "anomaly2.startLevel": [1, 1000000001, true],
+      "anomaly2.blurPx": [0, 20],
       "anomaly.androidBrightness": [1, 2]
     });
     for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
@@ -2525,6 +2539,7 @@
     }
 
     function clearAnomalyArtwork() {
+      anomalyWorld.classList.remove("foreground-anomaly");
       anomalyImage.style.visibility = "";
       anomalyBitmap.style.visibility = "hidden";
       setOverlayImageStyles(anomalyImage, anomalyBitmap, { display: "none" });
@@ -4913,8 +4928,8 @@
         }
       });
       updateDecoyVisibilityState();
-      if (levelType.flyingLetters && !gameplayPaused && menuPage === null && gameplayStarted && !gameOver && !roomCompleted &&
-          !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) && visibleRoomLetterIndices().length) startButterflyFlight();
+      if (!gameplayPaused && !endlessIntermission && menuPage === null && gameplayStarted && !gameOver && !roomCompleted &&
+          !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel())) startButterflyFlight();
       else stopButterflyFlight();
     }
 
@@ -4925,9 +4940,10 @@
     }
 
     function startButterflyFlight() {
-      // One animation loop updates every visible letter. Existing letters keep
+      // One animation loop updates visible flying letters. Existing letters keep
       // their velocities when another letter is captured, including overlaps.
-      const indices = visibleRoomLetterIndices();
+      const indices = visibleRoomLetterIndices().filter(index => tiles[index].classList.contains("butterfly-letter"));
+      if (!indices.length) { stopButterflyFlight(); return; }
       const visibleAnchors = new Set(indices.map(index => anchors[index]));
       for (const anchor of butterflyFlightStates.keys()) if (!visibleAnchors.has(anchor)) butterflyFlightStates.delete(anchor);
       for (const index of indices) {
@@ -4957,7 +4973,7 @@
       if (butterflyFlightFrame || !butterflyFlightStates.size) return;
       const step = time => {
         butterflyFlightFrame = 0;
-        if (gameplayPaused || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || wordTransitionPending ||
+        if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || wordTransitionPending ||
             captureInProgress && !isSpreadLetterLevel()) {
           stopButterflyFlight();
           return;
@@ -4982,7 +4998,7 @@
           }
           let targetX = state.goalX, targetY = state.goalY;
           let intensity = 0;
-          if (levelType.evadesCamera) {
+          if (tile.dataset.movement === "evading") {
             const viewWidth = viewport.getBoundingClientRect().width;
             const center = -offsetX + viewWidth / 2;
             const letterX = parseFloat(anchor.style.left);
@@ -5033,6 +5049,22 @@
       butterflyFlightFrame = requestAnimationFrame(step);
     }
 
+    function chooseLetterMovement() {
+      // Keep the explicit all-flying setting for existing level types and configs.
+      if (levelType.flyingLetters) return levelType.evadesCamera ? "evading" : "flying";
+      if (!isEndlessPuzzle()) return "fixed";
+      const rules = levelType;
+      const flying = levelIsUnlocked(rules.flyingLetterStartLevel) ? rules.flyingLetterChance : 0;
+      const evading = levelIsUnlocked(rules.evadingLetterStartLevel) ? rules.evadingLetterChance : 0;
+      if (!flying && !evading) return "fixed";
+      // A single draw gives each style its own share. If their total exceeds
+      // 100%, the evasive share takes priority and flight fills what's left.
+      const roll = Math.random();
+      if (roll < evading) return "evading";
+      if (roll < evading + flying) return "flying";
+      return "fixed";
+    }
+
     function createScatteredLetters() {
       stopButterflyFlight();
       letterWorld.replaceChildren();
@@ -5051,7 +5083,8 @@
 
         const tile = document.createElement("span");
         tile.className = "letter-tile";
-        if (levelType.flyingLetters) tile.classList.add("butterfly-letter");
+        tile.dataset.movement = chooseLetterMovement();
+        if (tile.dataset.movement !== "fixed") tile.classList.add("butterfly-letter");
         tile.dataset.index = index;
         tile.dataset.letter = letter;
         tile.style.setProperty("--letter-scale", CONFIG.letters.minScale + Math.random() * (CONFIG.letters.maxScale - CONFIG.letters.minScale));
@@ -5096,11 +5129,12 @@
       const frame = viewport.getBoundingClientRect();
       const worldWidth = renderedVideoWidth || frame.width;
       anchors.forEach((anchor, index) => {
+        const flying = tiles[index].classList.contains("butterfly-letter");
         const wasHidden = anchor.hidden;
         anchor.hidden = false;
         const glyph = anchor.querySelector(".letter-glyph");
         let footprint = glyph.getBoundingClientRect();
-        if (levelType.flyingLetters) {
+        if (flying) {
           const radius = Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + CONFIG.butterfly.radiusPaddingPx;
           anchor.dataset.flightRadius = radius;
           footprint = { width: radius * 2, height: radius * 2 };
@@ -5111,7 +5145,7 @@
           const decoy = glyph.textContent;
           glyph.textContent = tiles[index].dataset.letter;
           const correct = glyph.getBoundingClientRect();
-          if (levelType.flyingLetters) {
+          if (flying) {
             const radius = Math.max(Number(anchor.dataset.flightRadius), Math.hypot(glyph.offsetWidth, glyph.offsetHeight) / 2 + CONFIG.butterfly.radiusPaddingPx);
             anchor.dataset.flightRadius = radius;
             footprint = { width: radius * 2, height: radius * 2 };
@@ -5121,7 +5155,7 @@
         anchor.hidden = wasHidden;
         // Include rotation, the first letter's small vibration, and a margin
         // so the complete glyph remains clear of both UI rows and room edges.
-        const padding = levelType.flyingLetters ? CONFIG.butterfly.paddingPx : tiles[index].classList.contains("first-letter") ? Math.max(CONFIG.letters.firstPaddingPx, CONFIG.letters.vibrationPx) : CONFIG.letters.paddingPx;
+        const padding = flying ? CONFIG.butterfly.paddingPx : tiles[index].classList.contains("first-letter") ? Math.max(CONFIG.letters.firstPaddingPx, CONFIG.letters.vibrationPx) : CONFIG.letters.paddingPx;
         const minX = footprint.width / 2 + padding;
         const maxX = Math.max(minX, worldWidth - minX);
         const minY = band.top + footprint.height / 2 + padding;
@@ -6004,7 +6038,7 @@
       if (completedWordCount < anomalyWordThreshold()) return [];
       return [
         { rules: CONFIG.anomaly, files: CONFIG.assets.anomalyFiles },
-        { rules: CONFIG.anomaly2, files: [CONFIG.assets.anomaly2File] }
+        { rules: CONFIG.anomaly2, files: [CONFIG.assets.anomaly2File], foreground: true }
       ].filter(({ rules, files }) => rules.enabled && levelIsUnlocked(rules.startLevel) && files.length &&
         (rules.allowedRooms === "all" || rules.allowedRooms.length));
     }
@@ -6102,7 +6136,7 @@
       const canPlace = () => generation === levelGeneration && spawnRoomIndex === activeRoomIndex &&
         !gameplayPaused && !endlessIntermission && menuPage === null && !gameOver && !roomCompleted && !anomalyActive && renderedVideoWidth > 0;
       if (!canPlace()) return false;
-      for (const { files } of shuffleArray([...variants])) {
+      for (const { files, foreground } of shuffleArray([...variants])) {
         for (const src of shuffleArray([...files])) {
           const threshold = CONFIG.anomaly.alphaThreshold;
           // Local browsers can forbid canvas reads of file:// images. This
@@ -6123,6 +6157,7 @@
 
           anomalyRoomIndex = activeRoomIndex;
           anomalyWorld.style.display = "";
+          anomalyWorld.classList.toggle("foreground-anomaly", Boolean(foreground));
           anomalyMeta = meta;
           anomalyWorldBox = bbox;
           anomalyHasBeenSeen = false;
@@ -7434,6 +7469,7 @@
       const style = document.documentElement.style;
       const cssSettings = {
         "--doll-blur": `${CONFIG.doll.blurPx}px`, "--doll-opacity": CONFIG.doll.opacity,
+        "--anomaly2-blur": `${CONFIG.anomaly2.blurPx}px`,
         "--letter-beige": CONFIG.ui.letterColor, "--tarantino-yellow": CONFIG.ui.foundColor,
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
         "--ui-text-scale": CONFIG.ui.textScale, "--paper-text-scale": CONFIG.puzzles.paperTextScale,

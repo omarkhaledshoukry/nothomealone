@@ -155,8 +155,16 @@ tapTimeBonusSeconds = 2
 # Rotate on the upcoming HUD #10, #20, etc. 0 keeps the same rooms until retry or a new run.
 roomRotationEvery = 10
 decoyLetterChance = 0
+# Leave these two legacy switches off to use the per-letter chances below.
 flyingLetters = false
 evadesCamera = false
+# Applies to each newly placed letter. Chance is zero below its saved-level unlock.
+# Evasion is a separate share of letters; it flies away from the camera as it approaches.
+# Keep the sum at or below 1. If it is higher, evasion keeps its share and normal flight uses what is left.
+flyingLetterStartLevel = 5
+flyingLetterChance = 0.25
+evadingLetterStartLevel = 10
+evadingLetterChance = 0.10
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
 # Disabled by chance=0 in this version; set a weight to re-enable, and startLevel to its unlock level.
@@ -441,8 +449,8 @@ allowedRooms = [1,2,5,7,10,12,14]
 # Single-riddle modes have no completed word before the level ends.
 # Start their anomaly checks from READY by default; multiword modes retain afterWords.
 riddleAfterWords = 0
-# Checks are allowed from progression level 5, subject to allowedRooms.
-startLevel = 5
+# Checks are allowed from saved progression level 12, subject to allowedRooms.
+startLevel = 12
 enabled = true
 afterWords = 1
 checkMs = 15000
@@ -455,15 +463,17 @@ androidBrightness = 1.3
 # The second doll shares the same roll as the original. Only one can be active at a time.
 [anomaly2]
 enabled = true
-# Unlocks at saved progression level 10 (after nine solved riddles).
-startLevel = 10
+# Unlocks at saved progression level 24 (after 23 solved riddles).
+startLevel = 24
 # "all" allows every room. Use [] or enabled = false to disable the second doll.
 allowedRooms = "all"
+# Foreground blur in CSS pixels, above all other scene props. 0 turns just this blur off.
+blurPx = 1.2
 
 # afterWords=0 starts at READY. scale=0.2 is 20% of source size; topPx=-10 is 10px above the viewport.
 [spider]
 # First progression level at which this feature may be selected.
-startLevel = 1
+startLevel = 2
 enabled = true
 afterWords = 0
 checkMs = 20000
@@ -476,6 +486,7 @@ frameMs = 70
 offscreenMarginPx = 8
 retreatExtraPx = 4
 volume = 1
+# false starts the wav at 0 seconds for each new encounter.
 skipLeadingSilence = false
 silenceThreshold = 0.001
 soundPreRollSamples = 256
@@ -483,7 +494,7 @@ soundPreRollSamples = 256
 # Check delay is uniform between minCheckMs and maxCheckMs. Set enabled=false to disable the hand.
 [hand]
 # First progression level at which this feature may be selected.
-startLevel = 1
+startLevel = 4
 enabled = true
 minCheckMs = 8000
 maxCheckMs = 12000
