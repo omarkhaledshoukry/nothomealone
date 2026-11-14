@@ -1,4 +1,4 @@
-# Only the completed riddle count is saved per language. A new run or retry rolls fresh rooms.
+# Only the completed riddle count is saved per language. Room sets are never saved.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -11,7 +11,7 @@
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
 # Only endless fixed riddles are enabled. Each solved riddle banks one level and adds time.
-# Milestones apply as soon as you reach them; the room count changes only when you start another run.
+# Each new set of rooms uses the currently unlocked milestone.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -37,9 +37,9 @@ mode = "stage"
 [milestones.rooms]
 startLevels = [1,10,20]
 maxSceneNumbers = [5,10,0]
-# Endless Riddles: maximum answer length, with a minimum of 3. The opening answer sets the room count.
+# Endless Riddles: maximum answer length, with a minimum of 3. The first answer in a room set sets its count.
 # 3 means 3 letters; 4 means 3–4 letters; 5 means 3–5 letters. 0 uses [rooms].count as the cap.
-# Later riddles can use fewer letters, but cannot require more rooms than the run started with.
+# Until the rooms rotate, later riddles may be shorter and must fit the current rooms.
 # Other multi-room puzzle modes still use the exact staged count.
 roomCounts = [3,4,5]
 
@@ -70,8 +70,8 @@ arabicFontLocalNames = ["Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Gee
 saveFile = "save.txt"
 wordsFile = "words.txt"
 # Optional combinations: put true on the first line, then one comma-separated group per line.
-# One eligible group is picked per run, shuffled and trimmed to the first answer's length.
-# Retry or a new run uses a different eligible group when possible.
+# One eligible group is picked per rotation, retry, or new run and trimmed to the new answer length.
+# A different eligible group is preferred when it can supply different rooms.
 # Use false to disable it. Missing groups or media fall back to the normal scene pool.
 roomsFile = "rooms.txt"
 puzzlesFile = "puzzles.txt"
@@ -81,6 +81,7 @@ levelIndexFile = "index.json"
 paperFile = "note.png"
 handFile = "hand.png"
 anomalyFiles = ["anomaly.png"]
+anomaly2File = "anomaly_2.png"
 spiderFrames = ["spider-1.png", "spider-2.png"]
 spiderSound = "spider.wav"
 letterFontFile = "Dudu_Calligraphy.ttf"
@@ -147,8 +148,12 @@ timeLimitMs = 60000
 # Regular bonus, or the larger bonus when the captured letters spell the answer in order.
 timeBonusSeconds = 10
 inOrderTimeBonusSeconds = 20
+# In-order solves restore this many slots instead of charging wordCost, up to full. 0 disables the reward.
+inOrderBatteryBonusSlots = 1
 # Extra time per letter collected by tapping. Shutter captures get no tap bonus.
 tapTimeBonusSeconds = 2
+# Rotate on the upcoming HUD #10, #20, etc. 0 keeps the same rooms until retry or a new run.
+roomRotationEvery = 10
 decoyLetterChance = 0
 flyingLetters = false
 evadesCamera = false
@@ -275,7 +280,7 @@ jumpscareChance = 0.5
 title = "Battery Died"
 jumpscareChance = 0.5
 
-# Missing the active anomaly while taking a photo in its room.
+# Trying to collect a letter while either anomaly is present in its room.
 [failures.anomaly]
 title = "Anomaly Undetected"
 jumpscareChance = 1
@@ -428,7 +433,8 @@ maxStepMs = 50
 paddingPx = 15
 radiusPaddingPx = 5
 
-# afterWords=1 preserves the original first-word requirement. Set 0 to start its checks from READY.
+# Both anomalies share these check intervals, spawn odds, word gates and artwork settings.
+# allowedRooms, startLevel and enabled apply to the original anomaly only.
 [anomaly]
 # Actual room_N scene numbers. [] disables appearances; "all" allows every scene.
 allowedRooms = [1,2,5,7,10,12,14]
@@ -446,6 +452,14 @@ alphaThreshold = 8
 # Android anomaly artwork multiplier. 1 uses the original colours, 1.3 brightens by 30%.
 androidBrightness = 1.3
 
+# The second doll shares the same roll as the original. Only one can be active at a time.
+[anomaly2]
+enabled = true
+# Unlocks at saved progression level 10 (after nine solved riddles).
+startLevel = 10
+# "all" allows every room. Use [] or enabled = false to disable the second doll.
+allowedRooms = "all"
+
 # afterWords=0 starts at READY. scale=0.2 is 20% of source size; topPx=-10 is 10px above the viewport.
 [spider]
 # First progression level at which this feature may be selected.
@@ -462,7 +476,7 @@ frameMs = 70
 offscreenMarginPx = 8
 retreatExtraPx = 4
 volume = 1
-skipLeadingSilence = true
+skipLeadingSilence = false
 silenceThreshold = 0.001
 soundPreRollSamples = 256
 
@@ -567,7 +581,7 @@ prepareMedia = "TAP"
 clearProgress = "CLEAR"
 
 
-# Foreground dolls: rolled once per eligible scene at the start of a run and retained until retry or a new run.
+# Foreground dolls are rolled with each new room set and retained until it changes.
 # All appearance/motion values below apply to every doll. Scene numbers match room_N files.
 # Numbered dolls found in levels/ with no assignment inherit doll 1's room list.
 # An explicit empty list (for example "3":[]) disables that doll's eligible rooms.
@@ -625,7 +639,7 @@ exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
-howText = "Drag to look around, and use Prev and Next to switch rooms. Collect letters in any order. Tapping a letter adds time, and spelling the answer in order earns a bigger bonus. Hold the # counter to reread the clue. The rooms stay the same when a new riddle appears. Press Ready to resume the countdown. If you see an anomaly, photograph it first."
+howText = "Drag to look around, and use Prev and Next to switch rooms. Collect letters in any order. Tapping a letter adds time. Spelling the answer in order earns more time and restores battery. Hold the # counter to reread the clue. Press Ready to resume. If you see an anomaly, look away before collecting a letter in that room."
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
 
 [menu.ar]
@@ -643,5 +657,5 @@ exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
-howText = "اسحب لتنظر حولك، وتنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. لمس الحرف يزيد الوقت، وجمع الحروف بترتيب الكلمة يمنحك وقتًا إضافيًا أطول. اضغط مطولًا على رقم اللغز لقراءته مجددًا. تبقى الغرف نفسها عند ظهور لغز جديد، ويتوقف الوقت حتى تضغط «جاهز». إذا رأيت شيئًا غريبًا، فصوّره أولًا."
+howText = "اسحب لتنظر حولك، وتنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. لمس الحرف يزيد الوقت، وجمع الحروف بترتيب الكلمة يمنحك وقتًا أطول ويشحن البطارية. اضغط مطولًا على رقم اللغز لقراءته مجددًا. اضغط «جاهز» للمتابعة. إذا رأيت شيئًا غريبًا، فانظر بعيدًا قبل جمع أي حرف في تلك الغرفة."
 storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."

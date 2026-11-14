@@ -1341,6 +1341,7 @@
     "anomalyFiles": [
       "anomaly.png"
     ],
+    "anomaly2File": "anomaly_2.png",
     "spiderFrames": [
       "spider-1.png",
       "spider-2.png"
@@ -1659,6 +1660,11 @@
       12,
       14
     ]
+  },
+  "anomaly2": {
+    "enabled": true,
+    "startLevel": 10,
+    "allowedRooms": "all"
   },
   "spider": {
     "enabled": true,
@@ -2009,6 +2015,7 @@
       "levels.puzzleEndless.inOrderBatteryBonusSlots": [0, 12, true],
       "levels.puzzleEndless.tapTimeBonusSeconds": [0, 600, true],
       "levels.puzzleEndless.roomRotationEvery": [0, 1000000000, true],
+      "anomaly2.startLevel": [1, 1000000001, true],
       "anomaly.androidBrightness": [1, 2]
     });
     for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
@@ -2028,7 +2035,7 @@
         value.every((level, index) => Number.isSafeInteger(level) && level >= 1 && level <= 1000000001 && (!index || level > value[index - 1]));
       if (/^levels\.(singleRoomSequential|singleRoomFixed)\.decoyChances$/.test(path)) return Array.isArray(value) && value.length >= 1 && value.length <= 32 &&
         value.every(chance => typeof chance === "number" && Number.isFinite(chance) && chance >= 0 && chance <= 1);
-      if (path === "anomaly.allowedRooms") return value === "all" || Array.isArray(value) && value.length <= 1000 &&
+      if (path === "anomaly.allowedRooms" || path === "anomaly2.allowedRooms") return value === "all" || Array.isArray(value) && value.length <= 1000 &&
         new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
       if (path === "doll.roomAssignments") return value !== null && typeof value === "object" && !Array.isArray(value) &&
         Object.keys(value).length <= 64 && Object.entries(value).every(([number, scenes]) =>
@@ -2270,9 +2277,6 @@
     let ROOM_NAME = "ROOM";
     let availableScenes = [];
     let currentScene = null;
-    let ANOMALY_FILES = CONFIG.assets.anomalyFiles;
-    let ANOMALY_CHECK_MS = CONFIG.anomaly.checkMs;
-    let ANOMALY_SPAWN_CHANCE = CONFIG.anomaly.spawnChance;
     let SPIDER_FRAME_FILES = CONFIG.assets.spiderFrames;
     let SPIDER_SOUND_FILE = CONFIG.assets.spiderSound;
     let SPIDER_CHECK_MS = CONFIG.spider.checkMs;
@@ -2294,9 +2298,6 @@
       WORDS_TIMEOUT_MS = CONFIG.loading.wordsTimeoutMs;
       LEVELS_DIRECTORY = CONFIG.assets.levelsDirectory;
       LEVEL_PROBE_GAP = CONFIG.loading.levelProbeGap;
-      ANOMALY_FILES = CONFIG.assets.anomalyFiles;
-      ANOMALY_CHECK_MS = CONFIG.anomaly.checkMs;
-      ANOMALY_SPAWN_CHANCE = CONFIG.anomaly.spawnChance;
       SPIDER_FRAME_FILES = CONFIG.assets.spiderFrames;
       SPIDER_SOUND_FILE = CONFIG.assets.spiderSound;
       SPIDER_CHECK_MS = CONFIG.spider.checkMs;
@@ -2656,8 +2657,8 @@
 
     let completedWordCount = 0;
     let roomCompleted = false;
-    let anomalyEnabled = false;
     let anomalyTimer = null;
+    let anomalyChecking = false;
     let anomalyActive = false;
     let anomalyHasBeenSeen = false;
     let anomalyMeta = null;
@@ -4190,10 +4191,7 @@
       dismissClueIntro();
       anchors.forEach(anchor => { anchor.hidden = true; });
       showCurrentLetter();
-      if (CONFIG.anomaly.enabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
-        anomalyEnabled = true;
-        scheduleAnomalyCheck(encounterDelays?.anomaly);
-      }
+      scheduleAnomalyCheck(encounterDelays?.anomaly);
       scheduleNextHandCheck(encounterDelays?.hand);
       scheduleSpiderCheck(encounterDelays?.spider);
     }
@@ -5271,10 +5269,7 @@
       resumeLevelTimeouts();
       resumeCameraTimer();
       resumeSpiderEncounter();
-      if (!anomalyEnabled && CONFIG.anomaly.enabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
-        anomalyEnabled = true;
-        scheduleAnomalyCheck();
-      }
+      scheduleAnomalyCheck();
       if (spiderTimer === null && !spiderActive) scheduleSpiderCheck();
       if (handTimer === null && !handVisible) scheduleNextHandCheck();
     }
@@ -5320,10 +5315,7 @@
         clearLevelTimeout(handTimer);
         stopSpiderEncounter();
       }
-      if (!endless && !roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
-        anomalyEnabled = true;
-        scheduleAnomalyCheck();
-      }
+      if (!endless && !roomCompleted) scheduleAnomalyCheck();
       if (!endless && !roomCompleted && !spiderActive && spiderTimer === null) scheduleSpiderCheck();
       message.classList.remove("show");
       refreshMessageBitmap();
@@ -6008,28 +6000,43 @@
       stopSpiderSound();
     }
 
-    function anomalyRoomIsAllowed(number = currentScene?.number) {
-      return CONFIG.anomaly.allowedRooms === "all" || CONFIG.anomaly.allowedRooms.includes(number);
+    function unlockedAnomalyVariants() {
+      if (completedWordCount < anomalyWordThreshold()) return [];
+      return [
+        { rules: CONFIG.anomaly, files: CONFIG.assets.anomalyFiles },
+        { rules: CONFIG.anomaly2, files: [CONFIG.assets.anomaly2File] }
+      ].filter(({ rules, files }) => rules.enabled && levelIsUnlocked(rules.startLevel) && files.length &&
+        (rules.allowedRooms === "all" || rules.allowedRooms.length));
     }
 
-    function scheduleAnomalyCheck(delay = ANOMALY_CHECK_MS) {
-      clearLevelTimeout(anomalyTimer);
-      anomalyTimer = null;
-      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
+    function scheduleAnomalyCheck(delay = CONFIG.anomaly.checkMs) {
+      if (anomalyTimer !== null || anomalyChecking || !gameplayStarted || anomalyActive || gameOver || roomCompleted ||
+          !unlockedAnomalyVariants().length) return;
       const generation = levelGeneration;
       anomalyTimer = levelTimeout(async () => {
         anomalyTimer = null;
-        if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
-        if (anomalyRoomIsAllowed() && Math.random() < ANOMALY_SPAWN_CHANCE) {
-          const placed = await spawnAnomalyOffscreen();
-          if (generation === levelGeneration && !placed) scheduleAnomalyCheck();
-        } else {
+        if (anomalyActive || gameOver || roomCompleted) return;
+        const room = currentScene?.number;
+        const variants = unlockedAnomalyVariants().filter(({ rules }) =>
+          rules.allowedRooms === "all" || rules.allowedRooms.includes(room));
+        // One roll for both kinds, so the second doll doesn't double the spawn rate.
+        if (!variants.length || Math.random() >= CONFIG.anomaly.spawnChance) {
           scheduleAnomalyCheck();
+          return;
+        }
+        anomalyChecking = true;
+        try { await spawnAnomalyOffscreen(variants); }
+        catch (error) { console.warn("Could not place anomaly.", error); }
+        finally {
+          if (generation === levelGeneration) {
+            anomalyChecking = false;
+            scheduleAnomalyCheck();
+          }
         }
       }, delay);
     }
 
-    async function readAlphaBounds(src) {
+    async function readAlphaBounds(src, threshold = CONFIG.anomaly.alphaThreshold, knownArtwork = null) {
       return new Promise(resolve => {
         const img = new Image();
         img.onload = () => {
@@ -6043,7 +6050,7 @@
             let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
             for (let y = 0; y < canvas.height; y++) {
               for (let x = 0; x < canvas.width; x++) {
-                if (data[(y * canvas.width + x) * 4 + 3] > CONFIG.anomaly.alphaThreshold) {
+                if (data[(y * canvas.width + x) * 4 + 3] > threshold) {
                   if (x < minX) minX = x;
                   if (x > maxX) maxX = x;
                   if (y < minY) minY = y;
@@ -6056,8 +6063,12 @@
               bbox: maxX >= minX ? { left: minX, top: minY, right: maxX + 1, bottom: maxY + 1 } : null
             });
           } catch (error) {
-            console.warn("Could not inspect anomaly alpha bounds; using full image bounds.", error);
-            resolve({ src, width: img.naturalWidth, height: img.naturalHeight, bbox: { left: 0, top: 0, right: img.naturalWidth, bottom: img.naturalHeight } });
+            const width = img.naturalWidth, height = img.naturalHeight;
+            if (knownArtwork?.width === width && knownArtwork.height === height) resolve({ src, width, height, bbox: knownArtwork.bbox });
+            else {
+              console.warn("Could not inspect anomaly alpha bounds; using full image bounds.", error);
+              resolve({ src, width, height, bbox: { left: 0, top: 0, right: width, bottom: height } });
+            }
           }
         };
         img.onerror = () => resolve(null);
@@ -6085,41 +6096,46 @@
       return a.left < b.right && a.right > b.left;
     }
 
-    async function spawnAnomalyOffscreen() {
-      if (gameplayPaused || endlessIntermission || menuPage !== null || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || anomalyActive || gameOver || roomCompleted || !renderedVideoWidth) return false;
+    async function spawnAnomalyOffscreen(variants) {
       const generation = levelGeneration;
       const spawnRoomIndex = activeRoomIndex;
-      const src = ANOMALY_FILES[Math.floor(Math.random() * ANOMALY_FILES.length)];
-      const meta = await readAlphaBounds(src);
-      if (generation !== levelGeneration || gameplayPaused || endlessIntermission || menuPage !== null || !meta || !meta.bbox || !CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyRoomIsAllowed() || gameOver || roomCompleted || spawnRoomIndex !== activeRoomIndex) return false;
+      const canPlace = () => generation === levelGeneration && spawnRoomIndex === activeRoomIndex &&
+        !gameplayPaused && !endlessIntermission && menuPage === null && !gameOver && !roomCompleted && !anomalyActive && renderedVideoWidth > 0;
+      if (!canPlace()) return false;
+      for (const { files } of shuffleArray([...variants])) {
+        for (const src of shuffleArray([...files])) {
+          const threshold = CONFIG.anomaly.alphaThreshold;
+          // Local browsers can forbid canvas reads of file:// images. This
+          // fallback is measured from the supplied anomaly_2.png, used only
+          // for that file at its original dimensions. Live pixels take precedence.
+          const knownArtwork = new URL(src, document.baseURI).href === new URL(CONFIG_DEFAULTS.assets.anomaly2File, document.baseURI).href
+            ? { width: 1280, height: 720, bbox: { left: 0, top: 328, right: threshold === 8 ? 284 : 285, bottom: 720 } }
+            : null;
+          const meta = await readAlphaBounds(src, threshold, knownArtwork);
+          if (!canPlace()) return false;
+          if (!meta?.bbox) continue;
 
-      // The anomaly PNG is authored against the same full 1280x720 scene as
-      // the video. Keep the PNG fixed at the scene origin so its opaque pixels
-      // always land at their authored location; only the panorama itself pans.
-      const bbox = getScaledAnomalyBox(meta);
+          // The image stays aligned to the panorama; only its opaque artwork
+          // must be outside the viewport before it can spawn.
+          const bbox = getScaledAnomalyBox(meta);
+          const visible = currentVisibleWorldRange(), pad = CONFIG.anomaly.offscreenMarginPx;
+          if (horizontalBoxesIntersect(bbox, { left: visible.left - pad, right: visible.right + pad })) continue;
 
-      // Spawn only while the anomaly's ACTUAL non-transparent pixels are fully
-      // outside the current viewport. If its authored location is visible now,
-      // skip this checkpoint and try again on the next anomaly check.
-      const visible = currentVisibleWorldRange();
-      const edgePad = CONFIG.anomaly.offscreenMarginPx;
-      if (horizontalBoxesIntersect(
-        { left: bbox.left, right: bbox.right },
-        { left: visible.left - edgePad, right: visible.right + edgePad }
-      )) return false;
-
-      anomalyRoomIndex = activeRoomIndex;
-      anomalyWorld.style.display = "";
-      anomalyMeta = meta;
-      anomalyWorldBox = bbox;
-      anomalyHasBeenSeen = false;
-      anomalyActive = true;
-      anomalyImage.src = src;
-      setOverlayImageStyles(anomalyImage, anomalyBitmap, { left: "0px", top: "0px",
-        height: `${viewport.getBoundingClientRect().height}px`, width: `${renderedVideoWidth}px`, display: "block" });
-      anomalyWorld.style.width = `${renderedVideoWidth}px`;
-      anomalyWorld.style.height = `${viewport.getBoundingClientRect().height}px`;
-      return true;
+          anomalyRoomIndex = activeRoomIndex;
+          anomalyWorld.style.display = "";
+          anomalyMeta = meta;
+          anomalyWorldBox = bbox;
+          anomalyHasBeenSeen = false;
+          anomalyActive = true;
+          anomalyImage.src = src;
+          setOverlayImageStyles(anomalyImage, anomalyBitmap, { left: "0px", top: "0px",
+            height: `${viewport.getBoundingClientRect().height}px`, width: `${renderedVideoWidth}px`, display: "block" });
+          anomalyWorld.style.width = `${renderedVideoWidth}px`;
+          anomalyWorld.style.height = `${viewport.getBoundingClientRect().height}px`;
+          return true;
+        }
+      }
+      return false;
     }
 
     function updateAnomalyVisibilityState({ allowClear = true } = {}) {
@@ -7251,7 +7267,7 @@
       handBlocker.className = "";
       handBlocker.setAttribute("aria-hidden", "true");
       setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
-      anomalyEnabled = anomalyActive = anomalyHasBeenSeen = false;
+      anomalyChecking = anomalyActive = anomalyHasBeenSeen = false;
       anomalyRoomIndex = spiderRoomIndex = -1;
       anomalyMeta = anomalyWorldBox = null;
       clearAnomalyArtwork();
