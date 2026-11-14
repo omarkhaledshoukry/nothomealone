@@ -462,7 +462,7 @@ frameMs = 70
 offscreenMarginPx = 8
 retreatExtraPx = 4
 volume = 1
-skipLeadingSilence = false
+skipLeadingSilence = true
 silenceThreshold = 0.001
 soundPreRollSamples = 256
 

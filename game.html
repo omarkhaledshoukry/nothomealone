@@ -782,8 +782,6 @@
     /* Deepest scene overlay: above the room pixels, below letters and props.
        It remains inside sceneEffects so all existing blur triggers still apply. */
     #anomalyWorld { z-index: 1; }
-    #anomalyWorld.captured { animation: anomalyCaptured 160ms ease-out both; }
-    @keyframes anomalyCaptured { from { opacity: 1; } to { opacity: 0; } }
     #dollWorld {
       position: absolute;
       z-index: 4;
@@ -1443,7 +1441,9 @@
       "timeLimitMs": 60000,
       "timeBonusSeconds": 10,
       "inOrderTimeBonusSeconds": 20,
+      "inOrderBatteryBonusSlots": 1,
       "tapTimeBonusSeconds": 2,
+      "roomRotationEvery": 10,
       "decoyLetterChance": 0,
       "flyingLetters": false,
       "evadesCamera": false,
@@ -1986,7 +1986,8 @@
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let appleForegroundAudioPending = false;
     let gameplayPaused = pageSuspended;
-    let endlessIntermission = null; // "found", then "paper" until Ready.
+    let endlessIntermission = null; // "found", then "paper" or "rotating" until Ready.
+    let endlessRoomRotationDelays = null;
     let exitConfirmationActive = false;
     let playbackRevision = 0;
     let levelResumePending = null;
@@ -2005,7 +2006,9 @@
       "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5],
       "levels.puzzleEndless.timeBonusSeconds": [1, 600, true],
       "levels.puzzleEndless.inOrderTimeBonusSeconds": [1, 600, true],
+      "levels.puzzleEndless.inOrderBatteryBonusSlots": [0, 12, true],
       "levels.puzzleEndless.tapTimeBonusSeconds": [0, 600, true],
+      "levels.puzzleEndless.roomRotationEvery": [0, 1000000000, true],
       "anomaly.androidBrightness": [1, 2]
     });
     for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
@@ -2655,8 +2658,8 @@
     let roomCompleted = false;
     let anomalyEnabled = false;
     let anomalyTimer = null;
-    let anomalyFadeTimer = null;
     let anomalyActive = false;
+    let anomalyHasBeenSeen = false;
     let anomalyMeta = null;
     let anomalyWorldBox = null;
     let spiderFrames = [];
@@ -2924,14 +2927,18 @@
       }));
     }
 
+    function endlessRoomGroupRank(group, count, previousSet, previousLine) {
+      if (group.scenes.length < count) return -1;
+      const differentSet = previousSet?.size !== count || group.scenes.some(scene => !previousSet.has(scene.number));
+      return (differentSet ? 2 : 0) + Number(group.line !== previousLine);
+    }
+
     function drawEndlessRooms(groups, count, previousSet = lastEndlessSceneSet, previousLine = lastEndlessRoomLine) {
-      const eligible = groups.filter(group => group.scenes.length >= count);
-      if (!eligible.length) return { scenes: [], line: null };
-      const differentLine = group => group.line !== previousLine;
-      const differentSet = group => previousSet?.size !== count || group.scenes.some(scene => !previousSet.has(scene.number));
-      // Prefer a different authored line and a different room set when possible.
-      const group = chooseScene(eligible.filter(g => differentLine(g) && differentSet(g))) ||
-        chooseScene(eligible.filter(differentLine)) || chooseScene(eligible.filter(differentSet)) || chooseScene(eligible);
+      const rank = group => endlessRoomGroupRank(group, count, previousSet, previousLine);
+      const best = groups.reduce((max, group) => Math.max(max, rank(group)), -1);
+      if (best < 0) return { scenes: [], line: null };
+      // Prefer different rooms, and a different authored line when available.
+      const group = chooseScene(groups.filter(group => rank(group) === best));
       const shuffled = shuffleArray([...group.scenes]);
       const scenes = shuffled.slice(0, count);
       // A larger row can offer a different subset even when it is the only row.
@@ -3363,7 +3370,7 @@
         previous.cameraFraction = minOffset ? offsetX / minOffset : .5;
         const oldLetter = currentRoomLetterIndex();
         if (oldLetter >= 0 && tiles[oldLetter]?.dataset.decoySeen === "true") correctDecoy(oldLetter);
-        if (anomalyRoomIndex === activeRoomIndex && anomalyFadeTimer !== null) finishAnomalyFade();
+        if (anomalyActive && anomalyRoomIndex === activeRoomIndex && anomalyHasBeenSeen) removeAnomalyAndRestartTimer();
       }
       stopButterflyFlight();
       stopKeyboardInput();
@@ -3403,6 +3410,7 @@
       if (anomalyActive && anomalyRoomIndex === index && anomalyMeta) {
         anomalyWorldBox = getScaledAnomalyBox(anomalyMeta);
         setOverlayImageStyles(anomalyImage, anomalyBitmap, { height: `${viewport.getBoundingClientRect().height}px`, width: `${renderedVideoWidth}px` });
+        updateAnomalyVisibilityState({ allowClear: false });
       }
       if (spiderActive && spiderRoomIndex === index) layoutSpider();
       showCurrentLetter({ animate: !initial });
@@ -3684,14 +3692,23 @@
       return puzzleFilePromise;
     }
 
-    function endlessRiddleCandidates(puzzles, groups, catalog) {
+    function endlessRiddleCandidates(puzzles, groups, catalog, { allowEarlier = false } = {}) {
       const scoped = contentMilestonePool(puzzles, "puzzles");
       const fallback = roomMilestonePool(catalog);
       const { min, max } = endlessAnswerLengthRange();
-      const inRange = scoped.filter(({ answer }) => answer.length >= min && answer.length <= max);
-      const listed = inRange.filter(({ answer }) => groups.some(group => group.scenes.length >= answer.length));
-      const roomGroups = listed.length ? groups : [{ scenes: fallback, line: null }];
-      const candidates = listed.length ? listed : inRange.filter(({ answer }) => answer.length <= fallback.length);
+      const fits = ({ answer }) => answer.length >= min && answer.length <= max;
+      const select = pool => {
+        const inRange = pool.filter(fits);
+        const listed = inRange.filter(({ answer }) => groups.some(group => group.scenes.length >= answer.length));
+        return listed.length ? { candidates: listed, roomGroups: groups } : {
+          candidates: inRange.filter(({ answer }) => answer.length <= fallback.length),
+          roomGroups: [{ scenes: fallback, line: null }]
+        };
+      };
+      let { candidates, roomGroups } = select(scoped);
+      if (!candidates.length && allowEarlier) {
+        ({ candidates, roomGroups } = select(puzzles.slice(0, milestoneSelectionInfo.puzzles.last)));
+      }
       if (!candidates.length) throw new Error(`No ${min === max ? min : `${min}–${max}`}-letter riddle in the current pool has enough complete room/jumpscare pairs for level ${progressionLevel()}. Check ${puzzlesFileFor()}, ${CONFIG.assets.roomsFile}, and the room milestones.`);
       return { candidates, roomGroups };
     }
@@ -3737,9 +3754,19 @@
     async function planEndlessRiddle(catalog) {
       const [data, lists] = await Promise.all([loadPuzzleData(), loadRoomGroups()]);
       const groups = await resolveRoomGroups(catalog, lists);
-      const { candidates, roomGroups } = endlessRiddleCandidates(data.puzzles, groups, catalog);
+      const { candidates, roomGroups } = endlessRiddleCandidates(data.puzzles, groups, catalog, {
+        allowEarlier: endlessIntermission === "rotating"
+      });
       const { first, last } = milestoneSelectionInfo.puzzles;
-      const puzzle = drawEndlessRiddle(candidates, `${CONFIG.language.code}:${data.source}:${first}:${last}`);
+      const ratings = new Map();
+      for (const { answer } of candidates) {
+        if (ratings.has(answer.length)) continue;
+        ratings.set(answer.length, roomGroups.reduce((max, group) =>
+          Math.max(max, endlessRoomGroupRank(group, answer.length, lastEndlessSceneSet, lastEndlessRoomLine)), -1));
+      }
+      const best = Math.max(...ratings.values());
+      const preferred = candidates.filter(({ answer }) => ratings.get(answer.length) === best);
+      const puzzle = drawEndlessRiddle(preferred, `${CONFIG.language.code}:${data.source}:${first}:${last}`);
       const count = puzzle.answer.length;
       // A usable row takes precedence for this answer length; do not mix rows.
       const { scenes, line } = drawEndlessRooms(roomGroups, count);
@@ -4138,6 +4165,8 @@
       if (endlessIntermission === "paper") { resumeEndlessRiddle(); return; }
       if (menuPage !== null || gameplayPaused || !wordsReadyForClue || !videosReadyForClue || gameplayStarted || gameplayStarting || gameOver) return;
       if (!levelMediaIsPrepared()) { prepareMediaBeforeReady({ gesture: true }); return; }
+      const rotatingRooms = endlessIntermission === "rotating";
+      const encounterDelays = endlessRoomRotationDelays;
       gameplayStarting = true;
       readyButton.disabled = true;
       const activeRoom = levelRooms[activeRoomIndex];
@@ -4151,20 +4180,22 @@
       if (gameOver) return;
       gameplayStarting = false;
       gameplayStarted = true;
+      endlessIntermission = endlessRoomRotationDelays = null;
       watchRoomPlayback(activeRoom, roomPlayback);
       cameraOverlay.inert = false;
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
-      startCameraTimer();
+      if (rotatingRooms) resumeCameraTimer();
+      else startCameraTimer();
       dismissClueIntro();
       anchors.forEach(anchor => { anchor.hidden = true; });
       showCurrentLetter();
       if (CONFIG.anomaly.enabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
         anomalyEnabled = true;
-        scheduleAnomalyCheck();
+        scheduleAnomalyCheck(encounterDelays?.anomaly);
       }
-      scheduleNextHandCheck();
-      scheduleSpiderCheck();
+      scheduleNextHandCheck(encounterDelays?.hand);
+      scheduleSpiderCheck(encounterDelays?.spider);
     }
 
     function dismissClueIntro() {
@@ -4374,7 +4405,7 @@
       return best;
     }
 
-    function applyWorldOffset(animate = false, observeDecoys = false) {
+    function applyWorldOffset(animate = false, fromCameraInput = false) {
       const cameraMoved = Math.abs(offsetX - lastAppliedWorldOffset) > .01;
       lastAppliedWorldOffset = offsetX;
       roomImage.classList.toggle("snapping", animate);
@@ -4395,10 +4426,10 @@
       spiderWorld.style.transform = transform;
       dollWorld.style.transform = `translateX(${offsetX * CONFIG.doll.parallaxMultiplier}px)`;
       jumpscareVideo.style.transform = transform;
-      // Only actual camera gestures/coasting can fix a decoy. Resizing and
-      // layout updates also reposition the world, but do not count as looking away.
-      if (observeDecoys) {
+      // Only actual camera movement counts as looking away from a decoy or anomaly.
+      if (fromCameraInput) {
         updateDecoyVisibilityState({ allowCorrection: cameraMoved });
+        if (cameraMoved) updateAnomalyVisibilityState();
         updateSpiderVisibilityState();
       }
     }
@@ -4717,8 +4748,6 @@
       stopShutterEffect();
       // A scene tap is targeted (including -1 for a miss); a shutter press
       // chooses the current letter, or the closest X in the spread mode.
-      const localAnomaly = anomalyActive && anomalyRoomIndex === activeRoomIndex;
-      const hitsAnomaly = localAnomaly && anomalyInPhoto(point);
       const index = targetIndex === null ? shutterLetterIndex() : targetIndex;
       const letterIsVisible = isCurrentLetterInFrame(index);
       snapButton.classList.remove("snapping");
@@ -4728,9 +4757,7 @@
       clearLevelTimeout(shutterAnimationTimer);
       shutterAnimationTimer = levelTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
-      if (hitsAnomaly) captureAnomaly();
-      else if (localAnomaly) endGame("anomaly");
-      else if (letterIsVisible) {
+      if (letterIsVisible) {
         const tile = tiles[index];
         selectLetter(tile.dataset.letter, index, tile, { directTap: point !== null });
       } else drainBatterySlot();
@@ -5111,8 +5138,9 @@
       updateCameraTimer();
       if (gameOver) return;
       if (tile !== tiles[tileIndex] || anchors[tileIndex].hidden || tile.classList.contains("selected")) return;
-      if (tile.dataset.decoy === "true") {
-        endGame("decoy");
+      const localAnomaly = anomalyActive && anomalyRoomIndex === activeRoomIndex;
+      if (localAnomaly || tile.dataset.decoy === "true") {
+        endGame(localAnomaly ? "anomaly" : "decoy");
         return;
       }
       const slotIndex = isEndlessPuzzle() ? tileIndex : selectedCount;
@@ -5191,13 +5219,26 @@
       const seconds = (inOrder ? inOrderTimeBonusSeconds : timeBonusSeconds) + tapBonus;
       addCameraTimeBonus(seconds, { pause: true });
 
-      // Only the riddle number is banked. The room plan stays in this run.
+      // Only the riddle number is banked. Room plans stay in memory.
       progressState.completedRooms = currentRoomNumber;
       currentRoomNumber++;
       saveProgress();
+      return inOrder;
+    }
+
+    function endlessRoomRotationDue() {
+      const every = CONFIG.levels.puzzleEndless.roomRotationEvery;
+      // The HUD starts at #1 and shows the next, unsolved riddle.
+      const nextNumber = completedWordCount + 1;
+      return every > 0 && nextNumber > 1 && nextNumber % every === 0;
     }
 
     function showNextEndlessRiddle() {
+      if (endlessRoomRotationDue()) {
+        resetLevelState({ rotateEndlessRooms: true });
+        currentLevelLoadPromise = loadRandomLevel();
+        return currentLevelLoadPromise;
+      }
       endlessIntermission = "paper";
       message.classList.remove("show");
       finishLetterTransfer({ reveal: false });
@@ -5253,14 +5294,22 @@
       }
       completedWordCount++;
       updateCameraControls();
-      // Correct words use power, but reserve at least the last slot for misses.
-      const reserve = endless ? Math.max(1, CONFIG.battery.wordReserve) : CONFIG.battery.wordReserve;
-      const cost = Math.min(CONFIG.battery.wordCost, Math.max(0, batterySlotsRemaining - reserve));
-      if (cost) drainBatterySlot(cost);
+      const inOrder = endless && awardEndlessRiddle(tapBonus);
+      const batteryReward = inOrder ? CONFIG.levels.puzzleEndless.inOrderBatteryBonusSlots : 0;
+      if (batteryReward) {
+        const charged = Math.min(BATTERY_SLOT_COUNT, batterySlotsRemaining + batteryReward);
+        if (charged !== batterySlotsRemaining) {
+          batterySlotsRemaining = charged;
+          updateBatteryUI();
+        }
+      } else {
+        // Regular solves use power, but endless mode reserves the last slot for misses.
+        const reserve = endless ? Math.max(1, CONFIG.battery.wordReserve) : CONFIG.battery.wordReserve;
+        const cost = Math.min(CONFIG.battery.wordCost, Math.max(0, batterySlotsRemaining - reserve));
+        if (cost) drainBatterySlot(cost);
+      }
       if (gameOver) return;
-      if (endless) {
-        awardEndlessRiddle(tapBonus);
-      } else if (completedWordCount >= words.length) {
+      if (!endless && completedWordCount >= words.length) {
         roomCompleted = true;
         hidePuzzleHint({ immediate: true });
         recordRoomCompletion();
@@ -5558,7 +5607,7 @@
       dragStartOffsetX = offsetX;
       lastPanClientX = event.clientX;
       if (CONFIG.letters.tapEnabled && !captureInProgress && !wordTransitionPending &&
-          (isSceneTapPoint(event.clientX, event.clientY) || anomalyInPhoto({ x: event.clientX, y: event.clientY }))) {
+          isSceneTapPoint(event.clientX, event.clientY)) {
         pendingSceneTap = { x: event.clientX, y: event.clientY, started: event.timeStamp,
           index: letterAtPoint(event.clientX, event.clientY), roomIndex: activeRoomIndex, wordIndex, selectedCount };
       }
@@ -5603,7 +5652,7 @@
       const isTap = tap && !movedDuringDrag && tap.roomIndex === activeRoomIndex && tap.wordIndex === wordIndex && tap.selectedCount === selectedCount &&
         event.timeStamp - tap.started <= CONFIG.letters.tapMaxMs &&
         Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= CONFIG.letters.tapSlopPx &&
-        (isSceneTapPoint(event.clientX, event.clientY) || anomalyInPhoto(point));
+        isSceneTapPoint(point.x, point.y);
       // Lock a moving glyph on press so a fast letter cannot escape a clean
       // tap during the short down/up interval. No per-letter pointer handlers.
       const targetIndex = isTap ? (tap.index >= 0 ? tap.index : letterAtPoint(event.clientX, event.clientY)) : -1;
@@ -5855,7 +5904,7 @@
       drawSpiderFrame(spiderFrameIndex);
     }
 
-    function scheduleSpiderCheck() {
+    function scheduleSpiderCheck(delay = SPIDER_CHECK_MS) {
       clearLevelTimeout(spiderTimer);
       spiderTimer = null;
       if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
@@ -5864,7 +5913,7 @@
         if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive) return;
         if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
         scheduleSpiderCheck();
-      }, SPIDER_CHECK_MS);
+      }, delay);
     }
 
     function spawnSpiderOffscreen() {
@@ -5963,10 +6012,10 @@
       return CONFIG.anomaly.allowedRooms === "all" || CONFIG.anomaly.allowedRooms.includes(number);
     }
 
-    function scheduleAnomalyCheck() {
+    function scheduleAnomalyCheck(delay = ANOMALY_CHECK_MS) {
       clearLevelTimeout(anomalyTimer);
       anomalyTimer = null;
-      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || anomalyFadeTimer !== null || gameOver || roomCompleted) return;
+      if (!CONFIG.anomaly.enabled || !levelIsUnlocked(CONFIG.anomaly.startLevel) || !anomalyEnabled || anomalyActive || gameOver || roomCompleted) return;
       const generation = levelGeneration;
       anomalyTimer = levelTimeout(async () => {
         anomalyTimer = null;
@@ -5977,7 +6026,7 @@
         } else {
           scheduleAnomalyCheck();
         }
-      }, ANOMALY_CHECK_MS);
+      }, delay);
     }
 
     async function readAlphaBounds(src) {
@@ -6063,6 +6112,7 @@
       anomalyWorld.style.display = "";
       anomalyMeta = meta;
       anomalyWorldBox = bbox;
+      anomalyHasBeenSeen = false;
       anomalyActive = true;
       anomalyImage.src = src;
       setOverlayImageStyles(anomalyImage, anomalyBitmap, { left: "0px", top: "0px",
@@ -6072,34 +6122,19 @@
       return true;
     }
 
-    function anomalyInPhoto(point = null) {
-      if (!anomalyActive || anomalyRoomIndex !== activeRoomIndex || !anomalyWorldBox) return false;
-      const frame = viewport.getBoundingClientRect();
-      const box = anomalyWorldBox;
-      const left = Math.max(0, box.left + offsetX), right = Math.min(frame.width, box.right + offsetX);
-      const top = Math.max(0, box.top), bottom = Math.min(frame.height, box.bottom);
-      if (right <= left || bottom <= top) return false;
-      // The shutter uses the whole camera frame, as it does for letters.
-      // A tap is a targeted photo and must hit the visible anomaly itself.
-      if (!point) return true;
-      const x = point.x - frame.left, y = point.y - frame.top;
-      return x >= left && x < right && y >= top && y < bottom;
+    function updateAnomalyVisibilityState({ allowClear = true } = {}) {
+      if (!anomalyActive || anomalyRoomIndex !== activeRoomIndex || !anomalyWorldBox || gameOver ||
+          gameplayPaused || endlessIntermission || hintActive || handVisible) return;
+      if (horizontalBoxesIntersect(anomalyWorldBox, currentVisibleWorldRange())) anomalyHasBeenSeen = true;
+      else if (allowClear && anomalyHasBeenSeen) removeAnomalyAndRestartTimer();
     }
 
-    function captureAnomaly() {
-      anomalyActive = false;
-      anomalyWorld.classList.add("captured");
-      anomalyFadeTimer = levelTimeout(finishAnomalyFade, 160);
-    }
-
-    function finishAnomalyFade() {
-      clearLevelTimeout(anomalyFadeTimer);
-      anomalyFadeTimer = null;
+    function removeAnomalyAndRestartTimer() {
+      anomalyActive = anomalyHasBeenSeen = false;
       anomalyMeta = null;
       anomalyWorldBox = null;
       anomalyRoomIndex = -1;
       clearAnomalyArtwork();
-      anomalyWorld.classList.remove("captured");
       if (!gameOver && !roomCompleted) scheduleAnomalyCheck();
     }
 
@@ -6268,11 +6303,11 @@
     gameOverScreen.addEventListener("pointerup", retryOrContinue);
     gameOverScreen.addEventListener("keydown", retryOrContinue);
 
-    function scheduleNextHandCheck() {
+    function scheduleNextHandCheck(remainingDelay) {
       clearLevelTimeout(handTimer);
       handTimer = null;
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || gameOver || roomCompleted) return;
-      const delay = CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
+      const delay = remainingDelay ?? CONFIG.hand.minCheckMs + Math.random() * (CONFIG.hand.maxCheckMs - CONFIG.hand.minCheckMs);
       handTimer = levelTimeout(() => {
         handTimer = null;
         if (!levelIsUnlocked(CONFIG.hand.startLevel)) return;
@@ -6416,6 +6451,7 @@
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
       updateLimits();
+      updateAnomalyVisibilityState({ allowClear: false });
       // Keep random coordinates, sizes, rotations and collected progress.
       // Refit the same letters between the newly sized camera UI rows.
       if (currentWord) relayoutScatteredLetters();
@@ -7161,7 +7197,13 @@
       downloadProgress();
     }
 
-    function resetLevelState() {
+    function resetLevelState({ rotateEndlessRooms = false } = {}) {
+      const elapsed = pausedCameraElapsedMs;
+      endlessRoomRotationDelays = rotateEndlessRooms ? {
+        anomaly: levelTimeoutJobs.get(anomalyTimer)?.remaining,
+        hand: levelTimeoutJobs.get(handTimer)?.remaining,
+        spider: levelTimeoutJobs.get(spiderTimer)?.remaining
+      } : null;
       // Cover the viewport before removing anything from the outgoing scene.
       loadingScreen.classList.remove("hidden");
       levelGeneration++;
@@ -7175,7 +7217,7 @@
       levelTimeouts.clear();
       levelTimeoutJobs.clear();
       exitConfirmationActive = false;
-      endlessIntermission = null;
+      endlessIntermission = rotateEndlessRooms ? "rotating" : null;
       gameplayPaused = isPageInactive();
       viewport.classList.toggle("level-paused", gameplayPaused);
       document.getElementById("exitConfirmContent").hidden = true;
@@ -7186,6 +7228,7 @@
       hidePuzzleHint({ immediate: true });
       finishHintFade();
       stopCameraTimer();
+      if (rotateEndlessRooms) pausedCameraElapsedMs = elapsed;
       stopKeyboardInput();
       stopButterflyFlight();
       finishPanGesture();
@@ -7208,13 +7251,11 @@
       handBlocker.className = "";
       handBlocker.setAttribute("aria-hidden", "true");
       setOverlayImageStyles(handImage, handBitmap, { transition: "", transform: "" });
-      anomalyEnabled = anomalyActive = false;
-      anomalyFadeTimer = null;
+      anomalyEnabled = anomalyActive = anomalyHasBeenSeen = false;
       anomalyRoomIndex = spiderRoomIndex = -1;
       anomalyMeta = anomalyWorldBox = null;
       clearAnomalyArtwork();
       anomalyWorld.style.display = "";
-      anomalyWorld.classList.remove("captured");
       spiderWorld.style.display = "";
       dollWorld.replaceChildren();
       dollWorld.classList.remove("exiting");
@@ -7240,8 +7281,10 @@
       wordLetterRooms = [];
       words = []; currentWord = ""; currentPuzzle = null;
       endlessRunPuzzles = null;
-      completedWordCount = 0;
-      cameraBonusMs = 0;
+      if (!rotateEndlessRooms) {
+        completedWordCount = 0;
+        cameraBonusMs = 0;
+      }
       cameraTimeBonus.classList.remove("show");
       cameraTimeBonus.textContent = "";
       wordIndex = selectedCount = 0;
@@ -7265,7 +7308,7 @@
       clueIntro.classList.remove("show", "dismiss", "hint-mode", "exit-mode");
       clueIntro.setAttribute("aria-hidden", "true");
       cameraOverlay.setAttribute("aria-hidden", "true");
-      cameraOverlay.inert = false;
+      cameraOverlay.inert = rotateEndlessRooms;
       gameOverScreen.classList.remove("show");
       readyButton.disabled = true;
       mediaPreparation.hidden = true;
