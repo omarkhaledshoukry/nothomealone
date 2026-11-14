@@ -1,5 +1,4 @@
-# Progress resumes the same room set, ordered words and letter-to-room assignments.
-# Save save.txt links a writable file where supported, otherwise exports a backup.
+# Only the completed riddle count is saved per language. A new run or retry rolls fresh rooms.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -12,8 +11,7 @@
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
 # Only endless fixed riddles are enabled. Each solved riddle banks one level and adds time.
-# Room count and riddle pool are chosen at the start of a run and stay fixed until the next run.
-# Switching to the endless-only config keeps completed levels and starts a fresh endless run.
+# Milestones apply as soon as you reach them; the room count changes only when you start another run.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -35,16 +33,18 @@ poolEnds = [0,0]
 mode = "stage"
 
 # Each stage allows matching scene NUMBERS 1..maxSceneNumber. 0 means all scenes.
-# These limits apply to new levels; an unfinished saved level keeps its scene set.
+# An enabled rooms.txt with usable combinations takes priority over maxSceneNumbers in Endless Riddles.
 [milestones.rooms]
 startLevels = [1,10,20]
 maxSceneNumbers = [5,10,0]
-# Exact count at each stage. Multi-room riddles need an answer of that length.
-# Use 0 for a stage to keep the [rooms] count and normal answer-length rules.
+# Endless Riddles: maximum answer length, with a minimum of 3. The opening answer sets the room count.
+# 3 means 3 letters; 4 means 3–4 letters; 5 means 3–5 letters. 0 uses [rooms].count as the cap.
+# Later riddles can use fewer letters, but cannot require more rooms than the run started with.
+# Other multi-room puzzle modes still use the exact staged count.
 roomCounts = [3,4,5]
 
 # Standard levels use this many distinct rooms; word lengths may be this number or fewer.
-# When no staged room count applies, multi-room riddles add rooms to fit the answer.
+# Other multi-room puzzle modes may add rooms to fit the answer when there is no staged count.
 # singleRoomSequential, singleRoomSpread and singleRoomFixed always use ONE room, regardless of count or answer length.
 # Requires at least count complete room_N / jumpscare_N pairs in levels/.
 # Short words use a subset of rooms; the other rooms contain no letter for that word.
@@ -69,6 +69,11 @@ arabicFontLocalNames = ["Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Gee
 # Optional progress file; browser progress is saved automatically.
 saveFile = "save.txt"
 wordsFile = "words.txt"
+# Optional combinations: put true on the first line, then one comma-separated group per line.
+# One eligible group is picked per run, shuffled and trimmed to the first answer's length.
+# Retry or a new run uses a different eligible group when possible.
+# Use false to disable it. Missing groups or media fall back to the normal scene pool.
+roomsFile = "rooms.txt"
 puzzlesFile = "puzzles.txt"
 arabicPuzzlesFile = "puzzles_ar.txt"
 levelsDirectory = "levels/"
@@ -142,6 +147,8 @@ timeLimitMs = 60000
 # Regular bonus, or the larger bonus when the captured letters spell the answer in order.
 timeBonusSeconds = 10
 inOrderTimeBonusSeconds = 20
+# Extra time per letter collected by tapping. Shutter captures get no tap bonus.
+tapTimeBonusSeconds = 2
 decoyLetterChance = 0
 flyingLetters = false
 evadesCamera = false
@@ -455,7 +462,7 @@ frameMs = 70
 offscreenMarginPx = 8
 retreatExtraPx = 4
 volume = 1
-skipLeadingSilence = true
+skipLeadingSilence = false
 silenceThreshold = 0.001
 soundPreRollSamples = 256
 
@@ -516,6 +523,7 @@ batteryWidthFraction = 0.1
 letterColor = "rgba(241, 239, 229, 0.80)"
 foundColor = "#f6d20a"
 cameraColor = "#ffffff"
+# Extra scene blur behind the Ready paper, added on top of each doll's normal blur.
 clueBlurPx = 5
 clueDismissMs = 190
 clueFadeMs = 180
@@ -559,7 +567,7 @@ prepareMedia = "TAP"
 clearProgress = "CLEAR"
 
 
-# Foreground dolls: one presence roll per eligible SCENE per level, retained on visits/retries.
+# Foreground dolls: rolled once per eligible scene at the start of a run and retained until retry or a new run.
 # All appearance/motion values below apply to every doll. Scene numbers match room_N files.
 # Numbered dolls found in levels/ with no assignment inherit doll 1's room list.
 # An explicit empty list (for example "3":[]) disables that doll's eligible rooms.
@@ -583,7 +591,7 @@ minXFraction = 0
 maxXFraction = 1
 # >1 moves the doll faster than the room, so it feels closer to the player.
 parallaxMultiplier = 1.35
-blurPx = 0.3
+blurPx = 1.2
 opacity = 1
 # Any jumpscare sends the active doll upwards over the playing video.
 retreatMs = 180
@@ -617,7 +625,7 @@ exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
-howText = "Drag to look around. Use Prev and Next to switch rooms. Tap or photograph letters in any order. Collect them in spelling order for a bigger time bonus. Hold the # counter to reread the clue. The clock waits for Ready on each new riddle. If you see an anomaly, photograph it first."
+howText = "Drag to look around, and use Prev and Next to switch rooms. Collect letters in any order. Tapping a letter adds time, and spelling the answer in order earns a bigger bonus. Hold the # counter to reread the clue. The rooms stay the same when a new riddle appears. Press Ready to resume the countdown. If you see an anomaly, photograph it first."
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
 
 [menu.ar]
@@ -635,5 +643,5 @@ exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
-howText = "اسحب لتنظر حولك. تنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. اجمعها بترتيب الكلمة لتحصل على وقت إضافي أطول. اضغط مطولًا على رقم اللغز لقراءته مجددًا. يتوقف الوقت عند كل لغز جديد حتى تضغط «جاهز». إذا رأيت شيئًا غريبًا، فصوّره أولًا."
+howText = "اسحب لتنظر حولك، وتنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. لمس الحرف يزيد الوقت، وجمع الحروف بترتيب الكلمة يمنحك وقتًا إضافيًا أطول. اضغط مطولًا على رقم اللغز لقراءته مجددًا. تبقى الغرف نفسها عند ظهور لغز جديد، ويتوقف الوقت حتى تضغط «جاهز». إذا رأيت شيئًا غريبًا، فصوّره أولًا."
 storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."

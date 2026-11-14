@@ -746,14 +746,12 @@
       100% { transform: translate(0,0); }
     }
 
-    /* During the clue card, keep the prepared room soft and hide gameplay UI. */
-    #portraitViewport.clue-intro-active:not(.next-riddle) .room-image,
-    #portraitViewport.clue-intro-active:not(.next-riddle) .room-video,
-    #portraitViewport.clue-intro-active:not(.next-riddle) .room-video-cover {
-      filter: blur(var(--clue-blur, 5px));
+    /* Both Ready papers blur the full scene, including the foreground dolls. */
+    #portraitViewport.clue-intro-active #sceneEffects {
+      --scene-hint-blur: var(--clue-blur, 5px);
+      transition: filter var(--clue-fade-ms, 180ms) ease;
     }
-
-    #portraitViewport.next-riddle #sceneEffects { --scene-hint-blur: var(--clue-blur, 5px); }
+    #portraitViewport.clue-intro-active:not(.next-riddle) #sceneEffects { transition: none; }
     #portraitViewport.next-riddle #handBlocker { filter: blur(var(--clue-blur, 5px)); }
 
     #letterWorld,
@@ -1337,6 +1335,7 @@
     const CONFIG_DEFAULTS = {
   "assets": {
     "wordsFile": "words.txt",
+    "roomsFile": "rooms.txt",
     "levelsDirectory": "levels/",
     "levelIndexFile": "index.json",
     "paperFile": "note.png",
@@ -1444,6 +1443,7 @@
       "timeLimitMs": 60000,
       "timeBonusSeconds": 10,
       "inOrderTimeBonusSeconds": 20,
+      "tapTimeBonusSeconds": 2,
       "decoyLetterChance": 0,
       "flyingLetters": false,
       "evadesCamera": false,
@@ -1986,7 +1986,7 @@
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
     let appleForegroundAudioPending = false;
     let gameplayPaused = pageSuspended;
-    let endlessIntermission = null; // "found" until the message ends, then "paper" until Ready.
+    let endlessIntermission = null; // "found", then "paper" until Ready.
     let exitConfirmationActive = false;
     let playbackRevision = 0;
     let levelResumePending = null;
@@ -2005,6 +2005,7 @@
       "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5],
       "levels.puzzleEndless.timeBonusSeconds": [1, 600, true],
       "levels.puzzleEndless.inOrderTimeBonusSeconds": [1, 600, true],
+      "levels.puzzleEndless.tapTimeBonusSeconds": [0, 600, true],
       "anomaly.androidBrightness": [1, 2]
     });
     for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
@@ -2240,12 +2241,6 @@
       milestoneSelectionInfo.rooms = { level: progressionLevel(), stage: stage + 1, maxSceneNumber: maxNumber, count: allowed.length };
       return allowed;
     }
-    function nonRepeatingScenePool(scenes, previousNumber) {
-      if (previousNumber === null || previousNumber === undefined) return scenes;
-      const candidates = scenes.filter(scene => scene.number !== previousNumber);
-      if (!candidates.length) throw new Error("No alternative room is unlocked. Add or unlock another complete room/jumpscare pair so consecutive levels do not repeat the same scene.");
-      return candidates;
-    }
     function puzzlesFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicPuzzlesFile : config.assets.puzzlesFile;
     }
@@ -2259,9 +2254,6 @@
         return /^[\u0621-\u063a\u0641-\u064a]+$/.test(word) ? word : "";
       }
       return word.toLowerCase().replace(/[^a-z0-9]/g, "");
-    }
-    function validSavedWord(word, language) {
-      return typeof word === "string" && word.length > 0 && word.length <= 1024 && normalizeGameWord(word, language) === word;
     }
 
     let WORDS_FILE = wordsFileFor();
@@ -2570,6 +2562,8 @@
     let levelFileNamesPromise = null;
     let sceneCatalogPromise = null;
     let dollDiscoveryPromise = null;
+    let roomGroupsPromise = null;
+    const listedSceneProbes = new Map();
     let activeRoomIndex = 0;
     let levelRoomCount = CONFIG.rooms.count;
     let roomsReady = false;
@@ -2579,8 +2573,13 @@
     let languageFontReady = true;
     let words = [];
     let currentPuzzle = null;
-    let endlessPuzzles = [];
-    let endlessDeck = [];
+    let puzzleFilePromise = null;
+    let endlessRunPuzzles = null;
+    let endlessRiddleHistory = { pool: "", seen: new Set(), lastAnswer: null, lastPrompt: null };
+    let lastEndlessSceneSet = null;
+    let lastEndlessRoomLine = null;
+    let lastSceneNumber = null;
+    const tapBonusedLetters = new Set();
     let puzzleTextOverride = null;
     let levelLoading = false;
     let hintActive = false;
@@ -2866,6 +2865,86 @@
       return sceneCatalogPromise;
     }
 
+    function parseRoomGroups(text) {
+      if (typeof text !== "string" || text.length > 512000) return [];
+      const [enabled, ...lines] = text.replace(/^\uFEFF/, "").split(/\r\n?|\n/)
+        .map(line => line.replace(/[;#].*$/, "").trim()).filter(Boolean);
+      if (enabled?.toLowerCase() !== "true") return [];
+      return lines.flatMap(line => {
+        // Accept a period between two room numbers as in the supplied file.
+        if (!/^\d+(?:\s*[,.]\s*\d+)*$/.test(line)) return [];
+        const numbers = [...new Set(line.split(/[,.]/).map(Number))];
+        return numbers.length <= 200 && numbers.every(number => Number.isSafeInteger(number) && number > 0 && number <= 1000000000) ? [numbers] : [];
+      });
+    }
+
+    function loadRoomGroups() {
+      if (!roomGroupsPromise) roomGroupsPromise = (async () => {
+        if (localFolderImport) return parseRoomGroups(localFolderImport.roomsText);
+        try {
+          return await fetchLevelResource(new URL(CONFIG.assets.roomsFile, document.baseURI), {}, async response => {
+            if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
+            return parseRoomGroups(await response.text());
+          });
+        } catch { return []; }
+      })();
+      return roomGroupsPromise;
+    }
+
+    async function probeSceneNumber(number) {
+      const existing = listedSceneProbes.get(number);
+      if (existing) return existing;
+      const attempt = (async () => {
+        const probe = async names => (await Promise.all(names.map(async name => await levelAssetExists(name) ? name : null))).filter(Boolean);
+        const files = await probe([`room_${number}.png`, `room_${number}.mp4`, `jumpscare_${number}.mp4`]);
+        let [scene] = buildSceneCatalog(files);
+        if (!scene) {
+          const otherRooms = files.some(name => name.startsWith("room_")) ? [] : ["webp", "jpg", "jpeg", "webm", "m4v", "mov"].map(ext => `room_${number}.${ext}`);
+          const otherScares = files.some(name => name.startsWith("jumpscare_")) ? [] : ["webm", "m4v", "mov"].map(ext => `jumpscare_${number}.${ext}`);
+          [scene] = buildSceneCatalog([...files, ...await probe([...otherRooms, ...otherScares])]);
+        }
+        return scene;
+      })();
+      listedSceneProbes.set(number, attempt);
+      return attempt;
+    }
+
+    async function resolveRoomGroups(catalog, lists) {
+      const scenes = new Map(catalog.map(scene => [scene.number, scene]));
+      const missing = [...new Set(lists.flat())].filter(number => !scenes.has(number));
+      const batchSize = CONFIG.loading.levelProbeBatchSize;
+      // An index can be stale or miss an entry above the normal probe gap.
+      for (let i = 0; i < missing.length; i += batchSize) {
+        const batch = await Promise.all(missing.slice(i, i + batchSize).map(probeSceneNumber));
+        for (const scene of batch) if (scene) scenes.set(scene.number, scene);
+      }
+      return lists.map(list => ({
+        scenes: list.map(number => scenes.get(number)).filter(Boolean),
+        line: [...list].sort((a, b) => a - b).join(",")
+      }));
+    }
+
+    function drawEndlessRooms(groups, count, previousSet = lastEndlessSceneSet, previousLine = lastEndlessRoomLine) {
+      const eligible = groups.filter(group => group.scenes.length >= count);
+      if (!eligible.length) return { scenes: [], line: null };
+      const differentLine = group => group.line !== previousLine;
+      const differentSet = group => previousSet?.size !== count || group.scenes.some(scene => !previousSet.has(scene.number));
+      // Prefer a different authored line and a different room set when possible.
+      const group = chooseScene(eligible.filter(g => differentLine(g) && differentSet(g))) ||
+        chooseScene(eligible.filter(differentLine)) || chooseScene(eligible.filter(differentSet)) || chooseScene(eligible);
+      const shuffled = shuffleArray([...group.scenes]);
+      const scenes = shuffled.slice(0, count);
+      // A larger row can offer a different subset even when it is the only row.
+      if (previousSet?.size === count && scenes.every(scene => previousSet.has(scene.number))) {
+        const alternate = shuffled.slice(count).find(scene => !previousSet.has(scene.number));
+        if (alternate) {
+          scenes[scenes.length - 1] = alternate;
+          shuffleArray(scenes);
+        }
+      }
+      return { scenes, line: group.line };
+    }
+
     function dollNumberFromFile(name) {
       const configured = CONFIG.doll.filePattern.split("{number}");
       if (name.startsWith(configured[0]) && name.endsWith(configured[1])) {
@@ -2997,17 +3076,6 @@
       return room;
     }
 
-    function cleanDollPlan(value, count) {
-      if (!Array.isArray(value) || value.length !== count) return null;
-      if (!value.every(item => item === null || item && typeof item === "object" &&
-          Number.isSafeInteger(item.number) && item.number >= 1 && item.number <= 1000000000 &&
-          Number.isFinite(item.xFraction) && item.xFraction >= 0 && item.xFraction <= 1 &&
-          Number.isFinite(item.yVariation) && Math.abs(item.yVariation) <= 1 &&
-          Number.isFinite(item.sizeVariation) && Math.abs(item.sizeVariation) <= 1)) return null;
-      return value.map(item => item === null ? null : { number: item.number, xFraction: item.xFraction,
-        yVariation: item.yVariation, sizeVariation: item.sizeVariation });
-    }
-
     function chooseRoomDoll(sceneNumber) {
       if (!CONFIG.doll.enabled || !levelIsUnlocked(CONFIG.doll.startLevel)) return null;
       const assignments = CONFIG.doll.roomAssignments;
@@ -3023,9 +3091,7 @@
     }
 
     async function preloadLevelDolls() {
-      const saved = cleanDollPlan(resumedLevel?.dolls, levelRooms.length);
-      const plan = saved || levelRooms.map(room => chooseRoomDoll(room.scene.number));
-      levelRooms.forEach((room, index) => { room.dollState = plan[index]; });
+      levelRooms.forEach(room => { room.dollState = chooseRoomDoll(room.scene.number); });
       if (!CONFIG.doll.enabled || !levelIsUnlocked(CONFIG.doll.startLevel)) return;
       await Promise.all(levelRooms.map(async room => {
         if (!room.dollState) return;
@@ -3341,11 +3407,7 @@
       if (spiderActive && spiderRoomIndex === index) layoutSpider();
       showCurrentLetter({ animate: !initial });
       updateCameraControls();
-      if (!initial && progressState.currentLevel && !progressState.currentLevel.legacy) {
-        progressState.currentLevel.activeRoomIndex = activeRoomIndex;
-        progressState.updatedAt = new Date().toISOString();
-        saveProgress();
-      }
+      lastSceneNumber = currentScene.number;
     }
 
     function switchRoom(direction) {
@@ -3368,78 +3430,64 @@
       levelLoading = true;
       try {
         const [catalog] = await Promise.all([discoverScenes(), discoverDollFiles()]);
-        availableScenes = await resolveSavedScenes(catalog);
-        // Retry/resume must retain its original scene set even after config edits.
-        if (!resumedLevel) availableScenes = roomMilestonePool(availableScenes);
-        if (!resumedLevel) availableScenes = nonRepeatingScenePool(availableScenes, progressState.lastSceneNumber);
-        if (!resumedLevel && CONFIG.milestones.enabled && availableScenes.length < levelRoomCount) {
-          wordLoadInfo.url = new URL(levelDataFile(), document.baseURI).href;
-          showWordLoadError(new Error(`Level ${progressionLevel()} needs ${levelRoomCount} distinct rooms, but only ${availableScenes.length} complete room/jumpscare pairs are eligible. Check milestones.rooms.roomCounts, maxSceneNumbers and the matching scene files.`));
+        if (isEndlessPuzzle()) {
+          wordLoadInfo.url = new URL(puzzlesFileFor(), document.baseURI).href;
+          let plan;
+          try { plan = await planEndlessRiddle(catalog); }
+          catch (error) { showWordLoadError(error); return; }
+          if (gameOver) return;
+          applyEndlessRiddlePlan(plan);
+          parkUnusedRooms();
+          await preloadSelectedRooms();
+          if (gameOver) return;
+          roomsReady = true;
+          activateRoom(0, { initial: true });
+          if (loadingPlaybackInterrupted) recoverLoadingPlayback();
+          else revealWhenMediaReady();
           return;
         }
-        if (availableScenes.length < levelRoomCount) throw new Error(`This level needs ${levelRoomCount} complete numbered room/jumpscare pairs; found ${availableScenes.length}.`);
+        availableScenes = roomMilestonePool(catalog);
         if (isPuzzleLevel()) {
           try { await preparePuzzleForLevel(); }
           catch (error) { showWordLoadError(error); return; }
         }
-        let selected;
-        if (resumedLevel) {
-          selected = resumedLevel.sceneNumbers.map(number => availableScenes.find(scene => scene.number === number));
-          if (selected.some(scene => !scene)) throw new Error("A saved room scene is missing from levels/.");
-          if (resumedLevel.legacy) {
-            const extras = shuffleArray(availableScenes.filter(scene => !selected.includes(scene)));
-            selected.push(...extras.slice(0, levelRoomCount - selected.length));
-          }
-        } else selected = shuffleArray([...availableScenes]).slice(0, levelRoomCount);
+        if (availableScenes.length < levelRoomCount) throw new Error(`This level needs ${levelRoomCount} complete numbered room/jumpscare pairs; found ${availableScenes.length}.`);
+        const alternatives = availableScenes.filter(scene => scene.number !== lastSceneNumber);
+        const selected = shuffleArray([...(alternatives.length >= levelRoomCount ? alternatives : availableScenes)]).slice(0, levelRoomCount);
         levelRooms = selected.map(makeLevelRoom);
-        activeRoomIndex = resumedLevel?.activeRoomIndex || 0;
-        const loaded = await Promise.allSettled([preloadLevelDolls(), ...levelRooms.map(async room => {
-          const parts = await Promise.allSettled([
-            preloadRoomBackdrop(room),
-            prepareRoomJumpscare(room)
-          ]);
-          const failed = parts.find(part => part.status === "rejected");
-          if (failed) throw failed.reason;
-        })]);
-        const failed = loaded.find(part => part.status === "rejected");
-        if (failed) throw failed.reason;
+        activeRoomIndex = 0;
+        parkUnusedRooms();
+        await preloadSelectedRooms();
         if (gameOver) return;
         roomsReady = true;
         activateRoom(activeRoomIndex, { initial: true });
-        rememberCurrentRoom();
         if (loadingPlaybackInterrupted) recoverLoadingPlayback();
         else revealWhenMediaReady();
       } catch (error) { showLevelLoadError(error); }
       finally { levelLoading = false; }
     }
 
-    async function resolveSavedScenes(catalog) {
-      if (!resumedLevel) return [...catalog];
-      const resolved = [...catalog];
-      // A saved scene can be beyond a discovery gap or absent from an old
-      // index.json. Probe its exact number, rather than treating the index as
-      // proof that the saved files no longer exist.
-      await Promise.all(resumedLevel.sceneNumbers.map(async number => {
-        let names = [`room_${number}.png`, `room_${number}.mp4`, `jumpscare_${number}.mp4`];
-        let found = (await Promise.all(names.map(async name => await levelAssetExists(name) ? name : null))).filter(Boolean);
-        if (!buildSceneCatalog(found).length) {
-          names = ["webp", "jpg", "jpeg", "webm", "m4v", "mov"].map(ext => `room_${number}.${ext}`)
-            .concat(["webm", "m4v", "mov"].map(ext => `jumpscare_${number}.${ext}`));
-          found.push(...(await Promise.all(names.map(async name => await levelAssetExists(name) ? name : null))).filter(Boolean));
+    async function preloadSelectedRooms() {
+      const results = await Promise.allSettled([preloadLevelDolls(), ...levelRooms.flatMap(room => [
+        preloadRoomBackdrop(room), prepareRoomJumpscare(room)
+      ])]);
+      const failure = results.find(result => result.status === "rejected");
+      if (failure) throw failure.reason;
+    }
+
+    function parkUnusedRooms() {
+      // Keep their elements and audio permission for later, but release the
+      // media when a shorter answer needs fewer rooms.
+      for (const room of roomMediaPool.slice(levelRooms.length)) {
+        if (room.scareURL) releaseRoomScareSource(room);
+        if (room.video.hasAttribute("src")) {
+          room.video.pause();
+          room.video.removeAttribute("src");
+          room.video.load();
         }
-        const existing = resolved.findIndex(scene => scene.number === number);
-        const actual = buildSceneCatalog(found)[0];
-        if (actual) {
-          if (existing < 0) resolved.push(actual); else resolved[existing] = actual;
-        } else if (existing < 0) {
-          // HEAD/range discovery can itself be blocked. Actual image/video
-          // loading is authoritative; let it try the known saved filenames.
-          resolved.push({ number, roomImage: new URL(`room_${number}.png`, levelBaseURL).href,
-            roomVideo: new URL(`room_${number}.mp4`, levelBaseURL).href,
-            jumpscare: new URL(`jumpscare_${number}.mp4`, levelBaseURL).href });
-        }
-      }));
-      return resolved;
+        room.image.removeAttribute("src");
+        room.backdropReady = room.videoCoverReady = false;
+      }
     }
 
     function mediaAssetError(url, cause, clip = null) {
@@ -3470,6 +3518,8 @@
 
     function clearPreparedLevelCache() {
       levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
+      roomGroupsPromise = puzzleFilePromise = null;
+      listedSceneProbes.clear();
       dollFiles.clear();
       availableScenes = [];
       for (const room of roomMediaPool) {
@@ -3590,12 +3640,6 @@
       wordLoadError.hidden = true;
       loadingWord.hidden = false;
       try {
-        const endless = isEndlessPuzzle();
-        if (resumedLevel && !endless) {
-          currentPuzzle = { ...resumedLevel.puzzle };
-          acceptWordList(currentPuzzle.answer, "save.txt", "text/plain", { preserveOrder: true });
-          return;
-        }
         let text, source = wordLoadInfo.url, type = "text/plain";
         if (puzzleTextOverride) { text = puzzleTextOverride.text; source = puzzleTextOverride.source; }
         else if (localFolderImport) {
@@ -3607,25 +3651,112 @@
           text = await response.text(); type = response.headers.get("content-type") || ""; source = response.url;
         }
         const scoped = contentMilestonePool(parsePuzzleList(text, type), "puzzles");
-        const exactCount = endless && resumedLevel ? resumedLevel.puzzle.answer.length : stagedRoomCount();
+        const exactCount = stagedRoomCount();
         const eligible = scoped.filter(puzzle =>
           puzzle.answer.length >= CONFIG.puzzles.minAnswerLength && puzzle.answer.length <= CONFIG.puzzles.maxAnswerLength &&
           (!exactCount || puzzle.answer.length === exactCount) &&
           (isSingleRoomLevel() || puzzle.answer.length <= availableScenes.length));
         if (!eligible.length && exactCount) throw new Error(`Level ${progressionLevel()} needs a ${exactCount}-letter answer. Add one to the active pool in ${file} or adjust the room and answer-length settings.`);
         if (!eligible.length) throw new Error(`No riddle in the current file pool fits ${CONFIG.puzzles.minAnswerLength}–${CONFIG.puzzles.maxAnswerLength} letters and the ${availableScenes.length} room/jumpscare pairs unlocked at level ${progressionLevel()}. Check your content and scene milestones.`);
-        currentPuzzle = { ...(resumedLevel?.puzzle || eligible[Math.floor(Math.random() * eligible.length)]) };
-        if (!resumedLevel) levelRoomCount = isSingleRoomLevel() ? 1 : exactCount || Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
-        if (endless) {
-          // Freeze the eligible pool and answer length for the whole run.
-          // Duplicate answers with different clues do not crowd the deck.
-          endlessPuzzles = [...new Map(eligible.filter(p => p.answer.length === currentPuzzle.answer.length)
-            .map(p => [p.answer, p])).values()];
-          endlessDeck = shuffleArray(endlessPuzzles.filter(p => p.answer !== currentPuzzle.answer));
-        }
-        acceptWordList(currentPuzzle.answer, source, "text/plain", { preserveOrder: Boolean(resumedLevel) });
+        currentPuzzle = { ...chooseScene(eligible) };
+        levelRoomCount = isSingleRoomLevel() ? 1 : exactCount || Math.max(CONFIG.rooms.count, currentPuzzle.answer.length);
+        acceptWordList(currentPuzzle.answer, source, "text/plain");
         wordLoadInfo.count = eligible.length;
       } finally { clearTimeout(timeout); wordsLoading = false; }
+    }
+
+    function loadPuzzleData() {
+      if (!puzzleFilePromise) puzzleFilePromise = (async () => {
+        const file = puzzlesFileFor(), language = CONFIG.language.code;
+        if (puzzleTextOverride) return { puzzles: parsePuzzleList(puzzleTextOverride.text, "", language), source: puzzleTextOverride.source };
+        if (localFolderImport) {
+          if (typeof localFolderImport.puzzlesText !== "string") throw new Error(`The local folder has no ${file}. Choose the folder again.`);
+          return { puzzles: parsePuzzleList(localFolderImport.puzzlesText, "", language), source: localFolderImport.puzzlesSource || file };
+        }
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), WORDS_TIMEOUT_MS);
+        try {
+          const response = await fetch(new URL(file, document.baseURI), { cache: "no-store", signal: controller.signal });
+          if (!response.ok) throw new Error(`The server returned HTTP ${response.status} for ${file}.`);
+          return { puzzles: parsePuzzleList(await response.text(), response.headers.get("content-type") || "", language), source: response.url };
+        } finally { clearTimeout(timeout); }
+      })().catch(error => { puzzleFilePromise = null; throw error; });
+      return puzzleFilePromise;
+    }
+
+    function endlessRiddleCandidates(puzzles, groups, catalog) {
+      const scoped = contentMilestonePool(puzzles, "puzzles");
+      const fallback = roomMilestonePool(catalog);
+      const { min, max } = endlessAnswerLengthRange();
+      const inRange = scoped.filter(({ answer }) => answer.length >= min && answer.length <= max);
+      const listed = inRange.filter(({ answer }) => groups.some(group => group.scenes.length >= answer.length));
+      const roomGroups = listed.length ? groups : [{ scenes: fallback, line: null }];
+      const candidates = listed.length ? listed : inRange.filter(({ answer }) => answer.length <= fallback.length);
+      if (!candidates.length) throw new Error(`No ${min === max ? min : `${min}–${max}`}-letter riddle in the current pool has enough complete room/jumpscare pairs for level ${progressionLevel()}. Check ${puzzlesFileFor()}, ${CONFIG.assets.roomsFile}, and the room milestones.`);
+      return { candidates, roomGroups };
+    }
+
+    function endlessAnswerLengthRange(capacity = Infinity) {
+      const min = Math.max(3, CONFIG.puzzles.minAnswerLength);
+      const max = Math.min(capacity, CONFIG.puzzles.maxAnswerLength, Math.max(3, stagedRoomCount() || CONFIG.rooms.count));
+      return { min, max };
+    }
+
+    function nextEndlessPuzzle(data, roomCount) {
+      const { min, max } = endlessAnswerLengthRange(roomCount);
+      const fits = ({ answer }) => answer.length >= min && answer.length <= max;
+      const milestone = contentMilestonePool(data.puzzles, "puzzles");
+      const { first, last } = milestoneSelectionInfo.puzzles;
+      const pool = `${CONFIG.language.code}:${data.source}:${first}:${last}`;
+      const candidates = milestone.filter(fits);
+      // A new clue milestone can contain only words longer than this run's
+      // rooms. Fall back to already-unlocked clues that fit the same rooms.
+      if (candidates.some(puzzle => puzzle.answer !== currentPuzzle.answer)) return drawEndlessRiddle(candidates, pool);
+      const unlocked = data.puzzles.slice(0, last).filter(fits);
+      return unlocked.length ? drawEndlessRiddle(unlocked, `${pool}:fits-${roomCount}`) : { ...currentPuzzle };
+    }
+
+    function drawEndlessRiddle(candidates, pool) {
+      const history = endlessRiddleHistory;
+      if (history.pool !== pool) { history.pool = pool; history.seen.clear(); }
+      const unique = [...new Map(candidates.map(puzzle => [puzzle.answer, puzzle])).values()];
+      let remaining = unique.filter(puzzle => !history.seen.has(puzzle.answer));
+      if (!remaining.length || (remaining.length === 1 && remaining[0].answer === history.lastAnswer && unique.length > 1)) {
+        history.seen.clear();
+        remaining = unique;
+      }
+      const alternatives = remaining.filter(puzzle => puzzle.answer !== history.lastAnswer);
+      const distinct = alternatives.filter(puzzle => puzzle.prompt !== history.lastPrompt);
+      const puzzle = chooseScene(distinct.length ? distinct : alternatives.length ? alternatives : remaining);
+      history.seen.add(puzzle.answer);
+      history.lastAnswer = puzzle.answer;
+      history.lastPrompt = puzzle.prompt;
+      return { ...puzzle };
+    }
+
+    async function planEndlessRiddle(catalog) {
+      const [data, lists] = await Promise.all([loadPuzzleData(), loadRoomGroups()]);
+      const groups = await resolveRoomGroups(catalog, lists);
+      const { candidates, roomGroups } = endlessRiddleCandidates(data.puzzles, groups, catalog);
+      const { first, last } = milestoneSelectionInfo.puzzles;
+      const puzzle = drawEndlessRiddle(candidates, `${CONFIG.language.code}:${data.source}:${first}:${last}`);
+      const count = puzzle.answer.length;
+      // A usable row takes precedence for this answer length; do not mix rows.
+      const { scenes, line } = drawEndlessRooms(roomGroups, count);
+      return { puzzle, scenes, line, data, count: candidates.length };
+    }
+
+    function applyEndlessRiddlePlan({ puzzle, scenes, line, data, count }) {
+      currentPuzzle = puzzle;
+      endlessRunPuzzles = data;
+      if (scenes.length > 1 && scenes[0].number === lastSceneNumber) [scenes[0], scenes[1]] = [scenes[1], scenes[0]];
+      levelRoomCount = scenes.length;
+      lastEndlessSceneSet = new Set(scenes.map(scene => scene.number));
+      lastEndlessRoomLine = line;
+      levelRooms = scenes.map(makeLevelRoom);
+      activeRoomIndex = 0;
+      acceptWordList(puzzle.answer, data.source, "text/plain");
+      wordLoadInfo.count = count;
     }
 
     function makeWordRoomOrder(word) {
@@ -3635,16 +3766,15 @@
       return order.slice(0, word.length);
     }
 
-    function acceptWordList(text, source, contentType = "", { preserveOrder = false } = {}) {
+    function acceptWordList(text, source, contentType = "") {
       const loaded = parseWordList(text, contentType);
-      const scoped = isPuzzleLevel() || resumedLevel ? loaded : contentMilestonePool(loaded, "words");
+      const scoped = isPuzzleLevel() ? loaded : contentMilestonePool(loaded, "words");
       const maxLength = isSingleRoomLevel() ? 32 : levelRoomCount;
       const eligible = scoped.filter(word => word.length > 0 && word.length <= maxLength);
-      const seeded = resumedLevel?.legacy ? resumedLevel.words.filter(word => word.length > 0 && word.length <= levelRoomCount) : [];
-      const pool = preserveOrder ? eligible : [...seeded, ...shuffleArray(eligible.filter(word => !seeded.includes(word)))];
+      const pool = shuffleArray(eligible);
       if (pool.length < levelType.wordCount) throw new Error(`${levelDataFile()} needs at least ${levelType.wordCount} unique answers of ${maxLength} letters or fewer; found ${pool.length}.`);
       words = pool.slice(0, levelType.wordCount);
-      wordLetterRooms = resumedLevel && !resumedLevel.legacy ? resumedLevel.letterRooms.map(order => [...order]) : words.map(makeWordRoomOrder);
+      wordLetterRooms = words.map(makeWordRoomOrder);
       wordLoadInfo = { status: "loaded", url: source, count: eligible.length, error: null };
       console.info(`Loaded ${eligible.length} matching answers of up to ${maxLength} letters from ${source}`);
       wordLoadError.hidden = true;
@@ -3653,7 +3783,6 @@
       startWord(0);
       populateClueList();
       wordsReadyForClue = true;
-      rememberCurrentRoom();
       revealWhenMediaReady();
     }
 
@@ -3794,6 +3923,11 @@
           const saveFile = find(selectedFolderPath(selectedConfig.assets.saveFile));
           if (saveFile) saveText = await saveFile.text();
         } catch (error) { console.info("No readable local save.txt.", error.message); }
+        let roomsText = null;
+        try {
+          const roomsFile = find(selectedFolderPath(selectedConfig.assets.roomsFile));
+          if (roomsFile && roomsFile.size <= 512000) roomsText = await roomsFile.text();
+        } catch { /* An optional room list never blocks the local folder. */ }
         const levelsPrefix = selectedFolderPath(selectedConfig.assets.levelsDirectory).replace(/\/?$/, "/");
         const levelFiles = [...entries.keys()].filter(path => path.startsWith(levelsPrefix) && !path.slice(levelsPrefix.length).includes("/")).map(path => path.slice(levelsPrefix.length));
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
@@ -3811,7 +3945,7 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, saveText, levelFiles, languageFiles };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, languageFiles };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -3882,6 +4016,7 @@
         } else if (isPuzzleLevel()) {
           parsePuzzleList(text, file.type);
           puzzleTextOverride = { text, source: file.name };
+          puzzleFilePromise = null;
           if (localFolderImport) {
             localFolderImport.puzzlesText = text; localFolderImport.puzzlesSource = file.name;
             rememberLocalFiles(localFolderImport);
@@ -4017,6 +4152,7 @@
       gameplayStarting = false;
       gameplayStarted = true;
       watchRoomPlayback(activeRoom, roomPlayback);
+      cameraOverlay.inert = false;
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
       startCameraTimer();
@@ -4277,6 +4413,7 @@
       currentWord = words[wordIndex];
       selectedCount = 0;
       selectionHistory = [];
+      tapBonusedLetters.clear();
       updateLevelStatus();
       createHudWord();
       createScatteredLetters();
@@ -4595,7 +4732,7 @@
       else if (localAnomaly) endGame("anomaly");
       else if (letterIsVisible) {
         const tile = tiles[index];
-        selectLetter(tile.dataset.letter, index, tile);
+        selectLetter(tile.dataset.letter, index, tile, { directTap: point !== null });
       } else drainBatterySlot();
       if (!gameOver) playShutterEffect();
     }
@@ -4969,7 +5106,7 @@
       });
     }
 
-    function selectLetter(letter, tileIndex, tile) {
+    function selectLetter(letter, tileIndex, tile, { directTap = false } = {}) {
       if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       updateCameraTimer();
       if (gameOver) return;
@@ -5002,7 +5139,14 @@
       }
       selectedCount++;
 
-      if (selectedCount === currentWord.length) completeWord();
+      const finalLetter = selectedCount === currentWord.length;
+      let tapBonus = 0;
+      if (directTap && isEndlessPuzzle() && !tapBonusedLetters.has(tileIndex)) {
+        tapBonusedLetters.add(tileIndex);
+        tapBonus = CONFIG.levels.puzzleEndless.tapTimeBonusSeconds;
+        if (tapBonus && !finalLetter) addCameraTimeBonus(tapBonus);
+      }
+      if (finalLetter) completeWord(tapBonus);
       showCurrentLetter();
     }
 
@@ -5028,40 +5172,29 @@
       showCurrentLetter();
     }
 
-    function awardEndlessRiddle() {
-      const { timeBonusSeconds, inOrderTimeBonusSeconds } = CONFIG.levels.puzzleEndless;
-      // The capture sequence must spell the answer. Identical letters are interchangeable.
-      const inOrder = selectionHistory.length === currentWord.length &&
-        selectionHistory.every((slot, index) => currentWord[slot] === currentWord[index]);
-      const seconds = inOrder ? inOrderTimeBonusSeconds : timeBonusSeconds;
+    function addCameraTimeBonus(seconds, { pause = false } = {}) {
       cameraBonusMs += seconds * 1000;
-      // Leave any near-deadline media warm-up intact; only the game clock is held.
-      pauseCameraTimer({ keepStandby: true });
+      // Leave any near-deadline media warm-up intact; only hold the clock.
+      if (pause) pauseCameraTimer({ keepStandby: true });
+      else updateCameraTimer();
       cameraTimeBonus.classList.remove("show");
       cameraTimeBonus.textContent = `+${seconds} ${isArabic() ? "ث" : "sec"}`;
       void cameraTimeBonus.offsetWidth;
       cameraTimeBonus.classList.add("show");
-
-      // Bank solved riddles immediately. A new run uses the resulting
-      // progression, while this run keeps its rooms and eligible deck.
-      progressState.completedRooms = currentRoomNumber;
-      progressState.lastSceneNumber = levelRooms[activeRoomIndex].scene.number;
-      progressState.currentLevel = null;
-      progressState.updatedAt = new Date().toISOString();
-      currentRoomNumber++;
-      saveProgress();
     }
 
-    function drawEndlessRiddle() {
-      if (!endlessDeck.length) {
-        endlessDeck = shuffleArray([...endlessPuzzles]);
-        // The deck can cycle forever, but avoid an immediate repeat whenever
-        // the selected file pool has more than one answer of this length.
-        if (endlessDeck.length > 1 && endlessDeck[endlessDeck.length - 1].answer === currentPuzzle.answer) {
-          endlessDeck.unshift(endlessDeck.pop());
-        }
-      }
-      return { ...endlessDeck.pop() };
+    function awardEndlessRiddle(tapBonus = 0) {
+      const { timeBonusSeconds, inOrderTimeBonusSeconds } = CONFIG.levels.puzzleEndless;
+      // The capture sequence must spell the answer. Identical letters are interchangeable.
+      const inOrder = selectionHistory.length === currentWord.length &&
+        selectionHistory.every((slot, index) => currentWord[slot] === currentWord[index]);
+      const seconds = (inOrder ? inOrderTimeBonusSeconds : timeBonusSeconds) + tapBonus;
+      addCameraTimeBonus(seconds, { pause: true });
+
+      // Only the riddle number is banked. The room plan stays in this run.
+      progressState.completedRooms = currentRoomNumber;
+      currentRoomNumber++;
+      saveProgress();
     }
 
     function showNextEndlessRiddle() {
@@ -5069,7 +5202,7 @@
       message.classList.remove("show");
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
-      currentPuzzle = drawEndlessRiddle();
+      currentPuzzle = nextEndlessPuzzle(endlessRunPuzzles, levelRooms.length);
       populateClueList();
       clearLevelTimeout(clueDismissTimer);
       clueDismissTimer = null;
@@ -5093,12 +5226,19 @@
       words = [currentPuzzle.answer];
       wordLetterRooms = [makeWordRoomOrder(currentPuzzle.answer)];
       startWord(0);
+      // Room players, the camera position and encounter jobs stay in place.
       resumeLevelTimeouts();
       resumeCameraTimer();
       resumeSpiderEncounter();
+      if (!anomalyEnabled && CONFIG.anomaly.enabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
+        anomalyEnabled = true;
+        scheduleAnomalyCheck();
+      }
+      if (spiderTimer === null && !spiderActive) scheduleSpiderCheck();
+      if (handTimer === null && !handVisible) scheduleNextHandCheck();
     }
 
-    function completeWord() {
+    function completeWord(tapBonus = 0) {
       if (wordTransitionPending || gameOver || roomCompleted) return;
       wordTransitionPending = true;
       const endless = isEndlessPuzzle();
@@ -5119,7 +5259,7 @@
       if (cost) drainBatterySlot(cost);
       if (gameOver) return;
       if (endless) {
-        awardEndlessRiddle();
+        awardEndlessRiddle(tapBonus);
       } else if (completedWordCount >= words.length) {
         roomCompleted = true;
         hidePuzzleHint({ immediate: true });
@@ -5131,11 +5271,11 @@
         clearLevelTimeout(handTimer);
         stopSpiderEncounter();
       }
-      if (!roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
+      if (!endless && !roomCompleted && CONFIG.anomaly.enabled && !anomalyEnabled && levelIsUnlocked(CONFIG.anomaly.startLevel) && completedWordCount >= anomalyWordThreshold()) {
         anomalyEnabled = true;
         scheduleAnomalyCheck();
       }
-      if (!roomCompleted && !spiderActive && spiderTimer === null) scheduleSpiderCheck();
+      if (!endless && !roomCompleted && !spiderActive && spiderTimer === null) scheduleSpiderCheck();
       message.classList.remove("show");
       refreshMessageBitmap();
       void message.offsetWidth;
@@ -6663,10 +6803,8 @@
     }
 
     function recoverLevelAudioFromGesture(event) {
-      if (!event.isTrusted || gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || gameOver || roomCompleted) return;
-      if (pausedSpiderSoundOffset !== null) {
-        if (!endlessIntermission) resumeSpiderEncounter();
-      }
+      if (!event.isTrusted || gameplayPaused || endlessIntermission || isPageInactive() || menuPage !== null || !gameplayStarted || gameOver || roomCompleted) return;
+      if (pausedSpiderSoundOffset !== null) resumeSpiderEncounter();
       else if (!spiderSoundReady) unlockSpiderSound();
       const room = levelRooms[activeRoomIndex];
       if (room && room.media === room.video && (room.video.paused || room.video.muted)) {
@@ -6816,7 +6954,6 @@
     const PROGRESS_RESET_KEY = PROGRESS_STORAGE_BASE_KEY + ":cleared";
     let PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY;
     let progressState = emptyProgress();
-    let resumedLevel = null;
     let currentRoomNumber = 1;
     let completionRecorded = false;
     let progressStorageAvailable = true;
@@ -6826,72 +6963,23 @@
     let progressMessage = "";
 
     function emptyProgress() {
-      return { version: 6, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, lastSceneNumber: null, currentLevel: null, updatedAt: null };
+      return { version: 7, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0 };
     }
 
     function validateProgress(value) {
-      if (!value || ![1, 2, 3, 4, 5, 6].includes(value.version) || value.game !== "room-word-hunt" ||
+      if (!value || ![1, 2, 3, 4, 5, 6, 7].includes(value.version) || value.game !== "room-word-hunt" ||
           !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
-      if (value.updatedAt !== null && (typeof value.updatedAt !== "string" || !Number.isFinite(Date.parse(value.updatedAt)))) throw new Error("Invalid save date.");
       const language = value.version >= 3 ? value.language : "en";
       if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
-      const lastSceneNumber = value.lastSceneNumber ?? null;
-      if (lastSceneNumber !== null && (!Number.isSafeInteger(lastSceneNumber) || lastSceneNumber < 1 || lastSceneNumber > 1000000000)) throw new Error("Invalid previous room scene in save.txt.");
-      const clean = { version: 6, game: "room-word-hunt", language, completedRooms: value.completedRooms, lastSceneNumber, currentLevel: null, updatedAt: value.updatedAt };
-      if (value.currentLevel === null) return clean;
-      const level = value.currentLevel;
-      if (!level || level.roomNumber !== value.completedRooms + 1 || !Object.prototype.hasOwnProperty.call(CONFIG_DEFAULTS.levels, level.levelType) ||
-          !Array.isArray(level.words) || level.words.length < 1 || level.words.length > 20 ||
-          !level.words.every(word => validSavedWord(word, language)) ||
-          new Set(level.words).size !== level.words.length) throw new Error("Invalid unfinished level in save.txt.");
-      if (isPuzzleType(level.levelType) && value.version < 4) throw new Error("Invalid saved puzzle version.");
-      const singleRoom = isSingleRoomType(level.levelType);
-      if (singleRoom && (value.version < 5 || level.words.length !== 1)) throw new Error("Invalid saved single-room level.");
-      const fallback = CONFIG.levels[level.levelType], rules = {};
-      for (const key of ["timeLimitMs", "decoyLetterChance", "flyingLetters", "evadesCamera"]) {
-        const v = level.rules?.[key] === undefined ? fallback[key] : level.rules[key];
-        if (!configValueIsValid(`levels.${level.levelType}.${key}`, v, CONFIG_DEFAULTS.levels[level.levelType][key])) throw new Error(`Invalid saved level rule: ${key}`);
-        rules[key] = v;
-      }
-      if (value.version === 1) {
-        if (!Number.isSafeInteger(level.sceneNumber) || level.sceneNumber < 1) throw new Error("Invalid saved scene.");
-        rules.wordCount = fallback.wordCount; rules.roomCount = CONFIG.rooms.count;
-        clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [level.sceneNumber], activeRoomIndex: 0,
-          levelType: level.levelType, words: [...level.words], letterRooms: [], rules, legacy: true };
-        return clean;
-      }
-      const count = level.rules?.roomCount;
-      if (!configValueIsValid("rooms.count", count, CONFIG_DEFAULTS.rooms.count) ||
-          !Array.isArray(level.sceneNumbers) || level.sceneNumbers.length !== count ||
-          !level.sceneNumbers.every(number => Number.isSafeInteger(number) && number > 0) || new Set(level.sceneNumbers).size !== count ||
-          !Number.isInteger(level.activeRoomIndex) || level.activeRoomIndex < 0 || level.activeRoomIndex >= count ||
-          singleRoom && count !== 1 ||
-          level.words.some(word => word.length < 1 || word.length > (singleRoom ? 32 : count)) ||
-          !Array.isArray(level.letterRooms) || level.letterRooms.length !== level.words.length ||
-          !level.letterRooms.every((order, wordIndex) => Array.isArray(order) && order.length === level.words[wordIndex].length &&
-            (singleRoom || new Set(order).size === order.length) && order.every(index => Number.isInteger(index) && index >= 0 && index < count))) throw new Error("Invalid room layout in save.txt.");
-      rules.roomCount = count; rules.wordCount = level.words.length;
-      clean.currentLevel = { roomNumber: level.roomNumber, sceneNumbers: [...level.sceneNumbers], activeRoomIndex: level.activeRoomIndex,
-        levelType: level.levelType, words: [...level.words], letterRooms: level.letterRooms.map(order => [...order]), rules };
-      if (isPuzzleType(level.levelType)) {
-        if (value.version < 4 || level.words.length !== 1 || !level.puzzle ||
-            typeof level.puzzle.prompt !== "string" || !level.puzzle.prompt.trim() || level.puzzle.prompt.length > 2048 ||
-            level.puzzle.answer !== level.words[0] || parsePuzzleList(`${level.puzzle.prompt} [${level.puzzle.answer}]`, "", language).length !== 1) {
-          throw new Error("Invalid saved puzzle.");
-        }
-        clean.currentLevel.puzzle = { prompt: level.puzzle.prompt, answer: level.puzzle.answer };
-      }
-      const dolls = cleanDollPlan(level.dolls, count);
-      if (dolls) clean.currentLevel.dolls = dolls;
-      return clean;
+      // Upgrade older files using only their completed riddle count. Legacy
+      // room, doll and puzzle data do not affect the new roll.
+      return { version: 7, game: "room-word-hunt", language, completedRooms: value.completedRooms };
     }
 
     function parseProgress(text) {
       if (typeof text !== "string" || text.length > 262144) throw new Error("Invalid save.txt size.");
       return validateProgress(JSON.parse(text.replace(/^\uFEFF/, "")));
     }
-
-    function progressTime(state) { return Date.parse(state.updatedAt) || 0; }
 
     function savedBrowserProgress() {
       let newest = null;
@@ -6901,7 +6989,7 @@
           if (!raw) continue;
           const candidate = parseProgress(raw);
           if (candidate.language !== CONFIG.language.code) continue;
-          if (!newest || progressTime(candidate) > progressTime(newest)) newest = candidate;
+          if (!newest || candidate.completedRooms > newest.completedRooms) newest = candidate;
         } catch (error) { console.info("Could not read saved browser progress.", error.message); }
       }
       return newest;
@@ -6919,34 +7007,10 @@
       updateProgressStatus();
     }
 
-    function rememberCurrentRoom() {
-      if (roomCompleted || gameOver || !roomsReady || !wordsReadyForClue) return;
-      if (progressState.currentLevel && !progressState.currentLevel.legacy) {
-        // Older saves get one doll plan; later visits/retries keep both present
-        // dolls and explicit absences instead of rolling them again.
-        progressState.currentLevel.dolls = levelRooms.map(room => room.dollState ? { ...room.dollState } : null);
-        progressState.updatedAt = new Date().toISOString();
-        saveProgress();
-        return;
-      }
-      progressState.currentLevel = { roomNumber: currentRoomNumber, sceneNumbers: levelRooms.map(room => room.scene.number),
-        activeRoomIndex, levelType: levelType.name, words: [...words], letterRooms: wordLetterRooms.map(order => [...order]), rules: {
-          wordCount: words.length, roomCount: levelRoomCount, timeLimitMs: ROOM_TIME_LIMIT_MS, decoyLetterChance: levelType.decoyLetterChance,
-          flyingLetters: Boolean(levelType.flyingLetters), evadesCamera: Boolean(levelType.evadesCamera)
-        } };
-      if (isPuzzleLevel()) progressState.currentLevel.puzzle = { ...currentPuzzle };
-      progressState.currentLevel.dolls = levelRooms.map(room => room.dollState ? { ...room.dollState } : null);
-      progressState.updatedAt = new Date().toISOString();
-      saveProgress();
-    }
-
     function recordRoomCompletion() {
       if (completionRecorded) return;
       completionRecorded = true;
       progressState.completedRooms = currentRoomNumber;
-      progressState.lastSceneNumber = levelRooms[activeRoomIndex].scene.number;
-      progressState.currentLevel = null;
-      progressState.updatedAt = new Date().toISOString();
       saveProgress();
     }
 
@@ -6992,7 +7056,7 @@
         try {
           const candidate = parseProgress(text);
           if (candidate.language !== CONFIG.language.code) return;
-          if (!selected || progressTime(candidate) > progressTime(selected)) selected = candidate;
+          if (!selected || candidate.completedRooms > selected.completedRooms) selected = candidate;
         } catch (error) { console.info("Ignoring unavailable/invalid save.txt.", error.message); }
       };
       if (ignoreExternalSave) {
@@ -7018,9 +7082,18 @@
         } catch (error) { console.info("Save file access needs to be renewed.", error.message); }
       }
       progressState = selected || emptyProgress();
-      resumedLevel = progressState.currentLevel;
+      // Older direct-file imports cached the whole save alongside the text
+      // assets. Normalize that copy as well, so no level contents are kept.
+      if (localFolderImport?.saveText) {
+        let compact = null;
+        try { if (!ignoreExternalSave) compact = JSON.stringify(parseProgress(localFolderImport.saveText)); } catch {}
+        if (localFolderImport.saveText !== compact) {
+          localFolderImport.saveText = compact;
+          rememberLocalFiles(localFolderImport);
+        }
+      }
       currentRoomNumber = progressState.completedRooms + 1;
-      if (!resumedLevel?.legacy) saveProgress();
+      saveProgress();
     }
 
     function queueSaveFile(text) {
@@ -7166,11 +7239,13 @@
       currentScene = null;
       wordLetterRooms = [];
       words = []; currentWord = ""; currentPuzzle = null;
-      endlessPuzzles = []; endlessDeck = [];
+      endlessRunPuzzles = null;
+      completedWordCount = 0;
       cameraBonusMs = 0;
       cameraTimeBonus.classList.remove("show");
       cameraTimeBonus.textContent = "";
-      wordIndex = selectedCount = completedWordCount = 0;
+      wordIndex = selectedCount = 0;
+      tapBonusedLetters.clear();
       tiles = []; anchors = []; selectionHistory = [];
       letterWorld.replaceChildren(); wordDisplay.replaceChildren();
       letterWorld.classList.remove("snapping"); anomalyWorld.classList.remove("snapping"); dollWorld.classList.remove("snapping");
@@ -7213,7 +7288,9 @@
       void saveHandleStore("delete");
       progressMessage = "";
       progressState = emptyProgress();
-      progressState.updatedAt = new Date().toISOString();
+      lastSceneNumber = lastEndlessSceneSet = null;
+      lastEndlessRoomLine = null;
+      endlessRiddleHistory = { pool: "", seen: new Set(), lastAnswer: null, lastPrompt: null };
       if (localFolderImport) {
         localFolderImport.saveText = null;
         delete localFolderImport.levelFiles;
@@ -7238,7 +7315,6 @@
         if (fresh) resetBrowserProgress();
         resetLevelState();
         if (refreshMedia) clearPreparedLevelCache();
-        resumedLevel = progressState.currentLevel ? validateProgress(progressState).currentLevel : null;
         currentRoomNumber = progressState.completedRooms + 1;
         currentLevelLoadPromise = prepareCurrentLevel();
         return currentLevelLoadPromise;
@@ -7257,7 +7333,7 @@
       if (menuPage !== null || !gameOverScreen.classList.contains("show")) return;
       if (event?.target.closest?.("button, input, .progress-actions")) return;
       if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
-      // Reuse this exact unfinished room; completed rooms already cleared it.
+      // Keep the banked riddle number; pick fresh content.
       saveProgress();
       return transitionToLevel();
     }
@@ -7273,7 +7349,6 @@
       try {
         const imported = parseProgress(await file.text());
         if (imported.language !== CONFIG.language.code) throw new Error(`This save uses ${imported.language}. Set language.code to "${imported.language}" in config.txt first.`);
-        imported.updatedAt = new Date().toISOString();
         const text = JSON.stringify(imported, null, 2);
         let stored = false;
         for (const store of ["localStorage", "sessionStorage"]) {
@@ -7534,7 +7609,7 @@
         try { window[store].setItem(MENU_PREFERENCE_KEY, preference); } catch {}
       }
       CONFIG.language.code = language;
-      puzzleTextOverride = null;
+      puzzleTextOverride = puzzleFilePromise = null;
       gameInitializationStarted = false;
       refreshConfigBindings();
       configureGamePresentation();
@@ -7803,7 +7878,8 @@
         return false;
       }
       gameInitializationStarted = true;
-      // Separate language profiles preserve English retries when switching to Arabic.
+      if (importedFiles) clearPreparedLevelCache();
+      // Keep independent progression counts for English and Arabic.
       PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
       progressSaveHandle = null;
       progressWriteGeneration++;
@@ -7818,21 +7894,8 @@
     }
 
     async function prepareCurrentLevel() {
-      const endlessOnly = CONFIG.levels.puzzleEndless.chance > 0 && levelIsUnlocked(CONFIG.levels.puzzleEndless.startLevel) &&
-        Object.entries(CONFIG.levels).every(([name, type]) => name === "puzzleEndless" || !type.chance);
-      if (endlessOnly && resumedLevel && resumedLevel.levelType !== "puzzleEndless") {
-        // An old in-progress puzzle must not override an explicitly
-        // endless-only config. The banked progression is still retained.
-        resumedLevel = progressState.currentLevel = null;
-      }
-      levelType = resumedLevel ? { name: resumedLevel.levelType, ...resumedLevel.rules } : chooseLevelType();
-      if (resumedLevel && levelType.name === "puzzle") {
-        // Apply the requested flying-letter setting to unfinished regular
-        // riddles too, retaining their rooms, riddle and saved time limit.
-        levelType.flyingLetters = CONFIG.levels.puzzle.flyingLetters;
-        resumedLevel.rules.flyingLetters = levelType.flyingLetters;
-      }
-      levelRoomCount = resumedLevel?.rules.roomCount || (isSingleRoomLevel() ? 1 : stagedRoomCount() || CONFIG.rooms.count);
+      levelType = chooseLevelType();
+      levelRoomCount = isSingleRoomLevel() ? 1 : stagedRoomCount() || CONFIG.rooms.count;
       ROOM_TIME_LIMIT_MS = levelType.timeLimitMs;
       cameraRemainingSeconds = ROOM_TIME_LIMIT_MS / 1000;
       batterySlotsRemaining = BATTERY_SLOT_COUNT;
@@ -7843,11 +7906,7 @@
       updateBatteryUI();
       updateCameraTimer();
       if (isPuzzleLevel()) return roomLoad; // The puzzle answer determines room count before scenes are chosen.
-      let wordLoad;
-      if (resumedLevel && !resumedLevel.legacy) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
-      else if (resumedLevel?.legacy && resumedLevel.words.length >= levelType.wordCount && resumedLevel.words.every(word => word.length > 0 && word.length <= levelRoomCount)) acceptWordList(resumedLevel.words.join("\n"), "save.txt", "text/plain", { preserveOrder: true });
-      else if (localFolderImport) acceptWordList(localFolderImport.wordsText, localFolderImport.wordsSource);
-      else wordLoad = loadWords();
+      const wordLoad = localFolderImport ? acceptWordList(localFolderImport.wordsText, localFolderImport.wordsSource) : loadWords();
       await Promise.allSettled([roomLoad, wordLoad]);
     }
     syncVisibleViewport();
