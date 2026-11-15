@@ -1120,10 +1120,15 @@
     #menuShell[data-poster-position="left"] #homePoster { transform: translate3d(0, 0, 0); }
     #menuShell[data-poster-position="center"] #homePoster { transform: translate3d(calc(var(--home-pan-x, 0px) / 2), 0, 0); }
     #menuShell[data-poster-position="center"] #homeBackdrop::after { opacity: 1; }
+    #menuShell[data-poster-position="right"] #homeBackdrop::after { opacity: var(--menu-right-screen-dim-opacity, 1); }
     #menuShell[data-page="panning"] #homePoster { transition: transform var(--home-pan-ms, 650ms) cubic-bezier(.16,.72,.22,1); }
     .menu-page { width: min(88%, 510px); padding: 72px 12px 36px; text-align: center; z-index: 1; }
     #introPage { position: absolute; inset: 0; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; padding: 0 5% max(20%, calc(env(safe-area-inset-bottom) + 52px)); }
-    #homeStartButton { font-size: calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale)); }
+    #homeStartButton {
+      position: relative;
+      top: calc(0px - var(--menu-start-button-raise, 24px));
+      font-size: calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale));
+    }
     /* Keep the menu at its original vertical position after removing the heading. */
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
     .menu-page h2 { margin: 0 0 28px; font-size: calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
@@ -2016,6 +2021,8 @@
     "textScale": 2,
     "panMs": 650,
     "jitterStaggerMs": 75,
+    "rightScreenDimOpacity": 1,
+    "startButtonRaisePx": 24,
     "en": {
       "start": "START",
       "play": "PLAY",
@@ -2114,6 +2121,7 @@
     Object.assign(CONFIG_LIMITS, {
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
       "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true],
+      "menu.rightScreenDimOpacity": [0, 1], "menu.startButtonRaisePx": [-600, 600, true],
       "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5],
       "levels.puzzleEndless.timeBonusSeconds": [1, 600, true],
       "levels.puzzleEndless.inOrderTimeBonusSeconds": [1, 600, true],
@@ -7662,6 +7670,8 @@
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
         "--ui-text-scale": CONFIG.ui.textScale, "--paper-text-scale": CONFIG.puzzles.paperTextScale,
         "--menu-text-scale": CONFIG.menu.textScale,
+        "--menu-right-screen-dim-opacity": CONFIG.menu.rightScreenDimOpacity,
+        "--menu-start-button-raise": `${CONFIG.menu.startButtonRaisePx}px`,
         "--shutter-color": CONFIG.shutter.color, "--shutter-min": `${CONFIG.shutter.minSizePx}px`,
         "--shutter-max": `${CONFIG.shutter.maxSizePx}px`, "--shutter-size-vh": CONFIG.shutter.heightVh,
         "--shutter-bottom": `${CONFIG.shutter.bottomPercent}%`, "--shutter-ring": `${CONFIG.shutter.ringPx}px`,

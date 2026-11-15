@@ -667,6 +667,10 @@ textScale = 1.2
 panMs = 650
 # Time offset between adjacent menu buttons and between Stay and Leave.
 jitterStaggerMs = 75
+# Dim layer on the rightmost menu screen. 0 leaves it bright, 1 matches Settings.
+rightScreenDimOpacity = 1
+# Vertical START adjustment in pixels. Positive raises it, negative lowers it.
+startButtonRaisePx = 40
 
 [menu.en]
 start = "START"
