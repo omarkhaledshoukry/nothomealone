@@ -34,6 +34,7 @@
       --paper-text-scale: 1.5;
       --menu-text-scale: 2;
       --time-bonus-ms: 820ms;
+      --loading-font: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
     }
 
     @supports (height: 100dvh) {
@@ -509,7 +510,7 @@
       justify-content: center;
       gap: 0.02em;
       color: var(--letter-beige);
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-family: var(--loading-font);
       font-size: clamp(38px, calc(var(--view-unit) * 6), 62px);
       font-weight: 400;
       line-height: 1;
@@ -1185,10 +1186,12 @@
       -webkit-user-drag: none;
     }
     .endless-butterfly-capture { filter: var(--letter-filter, none); }
+    #status.butterfly-area,
+    #butterflyProgress {
+      font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale))/1 var(--loading-font);
+    }
     #butterflyProgress:not([hidden]) {
       display: block;
-      font-size: calc(var(--ui-font-size, 18px) * var(--ui-text-scale) * 1.45);
-      line-height: 1.05;
       white-space: nowrap;
     }
     #butterflyDanger:not([hidden]) {
@@ -1520,7 +1523,8 @@
       "butterflyAnomalyDeadlineMs": 5000,
       "butterflyRoomTarget": 3,
       "butterflyRoomTargetPerLevel": 1,
-      "butterflyRoomTimeBonusSeconds": 30
+      "butterflyRoomTargetMaxArea": 10,
+      "butterflyRoomTimeBonusSeconds": 10
     },
     "flyingPuzzle": {
       "chance": 0,
@@ -2035,7 +2039,7 @@
       "leave": "LEAVE",
       "howText": "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you.",
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
-      "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds 30 seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
+      "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
     },
     "ar": {
       "start": "ابدأ",
@@ -2054,7 +2058,7 @@
       "leave": "الخروج",
       "howText": "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك.",
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
-      "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف ٣٠ ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
+      "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
     }
   }
 };
@@ -2067,6 +2071,7 @@
       "levels.puzzleEndless.butterflyAnomalyDeadlineMs": [500, 60000, true],
       "levels.puzzleEndless.butterflyRoomTarget": [1, 1000000, true],
       "levels.puzzleEndless.butterflyRoomTargetPerLevel": [0, 1000000, true],
+      "levels.puzzleEndless.butterflyRoomTargetMaxArea": [1, 1000000001, true],
       "levels.puzzleEndless.butterflyRoomTimeBonusSeconds": [0, 600, true],
       "butterfly.minSizeFraction": [.02, .30], "butterfly.maxSizeFraction": [.02, .30], "butterfly.spriteBlurPx": [0, 12],
       "butterfly.maxPerRoom": [1, 12, true], "butterfly.minSpawnMs": [100, 60000, true], "butterfly.maxSpawnMs": [100, 60000, true],
@@ -4363,6 +4368,7 @@
       butterflyProgress.hidden = !butterflies || !gameplayStarted;
       status.textContent = butterflies ? `Area #${progressionLevel()}` : isEndlessPuzzle() ? riddleNumber : riddle ? CONFIG.text.hunt :
         gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
+      status.classList.toggle("butterfly-area", butterflies);
       status.classList.toggle("puzzle-hint", riddle && !single);
       prevRoomButton.classList.toggle("hold-hint", riddle && single);
       prevRoomButton.textContent = single ? CONFIG.text.hint : CONFIG.text.previousRoom;
@@ -7757,6 +7763,10 @@
 
     function updateMenuCopy() {
       const text = menuText();
+      const endless = CONFIG.levels.puzzleEndless;
+      const howCopy = endless.butterflyTargets && endless.chance > 0 ? gameText(text.butterflyHowText, {
+        roomBonusSeconds: endless.butterflyRoomTimeBonusSeconds.toLocaleString(isArabic() ? "ar-u-nu-arab" : "en")
+      }) : text.howText;
       document.title = CONFIG.menu.title;
       document.documentElement.lang = CONFIG.language.code;
       menuShell.dataset.language = CONFIG.language.code;
@@ -7764,7 +7774,7 @@
       menuShell.setAttribute("aria-label", CONFIG.menu.title);
       const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
-        storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy: CONFIG.levels.puzzleEndless.butterflyTargets && CONFIG.levels.puzzleEndless.chance > 0 ? text.butterflyHowText : text.howText,
+        storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy,
         exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
       for (const [id, label] of Object.entries(labels)) {
         const element = document.getElementById(id);
@@ -8482,7 +8492,10 @@
     }
 
     function startButterflyRoomTargets(elapsed) {
-      butterflyRoomGoal = levelType.butterflyRoomTarget + (progressionLevel() - 1) * levelType.butterflyRoomTargetPerLevel;
+      const area = progressionLevel();
+      const cap = levelType.butterflyRoomTargetMaxArea;
+      const targetArea = area <= cap ? area : 1 + Math.floor(Math.random() * cap);
+      butterflyRoomGoal = levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel;
       butterflyScore = 0;
       butterflyProgress.textContent = butterflyScoreText();
       butterflySetRooms.clear();
@@ -8631,8 +8644,7 @@
         clearEndlessButterflies();
         video.pause();
         video.muted = true;
-        butterflyResultScore.textContent = butterflyScoreText();
-        butterflyResultScore.hidden = false;
+        butterflyResultScore.hidden = true;
         showLevelCompleteScreen(CONFIG.text.nextLevel);
       }, CONFIG.butterfly.captureFlightMs, { riddleTransition: true });
     }

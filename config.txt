@@ -155,12 +155,14 @@ timeLimitMs = 60000
 butterflyTargets = true
 butterflyComboWindowMs = 2000
 butterflyAnomalyDeadlineMs = 5000
-# Room target = starting target + per-level increase times the number of saved levels completed.
+# Room target = starting target + per-level increase times (area number - 1).
+# Growth continues through the max area. Later areas roll one quota from Areas 1 through that max.
 # Each room contributes to the shared level target and adds time when cleared.
 # Use PREV and NEXT within the level. Tap to draw a new room set after reaching the shared target.
 butterflyRoomTarget = 3
 butterflyRoomTargetPerLevel = 1
-butterflyRoomTimeBonusSeconds = 30
+butterflyRoomTargetMaxArea = 10
+butterflyRoomTimeBonusSeconds = 10
 # Riddle-only time bonuses. Butterflies use the tap combo and room-clear settings.
 timeBonusSeconds = 10
 inOrderTimeBonusSeconds = 20
@@ -459,7 +461,7 @@ radiusPaddingPx = 5
 # Animated GIF sprites and edge flight for Endless Butterflies.
 minSizeFraction = 0.10
 maxSizeFraction = 0.20
-spriteBlurPx = 0.3
+spriteBlurPx = 0
 maxPerRoom = 3
 minSpawnMs = 700
 maxSpawnMs = 1300
@@ -677,7 +679,7 @@ cleared = "DATA CLEARED"
 language = "LANGUAGE"
 back = "Back"
 home = "Home"
-butterflyHowText = "Pan left and right to find butterflies. Tap them or use the shutter to catch them. Reach the target shown below the score to add 30 seconds and advance to the next room. Targets rise with saved levels. If time runs out before you reach the target, the run ends. Two successful taps in a row within two seconds earn two extra seconds. Use Prev and Next to check other rooms. When the red light appears, find the anomaly and look away before its countdown runs out."
+butterflyHowText = "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
@@ -696,7 +698,7 @@ cleared = "تم مسح البيانات"
 language = "اللغة"
 back = "رجوع"
 home = "الرئيسية"
-butterflyHowText = "حرّك الكاميرا يسارًا ويمينًا للعثور على الفراشات، والمسها أو التقط صورًا لها. حقّق الهدف المعروض أسفل النتيجة لتكسب ٣٠ ثانية وتنتقل إلى الغرفة التالية. يزيد الهدف مع كل مستوى محفوظ. تنتهي المحاولة إذا نفد الوقت قبل تحقيق الهدف. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. تنقّل بين الغرف بزرّي السابق والتالي. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
+butterflyHowText = "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
