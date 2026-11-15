@@ -1194,6 +1194,7 @@
       display: block;
       white-space: nowrap;
     }
+    #portraitViewport.scene-blackout #butterflyProgress { display: none; }
     #butterflyDanger:not([hidden]) {
       display: inline-flex;
       align-items: center;
@@ -1218,12 +1219,6 @@
     @keyframes butterflyDangerPulse { 50% { opacity: .36; } }
     #portraitViewport.level-paused .butterfly-danger-light { animation-play-state: paused; }
     @media (prefers-reduced-motion: reduce) { .butterfly-danger-light { animation: none; } }
-    #butterflyResultScore {
-      position: absolute;
-      top: calc(50% + clamp(65px, calc(var(--view-unit) * 10), 98px));
-      font: 1.1rem/1 "Lucida Console", Monaco, monospace;
-      color: var(--letter-beige);
-    }
   </style>
 </head>
 <body>
@@ -1346,7 +1341,6 @@
         <button class="home-back" id="endHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
-        <output id="butterflyResultScore" aria-label="Butterflies captured" hidden></output>
         <p id="levelLoadDetails" hidden></p>
       </div>
     </div>
@@ -6505,8 +6499,6 @@
       details.hidden = !levelLoadFailure;
       details.textContent = levelLoadFailure?.message || "";
       if (!roomCompleted) {
-        butterflyResultScore.hidden = !isEndlessButterflies() || Boolean(levelLoadFailure);
-        if (!butterflyResultScore.hidden) butterflyResultScore.textContent = butterflyScoreText();
         const failure = CONFIG.failures[gameOverReason] || CONFIG.failures.other;
         document.getElementById("gameOverTitle").textContent = failure.title;
         document.getElementById("retryText").textContent = CONFIG.text.retry;
@@ -7450,7 +7442,6 @@
       levelGeneration++;
       clearEndlessButterflies();
       if (!rotateEndlessRooms) butterflyScore = 0;
-      butterflyResultScore.hidden = true;
       ++playbackRevision;
       levelResumePending = null;
       loadingPlaybackInterrupted = false;
@@ -8195,7 +8186,6 @@
     const butterflyDanger = document.getElementById("butterflyDanger");
     const butterflyDangerSeconds = document.getElementById("butterflyDangerSeconds");
     const butterflyDangerDirection = document.getElementById("butterflyDangerDirection");
-    const butterflyResultScore = document.getElementById("butterflyResultScore");
     const endlessButterflyFlights = new Map(), butterflySetRooms = new Set(), butterflyCaptureAnimations = new Set();
     let butterflyScore = 0, butterflyRoomGoal = 0, butterflyTapAt = null;
     let butterflySprites = [], butterflySpriteLoad = null;
@@ -8644,7 +8634,6 @@
         clearEndlessButterflies();
         video.pause();
         video.muted = true;
-        butterflyResultScore.hidden = true;
         showLevelCompleteScreen(CONFIG.text.nextLevel);
       }, CONFIG.butterfly.captureFlightMs, { riddleTransition: true });
     }
