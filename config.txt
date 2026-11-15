@@ -154,7 +154,7 @@ timeLimitMs = 60000
 # Use butterflies in this Endless mode. Set butterflyTargets = false to play with riddles.
 butterflyTargets = true
 butterflyComboWindowMs = 2000
-butterflyAnomalyDeadlineMs = 5000
+butterflyAnomalyDeadlineMs = 10000
 # Room target = starting target + per-level increase times (area number - 1).
 # Growth continues through the max area. Later areas roll one quota from Areas 1 through that max.
 # Each room contributes to the shared level target and adds time when cleared.
@@ -461,7 +461,7 @@ radiusPaddingPx = 5
 # Animated GIF sprites and edge flight for Endless Butterflies.
 minSizeFraction = 0.10
 maxSizeFraction = 0.20
-spriteBlurPx = 0
+spriteBlurPx = 0.3
 maxPerRoom = 3
 minSpawnMs = 700
 maxSpawnMs = 1300
