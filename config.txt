@@ -10,7 +10,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Only endless fixed riddles are enabled. Each solved riddle banks one level and adds time.
+# Endless Butterflies is enabled. Each completed set banks one level.
 # Each new set of rooms uses the currently unlocked milestone.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
@@ -33,7 +33,7 @@ poolEnds = [0,0]
 mode = "stage"
 
 # Each stage allows matching scene NUMBERS 1..maxSceneNumber. 0 means all scenes.
-# An enabled rooms.txt with usable combinations takes priority over maxSceneNumbers in Endless Riddles.
+# An enabled rooms.txt with usable combinations takes priority over maxSceneNumbers in the Endless modes.
 [milestones.rooms]
 startLevels = [1,10,20]
 maxSceneNumbers = [5,10,0]
@@ -42,6 +42,8 @@ maxSceneNumbers = [5,10,0]
 # Until the rooms rotate, later riddles may be shorter and must fit the current rooms.
 # Other multi-room puzzle modes still use the exact staged count.
 roomCounts = [3,4,5]
+# Room counts for butterfly sets at the same saved milestones.
+butterflyRoomCounts = [2, 3, 4]
 
 # Standard levels use this many distinct rooms; word lengths may be this number or fewer.
 # Other multi-room puzzle modes may add rooms to fit the answer when there is no staged count.
@@ -70,10 +72,14 @@ arabicFontLocalNames = ["Noto Naskh Arabic", "Amiri", "Traditional Arabic", "Gee
 saveFile = "save.txt"
 wordsFile = "words.txt"
 # Optional combinations: put true on the first line, then one comma-separated group per line.
-# One eligible group is picked per rotation, retry, or new run and trimmed to the new answer length.
+# One eligible group is picked per rotation, retry, or new run and trimmed to the room count.
 # A different eligible group is preferred when it can supply different rooms.
 # Use false to disable it. Missing groups or media fall back to the normal scene pool.
 roomsFile = "rooms.txt"
+# Default sprite. Numbered GIFs such as butterfly_2.gif in the same folder are picked up automatically.
+butterflyFile = "butterfly.gif"
+# Optional extra sprite paths for files with custom names or locations.
+butterflyFiles = []
 puzzlesFile = "puzzles.txt"
 arabicPuzzlesFile = "puzzles_ar.txt"
 levelsDirectory = "levels/"
@@ -145,21 +151,31 @@ startLevel = 1
 chance = 1
 wordCount = 1
 timeLimitMs = 60000
-# Regular bonus, or the larger bonus when the captured letters spell the answer in order.
+# Use butterflies in this Endless mode. Set butterflyTargets = false to play with riddles.
+butterflyTargets = true
+butterflyComboWindowMs = 2000
+butterflyAnomalyDeadlineMs = 5000
+# Room target = starting target + per-level increase times the number of saved levels completed.
+# Each room contributes to the shared level target and adds time when cleared.
+# Use PREV and NEXT within the level. Tap to draw a new room set after reaching the shared target.
+butterflyRoomTarget = 3
+butterflyRoomTargetPerLevel = 1
+butterflyRoomTimeBonusSeconds = 30
+# Riddle-only time bonuses. Butterflies use the tap combo and room-clear settings.
 timeBonusSeconds = 10
 inOrderTimeBonusSeconds = 20
 # In-order solves restore this many slots instead of charging wordCost, up to full. 0 disables the reward.
 inOrderBatteryBonusSlots = 1
-# Extra time per letter collected by tapping. Shutter captures get no tap bonus.
+# Riddles award this per letter tap. Butterflies award it per two consecutive successful taps within the combo window.
 tapTimeBonusSeconds = 2
-# Rotate on the upcoming HUD #10, #20, etc. 0 keeps the same rooms until retry or a new run.
+# Riddle mode only. Rotate before riddle 10, 20, etc. 0 keeps the same rooms until retry or a new run.
 roomRotationEvery = 10
 decoyLetterChance = 0
 # Leave these two legacy switches off to use the per-letter chances below.
 flyingLetters = false
 evadesCamera = false
-# Applies to each newly placed letter. Chance is zero below its saved-level unlock.
-# Evasion is a separate share of letters; it flies away from the camera as it approaches.
+# Rolled for each new letter. Chance is zero below its saved-level unlock.
+# Butterflies always fly and use the same evasion unlock and chance.
 # Keep the sum at or below 1. If it is higher, evasion keeps its share and normal flight uses what is left.
 flyingLetterStartLevel = 5
 flyingLetterChance = 0.25
@@ -400,7 +416,7 @@ hudGapPx = 2
 
 # Flying motion applies to every mode with flyingLetters=true. Speeds are CSS pixels/second; travel/sway in CSS pixels.
 [butterfly]
-# Escape tuning: only active when the level has evadesCamera=true. Far-away flight keeps its normal motion.
+# Camera evasion for evading letters and butterflies. Far-away flight keeps its normal motion.
 evadeApproachScreens = 0.9
 evadeMaxSpeedMultiplier = 3.4
 evadeSteeringMultiplier = 2.6
@@ -440,6 +456,20 @@ flutterDeg = 23
 maxStepMs = 50
 paddingPx = 15
 radiusPaddingPx = 5
+# Animated GIF sprites and edge flight for Endless Butterflies.
+minSizeFraction = 0.10
+maxSizeFraction = 0.20
+spriteBlurPx = 0
+maxPerRoom = 3
+minSpawnMs = 700
+maxSpawnMs = 1300
+escapeChance = 0.42
+escapeAfterMinMs = 3600
+escapeAfterMaxMs = 8100
+escapeSpeedMultiplier = 2.15
+gatedEntryChance = 0.4
+entrySpeedMultiplier = 1.55
+captureFlightMs = 420
 
 # Both anomalies share these check intervals, spawn odds, word gates and artwork settings.
 # allowedRooms, startLevel and enabled apply to the original anomaly only.
@@ -586,6 +616,7 @@ clueTitle = "CLUES"
 ready = "READY"
 found = "FOUND"
 roomComplete = "LEVEL COMPLETE"
+nextLevel = "TAP TO CONTINUE"
 retry = "TAP TO RETRY"
 playAgain = "TAP TO PLAY AGAIN"
 prepareMedia = "TAP"
@@ -646,6 +677,7 @@ cleared = "DATA CLEARED"
 language = "LANGUAGE"
 back = "Back"
 home = "Home"
+butterflyHowText = "Pan left and right to find butterflies. Tap them or use the shutter to catch them. Reach the target shown below the score to add 30 seconds and advance to the next room. Targets rise with saved levels. If time runs out before you reach the target, the run ends. Two successful taps in a row within two seconds earn two extra seconds. Use Prev and Next to check other rooms. When the red light appears, find the anomaly and look away before its countdown runs out."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
@@ -664,6 +696,7 @@ cleared = "تم مسح البيانات"
 language = "اللغة"
 back = "رجوع"
 home = "الرئيسية"
+butterflyHowText = "حرّك الكاميرا يسارًا ويمينًا للعثور على الفراشات، والمسها أو التقط صورًا لها. حقّق الهدف المعروض أسفل النتيجة لتكسب ٣٠ ثانية وتنتقل إلى الغرفة التالية. يزيد الهدف مع كل مستوى محفوظ. تنتهي المحاولة إذا نفد الوقت قبل تحقيق الهدف. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. تنقّل بين الغرف بزرّي السابق والتالي. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
