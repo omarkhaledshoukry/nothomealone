@@ -500,7 +500,7 @@ startLevel = 24
 # "all" allows every room. Use [] or enabled = false to disable the second doll.
 allowedRooms = "all"
 # Foreground blur in CSS pixels, above all other scene props. 0 turns just this blur off.
-blurPx = 1.2
+blurPx = 0
 
 # afterWords=0 starts at READY. scale=0.2 is 20% of source size; topPx=-10 is 10px above the viewport.
 [spider]
