@@ -138,7 +138,8 @@
       will-change: transform;
     }
 
-    #letterWorld {
+    #letterWorld,
+    #largeButterflyWorld {
       position: absolute;
       top: 0;
       left: 0;
@@ -174,6 +175,7 @@
     .room-video.snapping,
     .room-video-cover.snapping,
     #letterWorld.snapping,
+    #largeButterflyWorld.snapping,
     #anomalyWorld.snapping,
     #dollWorld.snapping,
     #spiderWorld.snapping,
@@ -185,12 +187,15 @@
       --scene-hand-blur: var(--hand-blur, 3px);
     }
 
-    #letterWorld {
-      z-index: 2;
+    #letterWorld,
+    #largeButterflyWorld {
       pointer-events: none;
       filter: var(--letter-filter, blur(.7px));
       transition: filter 420ms ease;
     }
+    #letterWorld { z-index: 2; }
+    /* The spider follows this layer in the scene, above large butterflies. */
+    #largeButterflyWorld { z-index: 5; }
 
     .letter-anchor {
       position: absolute;
@@ -756,11 +761,13 @@
     #portraitViewport.next-riddle #handBlocker { filter: blur(var(--clue-blur, 5px)); }
 
     #letterWorld,
+    #largeButterflyWorld,
     #hud {
       transition: filter 420ms ease, opacity 320ms ease;
     }
 
     #portraitViewport.clue-intro-active #letterWorld,
+    #portraitViewport.clue-intro-active #largeButterflyWorld,
     #portraitViewport.clue-intro-active #cameraOverlay {
       opacity: 0;
     }
@@ -1190,6 +1197,7 @@
       will-change: transform;
       -webkit-user-drag: none;
     }
+    .endless-butterfly[hidden] { display: none; }
     .endless-butterfly-capture { filter: var(--letter-filter, none); }
     #status.butterfly-area,
     #butterflyProgress {
@@ -1290,6 +1298,7 @@
           <canvas id="anomalyBitmap" aria-hidden="true"></canvas>
         </div>
         <div id="dollWorld" aria-hidden="true"></div>
+        <div id="largeButterflyWorld" aria-hidden="true"></div>
         <div id="spiderWorld" aria-hidden="true">
           <div id="spiderActor" hidden>
             <canvas id="spiderCanvas"></canvas>
@@ -2474,6 +2483,7 @@
     let roomImage = document.getElementById("roomImage");
     let roomMedia = video;
     const letterWorld = document.getElementById("letterWorld");
+    const largeButterflyWorld = document.getElementById("largeButterflyWorld");
     const wordDisplay = document.getElementById("wordDisplay");
     const status = document.getElementById("status");
     const butterflyProgress = document.getElementById("butterflyProgress");
@@ -4521,6 +4531,8 @@
       }
       letterWorld.style.width = `${renderedVideoWidth}px`;
       letterWorld.style.height = `${height}px`;
+      largeButterflyWorld.style.width = letterWorld.style.width;
+      largeButterflyWorld.style.height = letterWorld.style.height;
       anomalyWorld.style.width = `${renderedVideoWidth}px`;
       anomalyWorld.style.height = `${height}px`;
       spiderWorld.style.width = `${renderedVideoWidth}px`;
@@ -4564,6 +4576,7 @@
       const videoCover = levelRooms[activeRoomIndex]?.videoCover;
       videoCover?.classList.toggle("snapping", animate);
       letterWorld.classList.toggle("snapping", animate);
+      largeButterflyWorld.classList.toggle("snapping", animate);
       anomalyWorld.classList.toggle("snapping", animate);
       spiderWorld.classList.toggle("snapping", animate);
       dollWorld.classList.toggle("snapping", animate);
@@ -4573,6 +4586,7 @@
       video.style.transform = transform;
       if (videoCover) videoCover.style.transform = transform;
       letterWorld.style.transform = transform;
+      largeButterflyWorld.style.transform = transform;
       anomalyWorld.style.transform = transform;
       spiderWorld.style.transform = transform;
       dollWorld.style.transform = `translateX(${offsetX * CONFIG.doll.parallaxMultiplier}px)`;
@@ -6412,6 +6426,7 @@
       roomImage.classList.remove("snapping");
       video.classList.remove("snapping");
       letterWorld.classList.remove("snapping");
+      largeButterflyWorld.classList.remove("snapping");
       anomalyWorld.classList.remove("snapping");
       jumpscareVideo.classList.remove("snapping");
       jumpscareVideo.style.transform = `translateX(${previousOffset}px)`;
@@ -7534,6 +7549,7 @@
       tapBonusedLetters.clear();
       tiles = []; anchors = []; selectionHistory = [];
       letterWorld.replaceChildren(); wordDisplay.replaceChildren();
+      largeButterflyWorld.classList.remove("snapping");
       letterWorld.classList.remove("snapping"); anomalyWorld.classList.remove("snapping"); dollWorld.classList.remove("snapping");
       captureInProgress = wordTransitionPending = roomCompleted = completionRecorded = false;
       offsetX = lastAppliedWorldOffset = minOffset = renderedVideoWidth = 0;
@@ -8329,13 +8345,16 @@
       image.className = "endless-butterfly";
       image.alt = "";
       image.draggable = false;
+      image.hidden = Boolean(predecessor);
       const sizeFraction = randomButterflyValue(config.minSizeFraction, config.maxSizeFraction);
+      const midpoint = (config.minSizeFraction + config.maxSizeFraction) / 2;
+      const layer = sizeFraction > midpoint ? largeButterflyWorld : letterWorld;
       const size = sizeFraction * geometry.viewWidth;
       const radius = size * Math.SQRT1_2;
       const edge = alreadyInRoom ? 0 : chooseButterflySide(flight, radius);
       const facing = edge === 0 ? (Math.random() < .5 ? -1 : 1) : -edge;
       const evadeChance = endlessEvadeChance();
-      const actor = { flight, image, predecessor, sizeFraction, size, radius,
+      const actor = { flight, image, layer, predecessor, sizeFraction, size, radius,
         edge, facing, speed: randomButterflyValue(config.minSpeed, config.maxSpeed),
         phase: randomButterflyValue(0, Math.PI * 2), bornAt: elapsed, nextTurn: elapsed, escapeAt: Infinity,
         escapes: Math.random() < config.escapeChance,
@@ -8355,7 +8374,7 @@
       }
       image.style.width = image.style.height = `${actor.size}px`;
       flight.actors.add(actor);
-      if (flight.room === levelRooms[activeRoomIndex]) letterWorld.appendChild(image);
+      if (flight.room === levelRooms[activeRoomIndex]) layer.appendChild(image);
       paintEndlessButterfly(actor);
       return actor;
     }
@@ -8364,7 +8383,9 @@
       const { left, right } = butterflyHorizontalBand(actor.flight.geometry, actor.radius, actor.edge);
       actor.goalX = left + (right - left) * randomButterflyValue(.32, .68);
       actor.goalY = actor.y;
+      actor.facing = -actor.edge;
       actor.mode = "entering";
+      actor.image.hidden = false;
     }
 
     function startButterflyRoaming(actor, elapsed) {
@@ -8376,7 +8397,7 @@
 
     function seedRoomButterfly() {
       const flight = endlessButterflyFlights.get(levelRooms[activeRoomIndex]);
-      if (!flight || flight.seeded || flight.caught >= butterflyRoomGoal) return;
+      if (!flight || flight.seeded || flight.caught + flight.actors.size >= butterflyRoomGoal) return;
       flight.seeded = true;
       // Place this butterfly during the room change, before its first visible frame.
       addEndlessButterfly(flight, Math.max(0, performance.now() - cameraStartedAt), { alreadyInRoom: true });
@@ -8389,8 +8410,12 @@
 
     function displayEndlessButterflies() {
       const flight = endlessButterflyFlights.get(levelRooms[activeRoomIndex]);
-      letterWorld.replaceChildren(...Array.from(flight?.actors || [], actor => actor.image));
-      for (const actor of flight?.actors || []) paintEndlessButterfly(actor);
+      letterWorld.replaceChildren();
+      largeButterflyWorld.replaceChildren();
+      for (const actor of flight?.actors || []) {
+        actor.layer.appendChild(actor.image);
+        paintEndlessButterfly(actor);
+      }
     }
 
     function rescaleEndlessButterflies() {
@@ -8406,7 +8431,9 @@
           actor.radius = actor.size * Math.SQRT1_2;
           for (const key of ["x", "worldX", "goalX"]) if (actor[key] !== undefined) actor[key] *= xScale;
           for (const key of ["y", "worldY", "goalY", "evadeGoalY"]) actor[key] = geometry.top + (actor[key] - previous.top) * yScale;
-          if (actor.mode === "waiting") actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
+          if (actor.mode === "waiting" || actor.mode === "outside") {
+            actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
+          }
           actor.image.style.width = actor.image.style.height = `${actor.size}px`;
           paintEndlessButterfly(actor);
         }
@@ -8416,18 +8443,18 @@
     function fillEndlessButterflies(flight, elapsed) {
       const config = CONFIG.butterfly;
       // Reserve space for the butterfly already in the room when it first opens.
-      const limit = flight.seeded ? config.maxPerRoom : config.maxPerRoom - 1;
-      if (flight.caught >= butterflyRoomGoal || flight.actors.size >= limit || elapsed < flight.nextSpawn) return;
+      const reserved = flight.seeded ? 0 : 1;
+      const limit = Math.min(config.maxPerRoom, butterflyRoomGoal - flight.caught) - reserved;
+      if (flight.actors.size >= limit || elapsed < flight.nextSpawn) return;
       flight.nextSpawn = elapsed + randomButterflyValue(config.minSpawnMs, config.maxSpawnMs);
       const actors = [...flight.actors].reverse();
       const waiting = actors.find(actor => actor.mode === "waiting");
       const previous = actors.find(actor => actor.mode === "roaming" || actor.mode === "entering");
       const predecessor = !waiting && previous && Math.random() < config.gatedEntryChance ? previous : null;
-      const actor = addEndlessButterfly(flight, elapsed, { predecessor });
-      if (waiting && !waiting.predecessor) waiting.predecessor = actor;
+      addEndlessButterfly(flight, elapsed, { predecessor });
     }
 
-    function removeEndlessButterfly(actor, elapsed, captured) {
+    function removeEndlessButterfly(actor, elapsed) {
       const { flight } = actor;
       flight.actors.delete(actor);
       actor.image.remove();
@@ -8435,13 +8462,29 @@
       for (const follower of flight.actors) {
         if (follower.mode !== "waiting" || follower.predecessor !== actor) continue;
         follower.predecessor = null;
-        if (captured) setButterflyEntryGoal(follower);
-        else follower.predecessor = [...flight.actors].reverse().find(other => other.mode === "roaming" || other.mode === "entering") || null;
+        setButterflyEntryGoal(follower);
       }
+    }
+
+    function waitForButterflyReturn(actor, elapsed) {
+      const { minSpawnMs, maxSpawnMs } = CONFIG.butterfly;
+      // Keep the same butterfly in the room's quota while it is outside.
+      actor.edge = actor.worldX < 0 ? -1 : 1;
+      actor.x = actor.worldX = butterflyBoundary(actor, 0, actor.flight.geometry.width);
+      actor.y = actor.worldY;
+      actor.vx = actor.vy = actor.bank = 0;
+      actor.mode = "outside";
+      actor.returnAt = elapsed + randomButterflyValue(minSpawnMs, maxSpawnMs);
+      actor.image.hidden = true;
+      paintEndlessButterfly(actor);
     }
 
     function moveEndlessButterfly(actor, elapsed, dt) {
       if (actor.mode === "waiting") return;
+      if (actor.mode === "outside") {
+        if (elapsed < actor.returnAt) return;
+        setButterflyEntryGoal(actor);
+      }
       const config = CONFIG.butterfly, { flight, radius } = actor;
       const { width, viewWidth } = flight.geometry;
       const bounds = { ...butterflyHorizontalBand(flight.geometry, radius, actor.edge), ...butterflyFlightBand(actor) };
@@ -8487,7 +8530,7 @@
       const horizontal = actor.worldX - priorX;
       if (dt && Math.abs(horizontal) > dt * 5) actor.facing = Math.sign(horizontal);
       actor.bank = clamp(actor.vx * config.bankVelocityMultiplier + Math.sin(t * config.swayXFrequency + actor.phase) * config.bankSwayDeg, -config.maxBankDeg, config.maxBankDeg);
-      if (actor.mode === "escaping" && (actor.worldX + radius < 0 || actor.worldX - radius > width)) removeEndlessButterfly(actor, elapsed, false);
+      if (actor.mode === "escaping" && (actor.worldX + radius < 0 || actor.worldX - radius > width)) waitForButterflyReturn(actor, elapsed);
       else paintEndlessButterfly(actor);
     }
 
@@ -8556,7 +8599,7 @@
     }
 
     function endlessButterflyInFrame(actor, frame) {
-      if (!actor || actor.mode === "waiting" || actor.flight.room !== levelRooms[activeRoomIndex] || !actor.flight.actors.has(actor)) return false;
+      if (!actor || actor.image.hidden || actor.flight.room !== levelRooms[activeRoomIndex] || !actor.flight.actors.has(actor)) return false;
       const x = actor.worldX + offsetX;
       return x >= 0 && x <= frame.width && actor.worldX >= 0 && actor.worldX <= actor.flight.geometry.width && actor.worldY >= 0 && actor.worldY <= frame.height;
     }
@@ -8602,7 +8645,7 @@
         return;
       }
       const now = performance.now();
-      removeEndlessButterfly(actor, now - cameraStartedAt, true);
+      removeEndlessButterfly(actor, now - cameraStartedAt);
       butterflyScore++;
       butterflyProgress.textContent = butterflyScoreText();
       flyButterflyToScore(actor, frame);
