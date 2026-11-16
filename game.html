@@ -195,7 +195,7 @@
     }
     #letterWorld { z-index: 2; }
     /* The spider follows this layer in the scene, above large butterflies. */
-    #largeButterflyWorld { z-index: 5; }
+    #largeButterflyWorld { z-index: 5; filter: var(--large-butterfly-filter, none); }
 
     .letter-anchor {
       position: absolute;
@@ -814,6 +814,7 @@
       will-change: transform;
     }
     .doll-actor[hidden] { display: none; }
+    .doll-actor.grayscale-doll { filter: grayscale(1) blur(var(--doll-blur, 1.2px)); }
     .doll-image, .doll-bitmap {
       position: absolute;
       inset: 0;
@@ -1199,6 +1200,21 @@
     }
     .endless-butterfly[hidden] { display: none; }
     .endless-butterfly-capture { filter: var(--letter-filter, none); }
+    .endless-butterfly-capture.large { filter: var(--large-butterfly-filter, none); }
+    .butterfly-sprite { display: block; width: 100%; height: 100%; }
+    .grayscale-butterfly { filter: grayscale(1); }
+    .butterfly-type-number {
+      position: absolute;
+      top: 0;
+      right: 0;
+      min-width: 1.2em;
+      padding: .08em .2em;
+      border-radius: 1em;
+      background: rgba(0, 0, 0, .85);
+      color: white;
+      font: 600 clamp(11px, 2.8vw, 15px)/1.15 system-ui, sans-serif;
+      text-align: center;
+    }
     #status.butterfly-area,
     #butterflyProgress {
       font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale))/1 var(--loading-font);
@@ -1534,6 +1550,21 @@
       "butterflyRoomTargetMaxArea": 10,
       "butterflyRoomTimeBonusSeconds": 10
     },
+    "puzzleButterflies": {
+      "startLevel": 1,
+      "chance": 1,
+      "wordCount": 1,
+      "timeLimitMs": 60000,
+      "butterflyFactorMaxLevel": 10,
+      "butterflyComboWindowMs": 2000,
+      "tapTimeBonusSeconds": 2,
+      "evadingLetterStartLevel": 10,
+      "evadingLetterChance": 0.1,
+      "butterflyAnomalyStartLevel": 3,
+      "butterflyAnomalyChance": 0.05,
+      "dollAnomalyStartLevel": 5,
+      "dollAnomalyChance": 0.05
+    },
     "flyingPuzzle": {
       "chance": 0,
       "wordCount": 1,
@@ -1545,7 +1576,7 @@
     },
     "singleRoomSequential": {
       "startLevel": 1,
-      "chance": 0.6,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 60000,
       "flyingLetters": true,
@@ -1573,7 +1604,7 @@
     },
     "singleRoomFixed": {
       "startLevel": 4,
-      "chance": 0.4,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 60000,
       "flyingLetters": false,
@@ -1603,6 +1634,10 @@
     "anomaly": {
       "title": "Anomaly Undetected",
       "jumpscareChance": 1
+    },
+    "grayscaleAnomaly": {
+      "title": "Anomaly Undetected",
+      "jumpscareChance": 0.1
     },
     "decoy": {
       "title": "Wrong Letter Captured",
@@ -1727,6 +1762,7 @@
     "minSizeFraction": 0.1,
     "maxSizeFraction": 0.2,
     "spriteBlurPx": 0,
+    "largeSpriteBlurPx": 1.2,
     "maxPerRoom": 3,
     "minSpawnMs": 700,
     "maxSpawnMs": 1300,
@@ -2049,7 +2085,8 @@
       "leave": "LEAVE",
       "howText": "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you.",
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
-      "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
+      "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
+      "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again."
     },
     "ar": {
       "start": "ابدأ",
@@ -2068,7 +2105,8 @@
       "leave": "الخروج",
       "howText": "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك.",
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
-      "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
+      "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
+      "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا."
     }
   }
 };
@@ -2083,7 +2121,14 @@
       "levels.puzzleEndless.butterflyRoomTargetPerLevel": [0, 1000000, true],
       "levels.puzzleEndless.butterflyRoomTargetMaxArea": [1, 1000000001, true],
       "levels.puzzleEndless.butterflyRoomTimeBonusSeconds": [0, 600, true],
-      "butterfly.minSizeFraction": [.02, .30], "butterfly.maxSizeFraction": [.02, .30], "butterfly.spriteBlurPx": [0, 12],
+      "levels.puzzleButterflies.butterflyFactorMaxLevel": [1, 100, true],
+      "levels.puzzleButterflies.butterflyComboWindowMs": [100, 10000, true],
+      "levels.puzzleButterflies.tapTimeBonusSeconds": [0, 600, true],
+      "levels.puzzleButterflies.evadingLetterStartLevel": [1, 1000000001, true],
+      "levels.puzzleButterflies.butterflyAnomalyStartLevel": [1, 1000000001, true],
+      "levels.puzzleButterflies.dollAnomalyStartLevel": [1, 1000000001, true],
+      "butterfly.minSizeFraction": [.02, .30], "butterfly.maxSizeFraction": [.02, .30],
+      "butterfly.spriteBlurPx": [0, 12], "butterfly.largeSpriteBlurPx": [0, 12],
       "butterfly.maxPerRoom": [1, 12, true], "butterfly.minSpawnMs": [100, 60000, true], "butterfly.maxSpawnMs": [100, 60000, true],
       "butterfly.escapeSpeedMultiplier": [1, 10], "butterfly.entrySpeedMultiplier": [1, 10], "butterfly.captureFlightMs": [80, 3000, true]
     });
@@ -2143,7 +2188,7 @@
       "anomaly2.blurPx": [0, 20],
       "anomaly.androidBrightness": [1, 2]
     });
-    for (const name of ["puzzleEndless", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
+    for (const name of ["puzzleEndless", "puzzleButterflies", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
       CONFIG_LIMITS[`levels.${name}.wordCount`] = [1, 1, true];
       CONFIG_LIMITS[`levels.${name}.timeLimitMs`] = [1000, 86400000, true];
@@ -2262,6 +2307,9 @@
         for (const name of KEYBOARD_BINDINGS) resolved.keyboard[name] = [...CONFIG_DEFAULTS.keyboard[name]];
         warnings.push("Keyboard actions share a key; default key bindings used.");
       }
+      if (!values.has("levels.puzzleButterflies.chance") && Object.keys(resolved.levels).some(name => values.has(`levels.${name}.chance`))) {
+        resolved.levels.puzzleButterflies.chance = 0;
+      }
       if (Object.values(resolved.levels).every(level => level.chance === 0)) {
         for (const name of Object.keys(resolved.levels)) resolved.levels[name].chance = CONFIG_DEFAULTS.levels[name].chance;
         warnings.push("All level chances were zero; default chances used.");
@@ -2333,7 +2381,7 @@
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
     function isSequentialType(name) { return name === "singleRoomSequential" || name === "singleRoomFixed"; }
-    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread"; }
+    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies"; }
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
     function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
     function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
@@ -2341,6 +2389,9 @@
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
     function isEndlessPuzzle() { return levelType.name === "puzzleEndless"; }
     function isEndlessButterflies() { return isEndlessPuzzle() && levelType.butterflyTargets; }
+    function isButterflyRiddle() { return levelType.name === "puzzleButterflies"; }
+    function usesButterflyActors() { return isEndlessButterflies() || isButterflyRiddle(); }
+    function usesPositionalRiddleHud() { return isEndlessPuzzle() || isButterflyRiddle(); }
     function requiresPuzzleData(name, rules) { return isPuzzleType(name) && !(name === "puzzleEndless" && rules.butterflyTargets); }
     function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
     function progressionLevel() { return Math.max(1, currentRoomNumber); }
@@ -3225,7 +3276,9 @@
         return scenes.includes(sceneNumber);
       });
       if (!choices.length || Math.random() >= CONFIG.doll.spawnChance) return null;
-      return { number: choices[Math.floor(Math.random() * choices.length)],
+      const grayscale = isButterflyRiddle() && levelIsUnlocked(levelType.dollAnomalyStartLevel) &&
+        Math.random() < levelType.dollAnomalyChance;
+      return { number: choices[Math.floor(Math.random() * choices.length)], grayscale,
         xFraction: CONFIG.doll.minXFraction + Math.random() * (CONFIG.doll.maxXFraction - CONFIG.doll.minXFraction),
         yVariation: Math.random() * 2 - 1, sizeVariation: Math.random() * 2 - 1 };
     }
@@ -3281,7 +3334,20 @@
           left: `${state.xFraction * Math.max(0, panorama - imageWidth)}px`,
           top: `${imageHeight * (CONFIG.doll.topImageFraction + state.yVariation * CONFIG.doll.verticalJitterImageFraction)}px` });
         if (!dollsRetreating) room.dollActor.hidden = false;
+        const frame = { width, height };
+        // A grayscale doll must have a camera angle from which it can be hidden.
+        if (grayscaleDollInView(room, frame, 0) && grayscaleDollInView(room, frame, minOffset)) state.grayscale = false;
+        room.dollActor.classList.toggle("grayscale-doll", state.grayscale);
       }
+    }
+
+    function grayscaleDollInView(room, frame, cameraOffset = offsetX) {
+      const actor = room?.dollActor;
+      if (!room?.dollState?.grayscale || !room.dollLoaded || !actor || actor.hidden) return false;
+      const left = parseFloat(actor.style.left) + cameraOffset * CONFIG.doll.parallaxMultiplier;
+      const top = parseFloat(actor.style.top);
+      return left < frame.width && left + parseFloat(actor.style.width) > 0 &&
+        top < frame.height && top + parseFloat(actor.style.height) > 0;
     }
 
     function retreatActiveDoll() {
@@ -3573,7 +3639,7 @@
       levelLoading = true;
       try {
         const [catalog] = await Promise.all([discoverScenes(), discoverDollFiles()]);
-        if (isEndlessPuzzle()) {
+        if (isEndlessPuzzle() || isButterflyRiddle()) {
           if (isEndlessButterflies()) {
             const plan = await planEndlessButterflies(catalog);
             if (gameOver) return;
@@ -3582,7 +3648,7 @@
           } else {
             wordLoadInfo.url = new URL(puzzlesFileFor(), document.baseURI).href;
             let plan;
-            try { plan = await planEndlessRiddle(catalog); }
+            try { plan = await (isButterflyRiddle() ? planButterflyRiddle(catalog) : planEndlessRiddle(catalog)); }
             catch (error) { showWordLoadError(error); return; }
             if (gameOver) return;
             applyEndlessRiddlePlan(plan);
@@ -3858,7 +3924,9 @@
 
     function endlessAnswerLengthRange(capacity = Infinity) {
       const min = Math.max(3, CONFIG.puzzles.minAnswerLength);
-      const max = Math.min(capacity, CONFIG.puzzles.maxAnswerLength, Math.max(3, stagedRoomCount() || CONFIG.rooms.count));
+      const rooms = CONFIG.milestones.rooms;
+      const stagedCap = isButterflyRiddle() && CONFIG.milestones.enabled ? rooms.roomCounts[milestoneStage(rooms.startLevels)] : stagedRoomCount();
+      const max = Math.min(capacity, CONFIG.puzzles.maxAnswerLength, Math.max(3, stagedCap || CONFIG.rooms.count));
       return { min, max };
     }
 
@@ -3871,7 +3939,7 @@
       const candidates = milestone.filter(fits);
       // A new clue milestone can contain only words longer than this run's
       // rooms. Fall back to already-unlocked clues that fit the same rooms.
-      if (candidates.some(puzzle => puzzle.answer !== currentPuzzle.answer)) return drawEndlessRiddle(candidates, pool);
+      if (candidates.some(puzzle => puzzle.answer !== currentPuzzle?.answer)) return drawEndlessRiddle(candidates, pool);
       const unlocked = data.puzzles.slice(0, last).filter(fits);
       return unlocked.length ? drawEndlessRiddle(unlocked, `${pool}:fits-${roomCount}`) : { ...currentPuzzle };
     }
@@ -3916,12 +3984,34 @@
       return { puzzle, scenes, line, data, count: candidates.length };
     }
 
+    async function planButterflyRiddle(catalog) {
+      const [data, groups, sprites] = await Promise.all([
+        loadPuzzleData(),
+        loadRoomGroups().then(lists => resolveRoomGroups(catalog, lists)),
+        discoverButterflySprites()
+      ]);
+      const puzzle = nextEndlessPuzzle(data, Infinity);
+      if (!puzzle.answer) {
+        const { min, max } = endlessAnswerLengthRange();
+        throw new Error(`Add a riddle with a ${min}–${max}-letter answer to ${puzzlesFileFor()} for this milestone.`);
+      }
+      const eligible = scene => scene.number !== progressState.lastButterflyRiddleRoom;
+      const authored = groups.map(group => ({ ...group, scenes: group.scenes.filter(eligible) }));
+      const milestone = roomMilestonePool(catalog).filter(eligible);
+      const pool = authored.some(group => group.scenes.length) ? authored :
+        [{ scenes: milestone.length ? milestone : catalog.filter(eligible), line: null }];
+      const { scenes, line } = drawEndlessRooms(pool, 1);
+      if (!scenes.length) throw new Error("Add another numbered room and its jumpscare to continue without repeating the previous room.");
+      butterflySprites = sprites;
+      return { puzzle, scenes, line, data };
+    }
+
     function applyEndlessRiddlePlan({ puzzle, scenes, line, data, count }) {
       currentPuzzle = puzzle;
       endlessRunPuzzles = data;
       applyEndlessRooms({ scenes, line });
       acceptWordList(puzzle.answer, data.source, "text/plain");
-      wordLoadInfo.count = count;
+      if (count !== undefined) wordLoadInfo.count = count;
     }
 
     function applyEndlessRooms({ scenes, line }) {
@@ -3987,15 +4077,17 @@
       loadingWord.hidden = true;
       wordLoadError.hidden = false;
       wordLoadTitle.textContent = "Choose your game folder";
-      const butterflyMode = CONFIG.levels.puzzleEndless.butterflyTargets;
-      wordLoadReason.textContent = reason || (butterflyMode ? "Select the game folder containing config.txt, rooms.txt and your butterfly sprites." :
+      const butterflyRiddles = CONFIG.levels.puzzleButterflies.chance > 0;
+      const butterflyMode = CONFIG.levels.puzzleEndless.chance > 0 && CONFIG.levels.puzzleEndless.butterflyTargets;
+      wordLoadReason.textContent = reason || (butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
+        butterflyMode ? "Select the game folder containing config.txt, rooms.txt and your butterfly sprites." :
         "Select the folder containing config.txt, your word list and puzzle file.");
       wordLoadHelp.textContent = "The text files will be read together. A missing or invalid config uses the built-in settings.";
       wordLoadUrl.hidden = true;
       document.getElementById("retryWordsButton").hidden = true;
       chooseGameFolderButton.hidden = false;
       const wordFileButton = document.getElementById("chooseWordsButton");
-      wordFileButton.hidden = butterflyMode;
+      wordFileButton.hidden = butterflyMode || butterflyRiddles;
       wordFileButton.textContent = "Choose word list only";
       if (!("webkitdirectory" in gameFolderInput)) chooseGameFolderButton.textContent = "Choose config and words";
       readyButton.disabled = true;
@@ -4342,9 +4434,10 @@
       updateCameraControls();
       if (rotatingRooms) resumeCameraTimer();
       else startCameraTimer();
-      if (isEndlessButterflies()) {
+      if (usesButterflyActors()) {
         startEndlessButterflies();
         loadingScreen.classList.add("hidden");
+        if (isButterflyRiddle()) dismissClueIntro();
       } else {
         dismissClueIntro();
         anchors.forEach(anchor => { anchor.hidden = true; });
@@ -4378,7 +4471,8 @@
       const butterflies = isEndlessButterflies(), riddle = isPuzzleLevel() && !butterflies;
       wordDisplay.hidden = butterflies;
       butterflyProgress.hidden = !butterflies || !gameplayStarted;
-      status.textContent = butterflies ? `Area #${progressionLevel()}` : isEndlessPuzzle() ? riddleNumber : riddle ? CONFIG.text.hunt :
+      status.textContent = isButterflyRiddle() ? butterflyScoreText() :
+        butterflies ? `Area #${progressionLevel()}` : isEndlessPuzzle() ? riddleNumber : riddle ? CONFIG.text.hunt :
         gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       status.classList.toggle("butterfly-area", butterflies);
       status.classList.toggle("puzzle-hint", riddle && !single);
@@ -4569,7 +4663,8 @@
     }
 
     function applyWorldOffset(animate = false, fromCameraInput = false) {
-      const cameraMoved = Math.abs(offsetX - lastAppliedWorldOffset) > .01;
+      const previousOffset = lastAppliedWorldOffset;
+      const cameraMoved = Math.abs(offsetX - previousOffset) > .01;
       lastAppliedWorldOffset = offsetX;
       roomImage.classList.toggle("snapping", animate);
       video.classList.toggle("snapping", animate);
@@ -4594,7 +4689,10 @@
       // Only actual camera movement counts as looking away from a decoy or anomaly.
       if (fromCameraInput) {
         updateDecoyVisibilityState({ allowCorrection: cameraMoved });
-        if (cameraMoved) updateAnomalyVisibilityState();
+        if (cameraMoved) {
+          updateAnomalyVisibilityState();
+          if (isButterflyRiddle()) clearGrayscaleAnomalies(previousOffset);
+        }
         updateSpiderVisibilityState();
       }
     }
@@ -4612,7 +4710,8 @@
       tapBonusedLetters.clear();
       updateLevelStatus();
       createHudWord();
-      createScatteredLetters();
+      if (isButterflyRiddle()) prepareButterflyRiddleTargets();
+      else createScatteredLetters();
       updateCameraControls();
     }
 
@@ -4620,7 +4719,7 @@
       wordDisplay.replaceChildren();
       wordDisplay.lang = CONFIG.language.code;
       wordDisplay.dir = isArabic() ? "rtl" : "ltr";
-      wordDisplay.classList.toggle("unordered-hud", isEndlessPuzzle());
+      wordDisplay.classList.toggle("unordered-hud", usesPositionalRiddleHud());
       if (isArabic()) {
         renderArabicHud();
         fitHudWord();
@@ -4637,7 +4736,7 @@
     }
 
     function renderArabicHud(count = selectedCount) {
-      const found = isEndlessPuzzle() ? new Set(selectionHistory) : null;
+      const found = usesPositionalRiddleHud() ? new Set(selectionHistory) : null;
       const runs = document.createDocumentFragment();
       let run = null, shown = "";
       for (const [index, letter] of [...currentWord].entries()) {
@@ -4682,7 +4781,7 @@
         const dotWidth = measure.measureText("·").width;
         measure.font = `${maximum}px "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif`;
         let widest = 1;
-        if (isEndlessPuzzle()) {
+        if (usesPositionalRiddleHud()) {
           widest = Math.max(1, measure.measureText(currentWord).width, [...currentWord].reduce((total, letter) =>
             total + Math.max(dotWidth, measure.measureText(letter).width), Math.max(0, currentWord.length - 1) * gap));
         } else {
@@ -4915,8 +5014,8 @@
       stopShutterEffect();
       // A scene tap is targeted (including -1 for a miss); a shutter press
       // chooses the current letter, or the closest X in the spread mode.
-      const butterflies = isEndlessButterflies();
-      const index = butterflies ? (point ? targetIndex : findEndlessButterfly()) : (targetIndex === null ? shutterLetterIndex() : targetIndex);
+      const butterflies = usesButterflyActors();
+      const index = !butterflies && targetIndex === null ? shutterLetterIndex() : targetIndex;
       snapButton.classList.remove("snapping");
       void snapButton.offsetWidth;
       snapButton.classList.add("snapping");
@@ -4924,7 +5023,8 @@
       clearLevelTimeout(shutterAnimationTimer);
       shutterAnimationTimer = levelTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
-      if (butterflies) collectEndlessButterfly(index, point !== null);
+      if (isButterflyRiddle()) collectButterflyRiddleShot(index, point !== null);
+      else if (butterflies) collectEndlessButterfly(point ? index : findEndlessButterfly(), point !== null);
       else if (isCurrentLetterInFrame(index)) {
         const tile = tiles[index];
         selectLetter(tile.dataset.letter, index, tile, { directTap: point !== null });
@@ -4945,10 +5045,10 @@
       updateBatteryUI();
     }
 
-    function drainBatterySlot(cost = CONFIG.battery.missCost) {
+    function drainBatterySlot(cost = CONFIG.battery.missCost, { deferFailure = false } = {}) {
       batterySlotsRemaining = Math.max(0, batterySlotsRemaining - cost);
       updateBatteryUI();
-      if (batterySlotsRemaining === 0) endGame("battery");
+      if (!deferFailure && batterySlotsRemaining === 0) endGame("battery");
     }
 
     function stopShutterEffect() {
@@ -5074,7 +5174,7 @@
     });
 
     function showCurrentLetter({ animate = true } = {}) {
-      if (isEndlessButterflies()) { displayEndlessButterflies(); return; }
+      if (usesButterflyActors()) { displayEndlessButterflies(); return; }
       anchors.forEach((anchor, index) => {
         const shouldShow = !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) &&
           (!isSequentialLetterLevel() || index === selectedCount) &&
@@ -5433,6 +5533,7 @@
 
     function advanceEndlessProgress() {
       progressState.completedRooms = currentRoomNumber;
+      delete progressState.lastButterflyRiddleRoom;
       currentRoomNumber++;
       saveProgress();
     }
@@ -5808,7 +5909,7 @@
       if (CONFIG.letters.tapEnabled && !captureInProgress && !wordTransitionPending &&
           isSceneTapPoint(event.clientX, event.clientY)) {
         pendingSceneTap = { x: event.clientX, y: event.clientY, started: event.timeStamp,
-          index: isEndlessButterflies() ? findEndlessButterfly({ x: event.clientX, y: event.clientY }) : letterAtPoint(event.clientX, event.clientY),
+          index: usesButterflyActors() ? findEndlessButterfly({ x: event.clientX, y: event.clientY }) : letterAtPoint(event.clientX, event.clientY),
           roomIndex: activeRoomIndex, wordIndex, selectedCount };
       }
       // Input timestamps keep touch velocity independent of render delays.
@@ -5855,7 +5956,7 @@
         isSceneTapPoint(point.x, point.y);
       // Lock a moving glyph on press so a fast letter cannot escape a clean
       // tap during the short down/up interval. No per-letter pointer handlers.
-      const targetIndex = !isTap ? -1 : isEndlessButterflies() ? (tap.index || findEndlessButterfly(point)) :
+      const targetIndex = !isTap ? -1 : usesButterflyActors() ? (tap.index || findEndlessButterfly(point)) :
         (tap.index >= 0 ? tap.index : letterAtPoint(event.clientX, event.clientY));
       const released = event.timeStamp;
       recordPanMotion(event.clientX, released);
@@ -6388,7 +6489,7 @@
     function beginGameOver(reason) {
       if (gameOver || roomCompleted) return false;
       gameOver = true;
-      if (isEndlessButterflies()) clearEndlessButterflies();
+      if (usesButterflyActors()) clearEndlessButterflies();
       hidePuzzleHint({ immediate: true });
       gameOverReason = Object.prototype.hasOwnProperty.call(CONFIG.failures, reason) ? reason : "other";
       stopButterflyFlight();
@@ -6705,7 +6806,7 @@
       // Refit the same letters between the newly sized camera UI rows.
       if (currentWord) relayoutScatteredLetters();
       fitHudWord();
-      if (isEndlessButterflies()) rescaleEndlessButterflies();
+      if (usesButterflyActors()) rescaleEndlessButterflies();
       showCurrentLetter({ animate: false });
       refreshShutterBitmap();
       refreshMessageBitmap();
@@ -6776,7 +6877,7 @@
       pauseLevelTimeouts();
       interruptCameraInput();
       stopButterflyFlight();
-      if (isEndlessButterflies()) pauseEndlessButterflyMotion();
+      if (usesButterflyActors()) pauseEndlessButterflyMotion();
       pauseSpiderEncounter();
       dollRetreatAnimation?.pause();
       if (cancelPreparation) cancelMenuPrimer?.();
@@ -6797,7 +6898,7 @@
       viewport.classList.remove("level-paused");
       resumeLevelTimeouts();
       resumeCameraTimer();
-      if (isEndlessButterflies() && gameplayStarted && !gameOver) resumeEndlessButterflyMotion();
+      if (usesButterflyActors() && gameplayStarted && !gameOver) resumeEndlessButterflyMotion();
       if (gameplayStarted && !gameOver && !roomCompleted) {
         showCurrentLetter({ animate: false });
         if (!endlessIntermission) resumeSpiderEncounter();
@@ -7263,9 +7364,13 @@
           !Number.isSafeInteger(value.completedRooms) || value.completedRooms < 0 || value.completedRooms > 1000000000) throw new Error("Invalid save.txt format.");
       const language = value.version >= 3 ? value.language : "en";
       if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
-      // Upgrade older files using only their completed riddle count. Legacy
-      // room, doll and puzzle data do not affect the new roll.
-      return { version: 7, game: "room-word-hunt", language, completedRooms: value.completedRooms };
+      // Older saves can supply a level count without a previous room.
+      const progress = { version: 7, game: "room-word-hunt", language, completedRooms: value.completedRooms };
+      if (value.version === 7 && value.completedRooms > 0 &&
+          Number.isSafeInteger(value.lastButterflyRiddleRoom) && value.lastButterflyRiddleRoom > 0) {
+        progress.lastButterflyRiddleRoom = value.lastButterflyRiddleRoom;
+      }
+      return progress;
     }
 
     function parseProgress(text) {
@@ -7303,6 +7408,8 @@
       if (completionRecorded) return;
       completionRecorded = true;
       progressState.completedRooms = currentRoomNumber;
+      if (isButterflyRiddle()) progressState.lastButterflyRiddleRoom = currentScene.number;
+      else delete progressState.lastButterflyRiddleRoom;
       saveProgress();
     }
 
@@ -7678,9 +7785,12 @@
 
     function configureGamePresentation() {
       const style = document.documentElement.style;
-      const letterBlur = isEndlessButterflies() ? CONFIG.butterfly.spriteBlurPx : CONFIG.letters.blurPx;
+      const letterBlur = usesButterflyActors() ? CONFIG.butterfly.spriteBlurPx : CONFIG.letters.blurPx;
+      snapButton.setAttribute("aria-label", isButterflyRiddle() ? "Take photo to capture all butterflies in view" :
+        "Take photo to collect the letter in frame");
       const cssSettings = {
         "--doll-blur": `${CONFIG.doll.blurPx}px`, "--doll-opacity": CONFIG.doll.opacity,
+        "--large-butterfly-filter": CONFIG.butterfly.largeSpriteBlurPx ? `blur(${CONFIG.butterfly.largeSpriteBlurPx}px)` : "none",
         "--anomaly2-blur": `${CONFIG.anomaly2.blurPx}px`,
         "--letter-beige": CONFIG.ui.letterColor, "--tarantino-yellow": CONFIG.ui.foundColor,
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
@@ -7781,7 +7891,8 @@
     function updateMenuCopy() {
       const text = menuText();
       const endless = CONFIG.levels.puzzleEndless;
-      const howCopy = endless.butterflyTargets && endless.chance > 0 ? gameText(text.butterflyHowText, {
+      const howCopy = CONFIG.levels.puzzleButterflies.chance > 0 ? text.butterflyRiddleHowText :
+        endless.butterflyTargets && endless.chance > 0 ? gameText(text.butterflyHowText, {
         roomBonusSeconds: endless.butterflyRoomTimeBonusSeconds.toLocaleString(isArabic() ? "ar-u-nu-arab" : "en")
       }) : text.howText;
       document.title = CONFIG.menu.title;
@@ -8214,6 +8325,7 @@
     const butterflyDangerDirection = document.getElementById("butterflyDangerDirection");
     const endlessButterflyFlights = new Map(), butterflySetRooms = new Set(), butterflyCaptureAnimations = new Set();
     let butterflyScore = 0, butterflyRoomGoal = 0, butterflyTapAt = null;
+    let butterflyRiddleQueue = [];
     let butterflySprites = [], butterflySpriteLoad = null;
     let endlessButterflyFrame = 0, endlessButterflyLastFrame = null;
     let butterflyAnomalyDeadline = null;
@@ -8270,7 +8382,7 @@
         const sprites = [...known.filter(Boolean), ...numbered];
         if (!sprites.length) throw new Error("No butterfly sprites could be loaded. Add butterfly.gif or a numbered GIF such as butterfly_2.gif beside the game.");
         return sprites;
-      })();
+      })().catch(error => { butterflySpriteLoad = null; throw error; });
       return butterflySpriteLoad;
     }
 
@@ -8341,11 +8453,21 @@
 
     function addEndlessButterfly(flight, elapsed, { predecessor = null, alreadyInRoom = false } = {}) {
       const config = CONFIG.butterfly, { geometry } = flight;
-      const image = chooseScene(butterflySprites).cloneNode();
-      image.className = "endless-butterfly";
+      const type = isButterflyRiddle() ? butterflyRiddleQueue.pop() : null;
+      const image = (type?.sprite || chooseScene(butterflySprites)).cloneNode();
       image.alt = "";
       image.draggable = false;
-      image.hidden = Boolean(predecessor);
+      let element = image;
+      if (type?.number) {
+        element = document.createElement("span");
+        image.className = "butterfly-sprite";
+        const badge = document.createElement("span");
+        badge.className = "butterfly-type-number";
+        badge.textContent = type.number;
+        element.append(image, badge);
+      }
+      element.className = "endless-butterfly";
+      element.hidden = Boolean(predecessor);
       const sizeFraction = randomButterflyValue(config.minSizeFraction, config.maxSizeFraction);
       const midpoint = (config.minSizeFraction + config.maxSizeFraction) / 2;
       const layer = sizeFraction > midpoint ? largeButterflyWorld : letterWorld;
@@ -8354,7 +8476,10 @@
       const edge = alreadyInRoom ? 0 : chooseButterflySide(flight, radius);
       const facing = edge === 0 ? (Math.random() < .5 ? -1 : 1) : -edge;
       const evadeChance = endlessEvadeChance();
-      const actor = { flight, image, layer, predecessor, sizeFraction, size, radius,
+      const grayscale = isButterflyRiddle() && geometry.width > geometry.viewWidth &&
+        levelIsUnlocked(levelType.butterflyAnomalyStartLevel) && Math.random() < levelType.butterflyAnomalyChance;
+      image.classList.toggle("grayscale-butterfly", grayscale);
+      const actor = { flight, element, image, layer, type, grayscale, predecessor, sizeFraction, size, radius,
         edge, facing, speed: randomButterflyValue(config.minSpeed, config.maxSpeed),
         phase: randomButterflyValue(0, Math.PI * 2), bornAt: elapsed, nextTurn: elapsed, escapeAt: Infinity,
         escapes: Math.random() < config.escapeChance,
@@ -8372,9 +8497,9 @@
         actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
         if (!predecessor) setButterflyEntryGoal(actor);
       }
-      image.style.width = image.style.height = `${actor.size}px`;
+      element.style.width = element.style.height = `${actor.size}px`;
       flight.actors.add(actor);
-      if (flight.room === levelRooms[activeRoomIndex]) layer.appendChild(image);
+      if (flight.room === levelRooms[activeRoomIndex]) layer.appendChild(element);
       paintEndlessButterfly(actor);
       return actor;
     }
@@ -8385,7 +8510,7 @@
       actor.goalY = actor.y;
       actor.facing = -actor.edge;
       actor.mode = "entering";
-      actor.image.hidden = false;
+      actor.element.hidden = false;
     }
 
     function startButterflyRoaming(actor, elapsed) {
@@ -8404,8 +8529,14 @@
     }
 
     function paintEndlessButterfly(actor) {
-      if (!actor.image.isConnected) return;
-      actor.image.style.transform = `translate3d(${actor.worldX - actor.size / 2}px, ${actor.worldY - actor.size / 2}px, 0) rotate(${actor.bank}deg) scaleX(${actor.facing})`;
+      if (!actor.element.isConnected) return;
+      const position = `translate3d(${actor.worldX - actor.size / 2}px, ${actor.worldY - actor.size / 2}px, 0)`;
+      const pose = `rotate(${actor.bank}deg) scaleX(${actor.facing})`;
+      if (actor.element === actor.image) actor.element.style.transform = `${position} ${pose}`;
+      else {
+        actor.element.style.transform = position;
+        actor.image.style.transform = pose;
+      }
     }
 
     function displayEndlessButterflies() {
@@ -8413,7 +8544,7 @@
       letterWorld.replaceChildren();
       largeButterflyWorld.replaceChildren();
       for (const actor of flight?.actors || []) {
-        actor.layer.appendChild(actor.image);
+        actor.layer.appendChild(actor.element);
         paintEndlessButterfly(actor);
       }
     }
@@ -8434,7 +8565,7 @@
           if (actor.mode === "waiting" || actor.mode === "outside") {
             actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
           }
-          actor.image.style.width = actor.image.style.height = `${actor.size}px`;
+          actor.element.style.width = actor.element.style.height = `${actor.size}px`;
           paintEndlessButterfly(actor);
         }
       }
@@ -8457,7 +8588,7 @@
     function removeEndlessButterfly(actor, elapsed) {
       const { flight } = actor;
       flight.actors.delete(actor);
-      actor.image.remove();
+      actor.element.remove();
       flight.nextSpawn = Math.min(flight.nextSpawn, elapsed + CONFIG.butterfly.minSpawnMs);
       for (const follower of flight.actors) {
         if (follower.mode !== "waiting" || follower.predecessor !== actor) continue;
@@ -8475,7 +8606,7 @@
       actor.vx = actor.vy = actor.bank = 0;
       actor.mode = "outside";
       actor.returnAt = elapsed + randomButterflyValue(minSpawnMs, maxSpawnMs);
-      actor.image.hidden = true;
+      actor.element.hidden = true;
       paintEndlessButterfly(actor);
     }
 
@@ -8534,11 +8665,34 @@
       else paintEndlessButterfly(actor);
     }
 
+    function rollButterflyTargetLevel(cap) {
+      const level = progressionLevel();
+      return level <= cap ? level : 1 + Math.floor(Math.random() * cap);
+    }
+
+    function prepareButterflyRiddleTargets() {
+      const factor = rollButterflyTargetLevel(levelType.butterflyFactorMaxLevel);
+      const positionsByLetter = new Map();
+      [...currentWord].forEach((letter, index) => {
+        if (!positionsByLetter.has(letter)) positionsByLetter.set(letter, []);
+        positionsByLetter.get(letter).push(index);
+      });
+      const sprites = shuffleArray([...butterflySprites]);
+      butterflyRiddleQueue = shuffleArray([...positionsByLetter.values()].flatMap((positions, index) => {
+        const remaining = positions.length * factor;
+        const reused = index >= sprites.length || index + sprites.length < positionsByLetter.size;
+        const type = { positions, remaining, sprite: sprites[index % sprites.length], number: reused ? index + 1 : null };
+        return Array(remaining).fill(type);
+      }));
+      butterflyRoomGoal = butterflyRiddleQueue.length;
+      butterflyScore = 0;
+    }
+
     function startButterflyRoomTargets(elapsed) {
-      const area = progressionLevel();
-      const cap = levelType.butterflyRoomTargetMaxArea;
-      const targetArea = area <= cap ? area : 1 + Math.floor(Math.random() * cap);
-      butterflyRoomGoal = levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel;
+      if (!isButterflyRiddle()) {
+        const targetArea = rollButterflyTargetLevel(levelType.butterflyRoomTargetMaxArea);
+        butterflyRoomGoal = levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel;
+      }
       butterflyScore = 0;
       butterflyProgress.textContent = butterflyScoreText();
       butterflySetRooms.clear();
@@ -8591,17 +8745,41 @@
       pauseEndlessButterflyMotion();
       for (const animation of butterflyCaptureAnimations) animation.cancel();
       butterflyCaptureAnimations.clear();
-      for (const flight of endlessButterflyFlights.values()) for (const actor of flight.actors) actor.image.remove();
+      for (const flight of endlessButterflyFlights.values()) for (const actor of flight.actors) actor.element.remove();
       endlessButterflyFlights.clear();
       butterflySetRooms.clear();
+      butterflyRiddleQueue = [];
       butterflyTapAt = butterflyAnomalyDeadline = null;
       butterflyDanger.hidden = true;
     }
 
     function endlessButterflyInFrame(actor, frame) {
-      if (!actor || actor.image.hidden || actor.flight.room !== levelRooms[activeRoomIndex] || !actor.flight.actors.has(actor)) return false;
+      if (!actor || actor.element.hidden || actor.flight.room !== levelRooms[activeRoomIndex] || !actor.flight.actors.has(actor)) return false;
       const x = actor.worldX + offsetX;
       return x >= 0 && x <= frame.width && actor.worldX >= 0 && actor.worldX <= actor.flight.geometry.width && actor.worldY >= 0 && actor.worldY <= frame.height;
+    }
+
+    function butterflyOverlapsView(actor, frame, cameraOffset = offsetX) {
+      if (actor.element.hidden) return false;
+      const x = actor.worldX + cameraOffset;
+      const angle = actor.bank * Math.PI / 180;
+      const half = actor.size / 2 * (Math.abs(Math.cos(angle)) + Math.abs(Math.sin(angle)));
+      return x + half > 0 && x - half < frame.width && actor.worldY + half > 0 && actor.worldY - half < frame.height;
+    }
+
+    function clearGrayscaleAnomalies(previousOffset) {
+      if (!gameplayStarted || gameOver || roomCompleted) return;
+      const room = levelRooms[activeRoomIndex], frame = viewport.getBoundingClientRect();
+      if (grayscaleDollInView(room, frame, previousOffset) && !grayscaleDollInView(room, frame)) {
+        room.dollState.grayscale = false;
+        room.dollActor.classList.remove("grayscale-doll");
+      }
+      for (const actor of endlessButterflyFlights.get(room)?.actors || []) {
+        if (actor.grayscale && butterflyOverlapsView(actor, frame, previousOffset) && !butterflyOverlapsView(actor, frame)) {
+          actor.grayscale = false;
+          actor.image.classList.remove("grayscale-butterfly");
+        }
+      }
     }
 
     function findEndlessButterfly(point = null) {
@@ -8619,12 +8797,13 @@
     }
 
     function flyButterflyToScore(actor, frame) {
-      const target = butterflyProgress.getBoundingClientRect(), image = actor.image;
+      const target = (isButterflyRiddle() ? status : butterflyProgress).getBoundingClientRect(), image = actor.image;
       const left = actor.worldX + offsetX - actor.size / 2, top = actor.worldY - actor.size / 2;
       const dx = target.left + (target.width - actor.size) / 2 - frame.left - left;
       const dy = target.top + (target.height - actor.size) / 2 - frame.top - top;
       image.className = "endless-butterfly-capture";
-      Object.assign(image.style, { left: `${left}px`, top: `${top}px` });
+      image.classList.toggle("large", actor.layer === largeButterflyWorld);
+      Object.assign(image.style, { left: `${left}px`, top: `${top}px`, width: `${actor.size}px`, height: `${actor.size}px` });
       captureEffects.appendChild(image);
       const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
       const frames = reducedMotion ? [{ transform: `scaleX(${actor.facing})`, opacity: 1 }, { transform: `scaleX(${actor.facing})`, opacity: 0 }] : [
@@ -8635,6 +8814,61 @@
       const animation = image.animate(frames, { duration: reducedMotion ? 150 : CONFIG.butterfly.captureFlightMs, easing: "cubic-bezier(.2,.66,.36,1)", fill: "forwards" });
       butterflyCaptureAnimations.add(animation);
       animation.finished.catch(() => {}).finally(() => { butterflyCaptureAnimations.delete(animation); image.remove(); });
+    }
+
+    function butterflyTapTimeBonus(directTap, now) {
+      const isCombo = directTap && butterflyTapAt !== null && now - butterflyTapAt <= levelType.butterflyComboWindowMs;
+      butterflyTapAt = directTap && !isCombo ? now : null;
+      return isCombo ? levelType.tapTimeBonusSeconds : 0;
+    }
+
+    function revealButterflyRiddleLetters(positions) {
+      selectionHistory.push(...positions);
+      selectedCount += positions.length;
+      if (isArabic()) {
+        renderArabicHud();
+        return;
+      }
+      for (const index of positions) {
+        const slot = wordDisplay.children[index];
+        slot.textContent = currentWord[index].toUpperCase();
+        slot.classList.add("found");
+      }
+    }
+
+    function collectButterflyRiddleShot(actor, directTap) {
+      const frame = viewport.getBoundingClientRect(), room = levelRooms[activeRoomIndex];
+      const flight = endlessButterflyFlights.get(room);
+      if (directTap && !endlessButterflyInFrame(actor, frame)) {
+        butterflyTapAt = null;
+        drainBatterySlot();
+        return;
+      }
+      const captures = directTap ? [actor] : [...flight.actors].filter(target => butterflyOverlapsView(target, frame));
+      if (!directTap) drainBatterySlot(1, { deferFailure: true });
+      // Validate the entire exposure before awarding any catches.
+      if (grayscaleDollInView(room, frame) || captures.some(target => target.grayscale)) {
+        endGame("grayscaleAnomaly");
+        return;
+      }
+      if (captures.length && anomalyActive && anomalyRoomIndex === activeRoomIndex) {
+        endGame("anomaly");
+        return;
+      }
+      const now = performance.now();
+      butterflyScore += captures.length;
+      flight.caught += captures.length;
+      status.textContent = butterflyScoreText();
+      for (const target of captures) {
+        removeEndlessButterfly(target, now - cameraStartedAt);
+        flyButterflyToScore(target, frame);
+        if (--target.type.remaining === 0) revealButterflyRiddleLetters(target.type.positions);
+      }
+      const bonus = butterflyTapTimeBonus(directTap, now);
+      if (bonus) addCameraTimeBonus(bonus);
+      // The last charge can still finish the riddle with its final exposure.
+      if (flight.caught === butterflyRoomGoal) completeButterflyLevel();
+      else if (batterySlotsRemaining === 0) endGame("battery");
     }
 
     function collectEndlessButterfly(actor, directTap) {
@@ -8649,14 +8883,12 @@
       butterflyScore++;
       butterflyProgress.textContent = butterflyScoreText();
       flyButterflyToScore(actor, frame);
-      const isCombo = directTap && butterflyTapAt !== null && now - butterflyTapAt <= levelType.butterflyComboWindowMs;
-      butterflyTapAt = directTap && !isCombo ? now : null;
       const quotaMet = ++actor.flight.caught === butterflyRoomGoal;
-      const bonus = (isCombo ? levelType.tapTimeBonusSeconds : 0) + (quotaMet ? levelType.butterflyRoomTimeBonusSeconds : 0);
+      const bonus = butterflyTapTimeBonus(directTap, now) + (quotaMet ? levelType.butterflyRoomTimeBonusSeconds : 0);
       if (bonus) addCameraTimeBonus(bonus);
       if (!quotaMet || gameOver || roomCompleted) return;
 
-      for (const spare of actor.flight.actors) spare.image.remove();
+      for (const spare of actor.flight.actors) spare.element.remove();
       actor.flight.actors.clear();
       butterflySetRooms.add(activeRoomIndex);
       if (butterflySetRooms.size === levelRooms.length) completeButterflyLevel();
@@ -8668,11 +8900,12 @@
     }
 
     function completeButterflyLevel() {
+      const riddle = isButterflyRiddle();
       roomCompleted = true;
-      endlessIntermission = "complete";
+      endlessIntermission = riddle ? "found" : "complete";
       completedWordCount++;
       recordRoomCompletion();
-      if ([...butterflySetRooms].every((index, position) => index === position)) {
+      if (!riddle && [...butterflySetRooms].every((index, position) => index === position)) {
         rechargeBatterySlots(levelType.inOrderBatteryBonusSlots);
       }
       pauseLevelTimeouts();
@@ -8682,13 +8915,25 @@
       finishPanGesture();
       finishShutterGesture();
       updateCameraControls();
+      if (riddle) {
+        viewport.classList.add("riddle-intermission");
+        message.classList.remove("show");
+        refreshMessageBitmap();
+        void message.offsetWidth;
+        message.classList.add("show");
+      }
       wordAdvanceTimer = levelTimeout(() => {
         wordAdvanceTimer = null;
+        if (riddle) {
+          transitionToLevel();
+          return;
+        }
         clearEndlessButterflies();
         video.pause();
         video.muted = true;
         showLevelCompleteScreen(CONFIG.text.nextLevel);
-      }, CONFIG.butterfly.captureFlightMs, { riddleTransition: true });
+      }, riddle ? Math.max(CONFIG.butterfly.captureFlightMs, CONFIG.ui.foundFlashMs) : CONFIG.butterfly.captureFlightMs,
+      { riddleTransition: true });
     }
 
     function updateButterflyAnomalyClock() {

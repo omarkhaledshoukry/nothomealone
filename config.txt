@@ -1,4 +1,4 @@
-# Only the completed riddle count is saved per language. Room sets are never saved.
+# The completed riddle count and last completed Butterfly Riddle room are saved per language.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -10,8 +10,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Endless Butterflies is enabled. Each completed set banks one level.
-# Each new set of rooms uses the currently unlocked milestone.
+# Butterfly Riddles is enabled. Each solved riddle banks one level and opens a fresh room.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -148,7 +147,7 @@ evadesCamera = false
 # The countdown pauses until Ready on the next riddle; the remaining time carries over.
 [levels.puzzleEndless]
 startLevel = 1
-chance = 1
+chance = 0
 wordCount = 1
 timeLimitMs = 60000
 # Use butterflies in this Endless mode. Set butterflyTargets = false to play with riddles.
@@ -183,6 +182,26 @@ flyingLetterStartLevel = 5
 flyingLetterChance = 0.25
 evadingLetterStartLevel = 10
 evadingLetterChance = 0.10
+
+# One riddle and one room. The answer is revealed as each letter's butterfly group is caught.
+[levels.puzzleButterflies]
+startLevel = 1
+chance = 1
+wordCount = 1
+timeLimitMs = 60000
+# Through level 10 the multiplier equals the level. Later levels roll a multiplier from 1 to 10.
+# Every answer letter position contributes that many butterflies. Repeated letters share a group.
+butterflyFactorMaxLevel = 10
+butterflyComboWindowMs = 2000
+tapTimeBonusSeconds = 2
+evadingLetterStartLevel = 10
+evadingLetterChance = 0.10
+# The butterfly roll applies on generation. The doll roll applies when a doll spawns.
+# Pan the grayscale subject fully out of view to restore it to colour.
+butterflyAnomalyStartLevel = 3
+butterflyAnomalyChance = 0.05
+dollAnomalyStartLevel = 5
+dollAnomalyChance = 0.05
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
 # Disabled by chance=0 in this version; set a weight to re-enable, and startLevel to its unlock level.
@@ -310,6 +329,11 @@ jumpscareChance = 0.5
 [failures.anomaly]
 title = "Anomaly Undetected"
 jumpscareChance = 1
+
+# Capturing a grayscale butterfly or capturing while a grayscale doll is visible.
+[failures.grayscaleAnomaly]
+title = "Anomaly Undetected"
+jumpscareChance = 0.10
 
 # Photographing a wrong/decoy letter.
 [failures.decoy]
@@ -462,6 +486,8 @@ radiusPaddingPx = 5
 minSizeFraction = 0.10
 maxSizeFraction = 0.20
 spriteBlurPx = 0.3
+# Blur for larger butterflies on the layer above the dolls. Defaults to the same 1.2 px as doll.blurPx.
+largeSpriteBlurPx = 1.2
 maxPerRoom = 3
 minSpawnMs = 700
 maxSpawnMs = 1300
@@ -684,6 +710,7 @@ language = "LANGUAGE"
 back = "Back"
 home = "Home"
 butterflyHowText = "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
+butterflyRiddleHowText = "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
@@ -703,6 +730,7 @@ language = "اللغة"
 back = "رجوع"
 home = "الرئيسية"
 butterflyHowText = "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
+butterflyRiddleHowText = "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
