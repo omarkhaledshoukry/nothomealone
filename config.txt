@@ -1,4 +1,4 @@
-# The completed riddle count and last completed Butterfly Riddle room are saved per language.
+# Each language saves the completed riddle count and the current Butterfly Riddle's room, clue and starting resources.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -188,14 +188,17 @@ evadingLetterChance = 0.10
 startLevel = 1
 chance = 1
 wordCount = 1
+# Starting clock. Later riddles use the time you carry forward.
 timeLimitMs = 60000
+clearTimeBonusSeconds = 20
 # Through level 10 the multiplier equals the level. Later levels roll a multiplier from 1 to 10.
 # Every answer letter position contributes that many butterflies. Repeated letters share a group.
 butterflyFactorMaxLevel = 10
 butterflyComboWindowMs = 2000
 tapTimeBonusSeconds = 2
-evadingLetterStartLevel = 10
-evadingLetterChance = 0.10
+# Camera evaders start after riddle 7.
+evadingLetterStartLevel = 8
+evadingLetterChance = 0.20
 # The butterfly roll applies on generation. The doll roll applies when a doll spawns.
 # Pan the grayscale subject fully out of view to restore it to colour.
 butterflyAnomalyStartLevel = 3
@@ -320,7 +323,7 @@ flyingLetters = true
 title = "GAME OVER"
 jumpscareChance = 0.5
 
-# Battery exhaustion always ends the level, with or without a jumpscare.
+# Battery exhaustion can end the level, with or without a jumpscare.
 [failures.battery]
 title = "Battery Died"
 jumpscareChance = 0.5
@@ -483,9 +486,9 @@ maxStepMs = 50
 paddingPx = 15
 radiusPaddingPx = 5
 # Animated GIF sprites and edge flight for Endless Butterflies.
-minSizeFraction = 0.10
-maxSizeFraction = 0.20
-spriteBlurPx = 0.3
+minSizeFraction = 0.15
+maxSizeFraction = 0.24
+spriteBlurPx = 1.2
 # Blur for larger butterflies on the layer above the dolls. Defaults to the same 1.2 px as doll.blurPx.
 largeSpriteBlurPx = 1.2
 maxPerRoom = 3
