@@ -1,4 +1,4 @@
-# Each language saves the completed riddle count and the current Butterfly Riddle's room, clue and starting resources.
+# Each language saves completed levels and the current level's room and riddle set.
 # ROOM WORD HUNT - config.txt
 # Place beside the game HTML. Save as UTF-8 and reload the page after editing.
 # Full-line comments start with # or ;. Sections and key names are case-sensitive.
@@ -10,7 +10,7 @@
 # Settings load once, before level selection. No config file is required to play.
 # Runtime values (camera position, collected letters, remaining time) are managed by the game.
 # Direct local opening: choose the game folder. Use Change local files after editing these settings.
-# Butterfly Riddles is enabled. Each solved riddle banks one level and opens a fresh room.
+# Static Riddle Hunt is enabled. Finishing its full riddle set banks one level.
 
 # Progression level = completed successful levels + 1. Retries do not advance it.
 # Disable this switch to ignore progression gates; feature enabled flags and chances still apply.
@@ -186,7 +186,7 @@ evadingLetterChance = 0.10
 # One riddle and one room. The answer is revealed as each letter's butterfly group is caught.
 [levels.puzzleButterflies]
 startLevel = 1
-chance = 1
+chance = 0
 wordCount = 1
 # Starting clock. Later riddles use the time you carry forward.
 timeLimitMs = 60000
@@ -205,6 +205,35 @@ butterflyAnomalyStartLevel = 3
 butterflyAnomalyChance = 0.05
 dollAnomalyStartLevel = 5
 dollAnomalyChance = 0.05
+
+# One room and 1–3 riddles. One stationary letter appears at a time in random answer order.
+[levels.puzzleStaticHunt]
+startLevel = 1
+chance = 1
+wordCount = 1
+# Every new level and retry starts with this clock and a full battery.
+timeLimitMs = 60000
+# Each solved riddle adds this bonus. The clock then waits for the next paper's Ready.
+clearTimeBonusSeconds = 20
+tapTimeBonusSeconds = 2
+# Unlock targets of 1, 2 and 3 riddles at these levels. After the final milestone, roll 1–3.
+riddleCountStartLevels = [1,2,3]
+# Rooms unlock by their numeric suffix. These settings override rooms.txt for this type.
+# Rooms 1–3 start unlocked, room 4 unlocks at level 5, room 5 at 10, and so on.
+roomsInitiallyUnlocked = 3
+roomUnlockStartLevel = 5
+roomUnlockEveryLevels = 5
+# Independent roll for a decorative flying butterfly at the start of each room.
+flyingButterflyChance = 0.50
+butterflyAnomalyStartLevel = 3
+butterflyAnomalyChance = 0.05
+dollAnomalyStartLevel = 5
+dollAnomalyChance = 0.05
+evadingLetterStartLevel = 8
+evadingLetterChance = 0.20
+flyingLetters = false
+evadesCamera = false
+decoyLetterChance = 0
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
 # Disabled by chance=0 in this version; set a weight to re-enable, and startLevel to its unlock level.
@@ -488,7 +517,7 @@ radiusPaddingPx = 5
 # Animated GIF sprites and edge flight for Endless Butterflies.
 minSizeFraction = 0.15
 maxSizeFraction = 0.24
-spriteBlurPx = 1.2
+spriteBlurPx = 0.6
 # Blur for larger butterflies on the layer above the dolls. Defaults to the same 1.2 px as doll.blurPx.
 largeSpriteBlurPx = 1.2
 maxPerRoom = 3
@@ -501,6 +530,14 @@ escapeSpeedMultiplier = 2.15
 gatedEntryChance = 0.4
 entrySpeedMultiplier = 1.55
 captureFlightMs = 420
+
+# A separate roll for a stationary first-frame butterfly in Static Riddle Hunt.
+# Capturing it once starts its animation and flight, and adds the time bonus.
+[frozenButterfly]
+enabled = true
+startLevel = 3
+spawnChance = 0.25
+timeBonusSeconds = 5
 
 # Both anomalies share these check intervals, spawn odds, word gates and artwork settings.
 # allowedRooms, startLevel and enabled apply to the original anomaly only.
@@ -714,6 +751,7 @@ back = "Back"
 home = "Home"
 butterflyHowText = "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
 butterflyRiddleHowText = "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again."
+staticHuntHowText = "Read the riddle and press Ready. Find one still letter at a time. Each correct tap adds two seconds. A photo uses one battery slot and captures the visible letter. Each solved riddle adds twenty seconds and pauses the clock until Ready. Finish the riddle target to complete the level. Turn the camera away from grayscale butterflies and dolls before capturing. Awaken a still butterfly with a tap or photo for five seconds."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
@@ -734,6 +772,7 @@ back = "رجوع"
 home = "الرئيسية"
 butterflyHowText = "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
 butterflyRiddleHowText = "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا."
+staticHuntHowText = "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة تضيف ثانيتين. تستخدم الصورة شحنة واحدة لالتقاط الحرف الظاهر. حل كل لغز يضيف عشرين ثانية ويوقف الساعة حتى تضغط استعداد. أكمل عدد الألغاز المطلوب لإنهاء المستوى. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. إيقاظ فراشة ساكنة باللمس أو الصورة يضيف خمس ثوانٍ."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
