@@ -276,7 +276,7 @@
     #cameraOverlay {
       --camera-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace;
       position: absolute;
-      z-index: 10;
+      z-index: 31;
       inset: 0;
       color: var(--camera-color, #fff);
       font-family: var(--camera-font);
@@ -1216,7 +1216,6 @@
     #portraitViewport.shutter-covered #handBlocker {
       opacity: 0; transition: opacity var(--shutter-blackout-fade-ms, 120ms) ease;
     }
-    #portraitViewport.shutter-blackout-enabled.hand-active #cameraOverlay { z-index: 31; }
     .letter-glyph.greek-decoy { font-family: Georgia, "Times New Roman", serif; text-transform: none; }
     #surveillanceIndicator:not([hidden]) {
       position: absolute; right: calc(100% + 6px); top: 50%; transform: translateY(-50%);
@@ -2206,7 +2205,7 @@
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
-      "staticHuntHowText": "Read the riddle and press Ready. Find one still letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
+      "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Surveillance areas show all letters together; other areas reveal one letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle; look left and right for the rest. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Wake a still butterfly first for five seconds, then catch it. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
     },
     "ar": {
@@ -2228,7 +2227,7 @@
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
-      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
+      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تظهر جميع الحروف معًا في مناطق كاميرا المراقبة، ويظهر حرف واحد في كل مرة في المناطق الأخرى. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف؛ انظر يمينًا ويسارًا للعثور على الباقي. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أيقظ الفراشة الساكنة أولاً لإضافة خمس ثوانٍ ثم التقطها. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
     }
   },
@@ -2553,7 +2552,10 @@
     function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies" || name === "puzzleStaticHunt" || name === "puzzleButterflyHunt"; }
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
     function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
-    function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
+    function isSurveillanceWord() {
+      return isStaticHunt() && CONFIG.surveillance.enabled && Boolean(staticHuntEntry()?.surveillance);
+    }
+    function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread" || isSurveillanceWord(); }
     function isPuzzleType(name) { return name === "puzzle" || name === "puzzleEndless" || name === "puzzleFlying" || name === "flyingPuzzle" || isSingleRoomType(name); }
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
     function isEndlessPuzzle() { return levelType.name === "puzzleEndless"; }
@@ -5596,7 +5598,7 @@
       anchors.forEach((anchor, index) => {
         const shouldShow = !wordTransitionPending && (!captureInProgress || isSpreadLetterLevel()) &&
           (!isSequentialLetterLevel() || index === selectedCount) &&
-          (!isStaticHunt() || index === staticHuntLetter) &&
+          (!isStaticHunt() || isSurveillanceWord() || index === staticHuntLetter) &&
           Number(anchor.dataset.roomIndex) === activeRoomIndex && !tiles[index].classList.contains("selected");
         if (!shouldShow) {
           anchor.hidden = true;
