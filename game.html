@@ -1202,6 +1202,30 @@
     #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
     @media (max-height: 580px) { #homePage { --home-menu-gap: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
 
+    #statusGroup {
+      position: absolute; top: max(5%, calc(env(safe-area-inset-top) + 12px));
+      left: 50%; transform: translateX(-50%); pointer-events: none;
+    }
+    #statusGroup #status { position: relative; top: auto; left: auto; transform: none; }
+    #sceneEffects { transition: filter 420ms ease, opacity var(--shutter-blackout-reveal-ms, 220ms) ease; }
+    #captureEffects, #handBlocker { transition: opacity var(--shutter-blackout-reveal-ms, 220ms) ease; }
+    #portraitViewport.shutter-covered #sceneEffects {
+      opacity: 0; transition: filter 420ms ease, opacity var(--shutter-blackout-fade-ms, 120ms) ease;
+    }
+    #portraitViewport.shutter-covered #captureEffects,
+    #portraitViewport.shutter-covered #handBlocker {
+      opacity: 0; transition: opacity var(--shutter-blackout-fade-ms, 120ms) ease;
+    }
+    #portraitViewport.shutter-blackout-enabled.hand-active #cameraOverlay { z-index: 31; }
+    .letter-glyph.greek-decoy { font-family: Georgia, "Times New Roman", serif; text-transform: none; }
+    #surveillanceIndicator:not([hidden]) {
+      position: absolute; right: calc(100% + 6px); top: 50%; transform: translateY(-50%);
+      display: block; width: 10px; height: 10px; margin: 0; border-radius: 50%;
+      background: #ff493b; box-shadow: 0 0 7px #f44336;
+      animation: surveillanceBlink var(--surveillance-blink-ms, 800ms) steps(1, end) infinite;
+    }
+    @keyframes surveillanceBlink { 50% { opacity: 0; } }
+    #portraitViewport.level-paused #surveillanceIndicator { animation-play-state: paused; }
     #wordDisplay[hidden] { display: none; }
     .endless-butterfly, .endless-butterfly-capture {
       position: absolute;
@@ -1363,7 +1387,10 @@
           <time id="cameraTimer" aria-label="Room time remaining">01:00</time>
           <span id="cameraTimeBonus" role="status" aria-live="polite" dir="ltr"></span>
         </div>
-        <div id="status" aria-live="polite">1/3</div>
+        <div id="statusGroup">
+          <span id="surveillanceIndicator" role="img" aria-label="Automatic surveillance camera" hidden></span>
+          <div id="status" aria-live="polite">1/3</div>
+        </div>
         <button id="prevRoomButton" class="room-navigation" type="button" disabled>PREV</button>
         <button id="nextRoomButton" class="room-navigation" type="button" disabled>NEXT</button>
         <button id="snapButton" type="button" aria-label="Take photo to collect the letter in frame" disabled>
@@ -1584,12 +1611,16 @@
     },
     "puzzleStaticHunt": {
       "startLevel": 1,
-      "chance": 1,
+      "chance": 0.8,
       "wordCount": 1,
       "timeLimitMs": 60000,
-      "clearTimeBonusSeconds": 20,
-      "tapTimeBonusSeconds": 2,
-      "riddleCountStartLevels": [1, 2, 3],
+      "clearTimeBonusSeconds": 10,
+      "tapTimeBonusSeconds": 1,
+      "riddleCountStartLevels": [
+        1,
+        2,
+        3
+      ],
       "roomsInitiallyUnlocked": 3,
       "roomUnlockStartLevel": 5,
       "roomUnlockEveryLevels": 5,
@@ -1598,11 +1629,14 @@
       "butterflyAnomalyChance": 0.05,
       "dollAnomalyStartLevel": 5,
       "dollAnomalyChance": 0.05,
-      "evadingLetterStartLevel": 8,
+      "evadingLetterStartLevel": 9,
       "evadingLetterChance": 0.2,
       "flyingLetters": false,
       "evadesCamera": false,
-      "decoyLetterChance": 0
+      "decoyLetterChance": 0,
+      "greekDecoyStartLevel": 5,
+      "greekDecoyChance": 0.1,
+      "surveillanceChance": 0.25
     },
     "flyingPuzzle": {
       "chance": 0,
@@ -1659,6 +1693,38 @@
         0.05,
         0.1
       ]
+    },
+    "puzzleButterflyHunt": {
+      "startLevel": 5,
+      "chance": 0.2,
+      "wordCount": 1,
+      "timeLimitMs": 60000,
+      "clearTimeBonusSeconds": 20,
+      "tapTimeBonusSeconds": 2,
+      "riddleCountStartLevels": [
+        1,
+        2,
+        3
+      ],
+      "roomsInitiallyUnlocked": 3,
+      "roomUnlockStartLevel": 5,
+      "roomUnlockEveryLevels": 5,
+      "butterflyAnomalyStartLevel": 3,
+      "butterflyAnomalyChance": 0.05,
+      "dollAnomalyStartLevel": 5,
+      "dollAnomalyChance": 0.05,
+      "evadingLetterStartLevel": 9,
+      "evadingLetterChance": 0.2,
+      "flyingLetters": false,
+      "evadesCamera": false,
+      "decoyLetterChance": 0,
+      "surveillanceChance": 0.25,
+      "butterflyFactorMaxLevel": 10,
+      "butterflyComboWindowMs": 2000,
+      "butterflyRoomTarget": 3,
+      "butterflyRoomTargetPerLevel": 1,
+      "butterflyRoomTargetMaxArea": 10,
+      "initialButterflies": 3
     }
   },
   "frozenButterfly": {
@@ -1762,7 +1828,8 @@
     "tapEnabled": true,
     "tapSlopPx": 8,
     "tapMaxMs": 400,
-    "tapHitPaddingPx": 8
+    "tapHitPaddingPx": 8,
+    "greekDecoyCharacters": "ξψφωζ"
   },
   "butterfly": {
     "minSpeed": 44,
@@ -1817,7 +1884,8 @@
     "escapeSpeedMultiplier": 2.15,
     "gatedEntryChance": 0.4,
     "entrySpeedMultiplier": 1.55,
-    "captureFlightMs": 420
+    "captureFlightMs": 420,
+    "captureFadeMs": 140
   },
   "anomaly": {
     "enabled": false,
@@ -1899,7 +1967,11 @@
     "bottomPercent": 8,
     "ringPx": 2,
     "paddingPx": 4,
-    "color": "#ffffff"
+    "color": "#ffffff",
+    "holdBlackoutEnabled": true,
+    "holdBlackoutDelayMs": 180,
+    "holdBlackoutFadeMs": 120,
+    "holdBlackoutRevealMs": 220
   },
   "ui": {
     "viewportAspectRatio": 0.625,
@@ -1948,15 +2020,17 @@
     "previousRoom": "PREV",
     "nextRoom": "NEXT",
     "hint": "HINT",
-    "puzzleTitle": "Level",
-    "puzzleTitleAr": "المستوى",
+    "puzzleTitle": "Area",
+    "puzzleTitleAr": "المنطقة",
     "hunt": "CASE",
     "exit": "EXIT",
     "puzzleLevelFormat": "{title} #{number}",
     "prepareMedia": "TAP",
     "clearProgress": "CLEAR",
     "mediaPreparationPrompt": "Tap to finish loading.",
-    "mediaPreparationFailed": "Loading could not finish. Tap to try again."
+    "mediaPreparationFailed": "Loading could not finish. Tap to try again.",
+    "catchFliesInstruction": "catch the flies",
+    "catchFliesInstructionAr": "التقط الفراشات"
   },
   "rooms": {
     "count": 4,
@@ -2132,7 +2206,8 @@
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
-      "staticHuntHowText": "Read the riddle and press Ready. Find one still letter at a time. Each correct letter tap adds two seconds. A photo captures the visible letter and butterflies. Only missed captures use a battery slot. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Each solved riddle adds twenty seconds and pauses the clock until Ready. Finish the riddle target to complete the level. Turn the camera away from grayscale butterflies and dolls before capturing."
+      "staticHuntHowText": "Read the riddle and press Ready. Find one still letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
+      "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle; look left and right for the rest. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Wake a still butterfly first for five seconds, then catch it. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
     },
     "ar": {
       "start": "ابدأ",
@@ -2153,8 +2228,16 @@
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
-      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة للحرف تضيف ثانيتين. تلتقط الصورة الحرف والفراشات الظاهرة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. حل كل لغز يضيف عشرين ثانية ويوقف الساعة حتى تضغط استعداد. أكمل عدد الألغاز المطلوب لإنهاء المستوى. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط."
+      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
+      "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف؛ انظر يمينًا ويسارًا للعثور على الباقي. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أيقظ الفراشة الساكنة أولاً لإضافة خمس ثوانٍ ثم التقطها. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
     }
+  },
+  "surveillance": {
+    "enabled": true,
+    "speedScreensPerSecond": 0.12,
+    "edgePauseMs": 1000,
+    "reverseSwipeMinPx": 24,
+    "blinkMs": 800
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2189,6 +2272,28 @@
       "butterfly.spriteBlurPx": [0, 12], "butterfly.largeSpriteBlurPx": [0, 12],
       "butterfly.maxPerRoom": [1, 12, true], "butterfly.minSpawnMs": [100, 60000, true], "butterfly.maxSpawnMs": [100, 60000, true],
       "butterfly.escapeSpeedMultiplier": [1, 10], "butterfly.entrySpeedMultiplier": [1, 10], "butterfly.captureFlightMs": [80, 3000, true]
+    });
+    for (const name of ["puzzleStaticHunt", "puzzleButterflyHunt"]) {
+      for (const key of ["clearTimeBonusSeconds", "tapTimeBonusSeconds", "roomsInitiallyUnlocked", "roomUnlockStartLevel", "roomUnlockEveryLevels", "butterflyAnomalyStartLevel", "dollAnomalyStartLevel", "evadingLetterStartLevel"]) {
+        CONFIG_LIMITS[`levels.${name}.${key}`] = CONFIG_LIMITS[`levels.puzzleStaticHunt.${key}`];
+      }
+    }
+    Object.assign(CONFIG_LIMITS, {
+      "levels.puzzleStaticHunt.greekDecoyStartLevel": [1, 1000000001, true],
+      "levels.puzzleButterflyHunt.butterflyFactorMaxLevel": [1, 100, true],
+      "levels.puzzleButterflyHunt.butterflyComboWindowMs": [100, 10000, true],
+      "surveillance.speedScreensPerSecond": [.01, 2],
+      "surveillance.edgePauseMs": [0, 10000, true],
+      "surveillance.reverseSwipeMinPx": [4, 200],
+      "surveillance.blinkMs": [400, 4000, true],
+      "shutter.holdBlackoutDelayMs": [80, 1000, true],
+      "shutter.holdBlackoutFadeMs": [30, 1000, true],
+      "shutter.holdBlackoutRevealMs": [30, 2000, true],
+      "butterfly.captureFadeMs": [50, 1000, true],
+      "levels.puzzleButterflyHunt.butterflyRoomTarget": [2, 1000000, true],
+      "levels.puzzleButterflyHunt.butterflyRoomTargetPerLevel": [0, 1000000, true],
+      "levels.puzzleButterflyHunt.butterflyRoomTargetMaxArea": [1, 1000000001, true],
+      "levels.puzzleButterflyHunt.initialButterflies": [2, 12, true]
     });
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
@@ -2246,7 +2351,7 @@
       "anomaly2.blurPx": [0, 20],
       "anomaly.androidBrightness": [1, 2]
     });
-    for (const name of ["puzzleEndless", "puzzleButterflies", "puzzleStaticHunt", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
+    for (const name of ["puzzleEndless", "puzzleButterflies", "puzzleStaticHunt", "puzzleButterflyHunt", "puzzleFlying", "singleRoomSequential", "singleRoomSpread", "singleRoomFixed"]) {
       CONFIG_LIMITS[`levels.${name}.startLevel`] = [1, 1000000001, true];
       CONFIG_LIMITS[`levels.${name}.wordCount`] = [1, 1, true];
       CONFIG_LIMITS[`levels.${name}.timeLimitMs`] = [1000, 86400000, true];
@@ -2257,9 +2362,10 @@
     }
 
     function configValueIsValid(path, value, fallback) {
-      if (path === "levels.puzzleStaticHunt.riddleCountStartLevels") return Array.isArray(value) && value.length === 3 &&
+      if (/^levels\.(puzzleStaticHunt|puzzleButterflyHunt)\.riddleCountStartLevels$/.test(path)) return Array.isArray(value) && value.length === 3 &&
         value[0] === 1 && value.every((level, index) => Number.isSafeInteger(level) && level >= 1 &&
           level <= 1000000001 && (!index || level > value[index - 1]));
+      if (path === "letters.greekDecoyCharacters") return typeof value === "string" && /^[α-ω]{1,32}$/u.test(value);
       if (path === "loading.mediaLoadAttempts") return Number.isInteger(value) && value >= 1 && value <= 3;
       if (path === "language.code") return value === "en" || value === "ar";
       if (/^levels\.(singleRoomSequential|singleRoomFixed)\.decoyStartLevels$/.test(path)) return Array.isArray(value) && value.length >= 1 && value.length <= 32 && value[0] === 1 &&
@@ -2368,7 +2474,7 @@
         for (const name of KEYBOARD_BINDINGS) resolved.keyboard[name] = [...CONFIG_DEFAULTS.keyboard[name]];
         warnings.push("Keyboard actions share a key; default key bindings used.");
       }
-      for (const name of ["puzzleButterflies", "puzzleStaticHunt"]) {
+      for (const name of ["puzzleButterflies", "puzzleStaticHunt", "puzzleButterflyHunt"]) {
         if (!values.has(`levels.${name}.chance`) && Object.keys(resolved.levels).some(other => values.has(`levels.${other}.chance`))) {
           resolved.levels[name].chance = 0;
         }
@@ -2444,7 +2550,7 @@
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
     function isSequentialType(name) { return name === "singleRoomSequential" || name === "singleRoomFixed"; }
-    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies" || name === "puzzleStaticHunt"; }
+    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies" || name === "puzzleStaticHunt" || name === "puzzleButterflyHunt"; }
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
     function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
     function isSpreadLetterLevel() { return levelType.name === "singleRoomSpread"; }
@@ -2452,12 +2558,14 @@
     function isPuzzleLevel() { return isPuzzleType(levelType.name); }
     function isEndlessPuzzle() { return levelType.name === "puzzleEndless"; }
     function isEndlessButterflies() { return isEndlessPuzzle() && levelType.butterflyTargets; }
-    function isButterflyRiddle() { return levelType.name === "puzzleButterflies"; }
+    function isButterflyArea() { return levelType.name === "puzzleButterflyHunt"; }
+    function isButterflyRiddle() { return levelType.name === "puzzleButterflies" || isButterflyArea(); }
+    function isAreaHunt() { return isStaticHunt() || isButterflyArea(); }
     function isStaticHunt() { return levelType.name === "puzzleStaticHunt"; }
     function usesButterflyActors() { return isEndlessButterflies() || isButterflyRiddle(); }
     function usesButterflyMotion() { return usesButterflyActors() || isStaticHunt(); }
     function usesPositionalRiddleHud() { return isEndlessPuzzle() || isButterflyRiddle() || isStaticHunt(); }
-    function requiresPuzzleData(name, rules) { return isPuzzleType(name) && !(name === "puzzleEndless" && rules.butterflyTargets); }
+    function requiresPuzzleData(name, rules) { return isPuzzleType(name) && name !== "puzzleButterflyHunt" && !(name === "puzzleEndless" && rules.butterflyTargets); }
     function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
     function progressionLevel() { return Math.max(1, currentRoomNumber); }
     function levelIsUnlocked(startLevel) { return !CONFIG.milestones.enabled || progressionLevel() >= startLevel; }
@@ -2567,6 +2675,11 @@
     }
 
     function chooseLevelType() {
+      const saved = progressState.staticRiddleHunt;
+      if (saved?.level === progressionLevel()) {
+        const mode = saved.mode || "puzzleStaticHunt";
+        if (LEVEL_TYPES[mode]) return effectiveLevelRules(LEVEL_TYPES[mode]);
+      }
       const types = Object.values(LEVEL_TYPES).filter(level => level.chance > 0 && levelIsUnlocked(level.startLevel));
       if (!types.length) {
         console.warn("No weighted level type is unlocked; using the built-in regular riddle fallback.");
@@ -2599,6 +2712,7 @@
     let roomImage = document.getElementById("roomImage");
     let roomMedia = video;
     const letterWorld = document.getElementById("letterWorld");
+    const surveillanceIndicator = document.getElementById("surveillanceIndicator");
     const smallButterflyWorld = document.getElementById("smallButterflyWorld");
     const largeButterflyWorld = document.getElementById("largeButterflyWorld");
     const wordDisplay = document.getElementById("wordDisplay");
@@ -2828,6 +2942,7 @@
     let words = [];
     let currentPuzzle = null;
     let staticHuntPuzzles = [], staticHuntLetter = -1;
+    let areaFrozenUsed = false;
     let puzzleFilePromise = null;
     let endlessRunPuzzles = null;
     let endlessRiddleHistory = { pool: "", seen: new Set(), lastAnswer: null, lastPrompt: null };
@@ -2874,6 +2989,9 @@
     let shutterStartX = 0;
     let shutterStartY = 0;
     let shutterMoved = false;
+    let shutterKeyCode = null, shutterPressStartedAt = null;
+    let shutterHoldTimer = null, shutterBlackoutFrame = 0, shutterRevealTimer = null;
+    let shutterHoldUsed = false, shutterBlackoutActive = false, shutterBlackoutOpaque = false, shutterRevealing = false;
 
     let isDragging = false;
     let movedDuringDrag = false;
@@ -2891,6 +3009,9 @@
     let panMotionDirection = 0;
     let panDirectionTravel = 0;
     let cameraMomentumFrame = 0;
+    let surveillanceActive = false, surveillanceDirection = 1, surveillanceFrame = 0;
+    let surveillanceLastTime = null, surveillancePauseRemainingMs = 0;
+    let surveillanceGestureReversed = false;
     let panPointerId = null;
     const keyboardHeldCodes = new Set();
     let keyboardPanFrame = 0;
@@ -3719,7 +3840,7 @@
             wordLoadInfo.url = new URL(puzzlesFileFor(), document.baseURI).href;
             let plan;
             try {
-              plan = await (isStaticHunt() ? planStaticRiddleHunt(catalog) :
+              plan = await (isAreaHunt() ? planStaticRiddleHunt(catalog) :
                 isButterflyRiddle() ? planButterflyRiddle(catalog) : planEndlessRiddle(catalog));
             }
             catch (error) { showWordLoadError(error); return; }
@@ -4065,7 +4186,7 @@
 
     function staticHuntEntry() {
       const entry = progressState.staticRiddleHunt;
-      return isStaticHunt() && entry?.level === progressionLevel() ? entry : null;
+      return isAreaHunt() && entry?.level === progressionLevel() ? entry : null;
     }
 
     function staticHuntRoomLimit() {
@@ -4081,10 +4202,43 @@
       return progressionLevel() > starts[2] ? 1 + Math.floor(Math.random() * 3) : milestoneStage(starts) + 1;
     }
 
-    async function planStaticRiddleHunt(catalog) {
+    async function planFlyTargetArea(catalog) {
       let entry = staticHuntEntry();
-      const needsSprites = entry ? entry.flying || entry.frozen :
-        levelType.flyingButterflyChance > 0 || CONFIG.frozenButterfly.enabled;
+      butterflySprites = await discoverButterflySprites();
+      if (!entry) {
+        const previous = progressState.lastStaticHuntRoom ?? progressState.lastButterflyRiddleRoom ?? lastSceneNumber;
+        const eligible = catalog.filter(scene => scene.number <= staticHuntRoomLimit() && scene.number !== previous);
+        if (!eligible.length) throw new Error("Add another unlocked room and matching jumpscare, or adjust this mode's room unlock settings.");
+        const scene = chooseScene(eligible);
+        const targetArea = rollButterflyTargetLevel(levelType.butterflyRoomTargetMaxArea);
+        entry = {
+          level: progressionLevel(), mode: levelType.name, room: scene.number,
+          target: levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel,
+          surveillance: CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance,
+          flying: false, frozen: CONFIG.frozenButterfly.enabled && levelIsUnlocked(CONFIG.frozenButterfly.startLevel) &&
+            Math.random() < CONFIG.frozenButterfly.spawnChance
+        };
+      } else if (!Number.isSafeInteger(entry.target)) {
+        // Keep the remaining area's original overall quota when upgrading an older multi-riddle save.
+        entry = {
+          level: entry.level, mode: levelType.name, room: entry.room, surveillance: Boolean(entry.surveillance),
+          target: entry.puzzles.reduce((total, puzzle, index) => total + puzzle.answer.length * (entry.factors?.[index] || 1), 0),
+          flying: false, frozen: entry.frozen
+        };
+      }
+      progressState.staticRiddleHunt = entry;
+      saveProgress();
+      const scene = catalog.find(room => room.number === entry.room);
+      if (!scene) throw new Error("Restore the saved room and its jumpscare to retry this area.");
+      return { puzzle: { prompt: isArabic() ? CONFIG.text.catchFliesInstructionAr : CONFIG.text.catchFliesInstruction, answer: "" },
+        scenes: [scene], line: null, data: null };
+    }
+
+    async function planStaticRiddleHunt(catalog) {
+      if (isButterflyArea()) return planFlyTargetArea(catalog);
+      let entry = staticHuntEntry();
+      const needsSprites = isButterflyArea() || (entry ? entry.flying || entry.frozen :
+        levelType.flyingButterflyChance > 0 || CONFIG.frozenButterfly.enabled);
       const [data, sprites] = await Promise.all([
         entry ? { puzzles: entry.puzzles, source: puzzlesFileFor() } : loadPuzzleData(),
         needsSprites ? discoverButterflySprites() : []
@@ -4102,7 +4256,9 @@
           throw new Error(`Add riddles with ${min}–${max}-letter answers to the active pool in ${puzzlesFileFor()}.`);
         }
         entry = {
-          level: progressionLevel(), room: scene.number, puzzles,
+          level: progressionLevel(), mode: levelType.name, room: scene.number, puzzles,
+          factors: isButterflyArea() ? puzzles.map(() => rollButterflyTargetLevel(levelType.butterflyFactorMaxLevel)) : [],
+          surveillance: CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance,
           flying: Math.random() < levelType.flyingButterflyChance,
           frozen: CONFIG.frozenButterfly.enabled && levelIsUnlocked(CONFIG.frozenButterfly.startLevel) &&
             Math.random() < CONFIG.frozenButterfly.spawnChance
@@ -4152,7 +4308,25 @@
     }
 
     function applyEndlessRiddlePlan({ puzzle, scenes, line, data, count }) {
-      if (isStaticHunt()) staticHuntPuzzles = staticHuntEntry().puzzles;
+      if (isButterflyArea()) {
+        currentPuzzle = puzzle;
+        endlessRunPuzzles = null;
+        staticHuntPuzzles = [];
+        applyEndlessRooms({ scenes, line });
+        words = []; currentWord = ""; wordLetterRooms = [];
+        tiles = []; anchors = [];
+        letterWorld.replaceChildren(); wordDisplay.replaceChildren();
+        butterflyRoomGoal = staticHuntEntry().target;
+        butterflyScore = selectedCount = 0;
+        wordsReadyForClue = true;
+        wordLoadInfo = { status: "loaded", url: "", count: 0, error: null };
+        wordLoadError.hidden = true;
+        loadingWord.hidden = false;
+        populateClueList();
+        updateCameraControls();
+        return;
+      }
+      if (isAreaHunt()) staticHuntPuzzles = staticHuntEntry().puzzles;
       currentPuzzle = puzzle;
       endlessRunPuzzles = data;
       applyEndlessRooms({ scenes, line });
@@ -4514,7 +4688,7 @@
       const title = gameText(CONFIG.text.puzzleLevelFormat, {
         title: isArabic() ? CONFIG.text.puzzleTitleAr : CONFIG.text.puzzleTitle, number
       });
-      return isStaticHunt() ? `${title} x${staticHuntPuzzles.length}` : title;
+      return title;
     }
 
     function populateClueList() {
@@ -4594,6 +4768,7 @@
       scheduleAnomalyCheck(encounterDelays?.anomaly);
       scheduleNextHandCheck(encounterDelays?.hand);
       scheduleSpiderCheck(encounterDelays?.spider);
+      startSurveillanceScan();
     }
 
     function dismissClueIntro() {
@@ -4617,9 +4792,11 @@
       const single = usesSingleRoomControls(), control = puzzleHintControl();
       const riddleNumber = `#${completedWordCount + 1}`;
       const butterflies = isEndlessButterflies(), riddle = isPuzzleLevel() && !butterflies;
-      wordDisplay.hidden = butterflies;
-      butterflyProgress.hidden = !butterflies || !gameplayStarted;
-      status.textContent = isStaticHunt() ? `${completedWordCount}/${staticHuntPuzzles.length}` : isButterflyRiddle() ? butterflyScoreText() :
+      wordDisplay.hidden = butterflies || isButterflyArea();
+      butterflyProgress.hidden = !butterflies || !gameplayStarted ||
+        Boolean(endlessIntermission) || gameOver || roomCompleted || hintActive;
+      updateSurveillanceIndicator();
+      status.textContent = isButterflyArea() ? butterflyScoreText() : isStaticHunt() ? `${completedWordCount}/${staticHuntPuzzles.length}` : isButterflyRiddle() ? butterflyScoreText() :
         butterflies ? `Area #${progressionLevel()}` : isEndlessPuzzle() ? riddleNumber : riddle ? CONFIG.text.hunt :
         gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       status.classList.toggle("butterfly-area", butterflies);
@@ -4631,13 +4808,15 @@
       if (riddle) {
         if (control === status) { control.setAttribute("role", "button"); control.setAttribute("tabindex", "0"); }
         control.setAttribute("aria-controls", "clueIntro");
-        const label = isArabic() ? "اضغط مطولًا لقراءة اللغز" : "Hold to read the riddle";
+        const label = isButterflyArea() ? (isArabic() ? "اضغط مطولًا لقراءة المهمة" : "Hold to read the task") :
+          isArabic() ? "اضغط مطولًا لقراءة اللغز" : "Hold to read the riddle";
         control.setAttribute("aria-label", isEndlessPuzzle() ? `${riddleNumber}: ${label}` : `${CONFIG.text.hint}: ${label}`);
         control.setAttribute("aria-expanded", String(hintActive));
       }
     }
 
     function showPuzzleHint() {
+      if (hasShutterPress() || shutterBlackoutActive || shutterRevealing) return false;
       if (gameplayPaused || endlessIntermission || menuPage !== null || !isPuzzleLevel() || !gameplayStarted || handVisible || gameOver || roomCompleted || !currentPuzzle) return false;
       clueIntro.classList.remove("exit-mode");
       document.getElementById("exitConfirmContent").hidden = true;
@@ -4952,9 +5131,11 @@
 
     function updateCameraControls() {
       updateLevelStatus();
-      const blocked = gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || handVisible || gameOver || roomCompleted || !roomsReady;
+      const baseBlocked = gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || !roomsReady;
+      const blocked = baseBlocked || handVisible || hasShutterPress() || shutterBlackoutActive || shutterRevealing;
       if (blocked || hintActive) stopKeyboardInput();
-      snapButton.disabled = blocked || hintActive || wordTransitionPending || captureInProgress ||
+      snapButton.disabled = baseBlocked || hintActive || wordTransitionPending || captureInProgress || shutterRevealing ||
+        (handVisible && !CONFIG.shutter.holdBlackoutEnabled) ||
         ((isButterflyRiddle() || isStaticHunt()) && batterySlotsRemaining === 0);
       if (usesSingleRoomControls()) {
         prevRoomButton.disabled = blocked || !isPuzzleLevel();
@@ -4971,6 +5152,7 @@
     }
 
     function updateCameraTimer() {
+      if (shutterBlackoutOpaque) resolveShutterLookAway();
       if (cameraStartedAt !== null && !gameplayPaused && !document.hidden) {
         cameraRemainingSeconds = Math.max(0, Math.ceil(
           (ROOM_TIME_LIMIT_MS + cameraBonusMs - (performance.now() - cameraStartedAt)) / 1000));
@@ -5087,6 +5269,10 @@
     }
 
     function chooseLetterGlyph(letter, word, index) {
+      if (isStaticHunt()) {
+        return levelIsUnlocked(levelType.greekDecoyStartLevel) && Math.random() < levelType.greekDecoyChance
+          ? chooseScene([...CONFIG.letters.greekDecoyCharacters]) : letter;
+      }
       if (isSequentialLetterLevel() && index === 0) return letter;
       if (!levelIsUnlocked(CONFIG.letters.decoyStartLevel) || !levelType.decoyLetterChance || Math.random() >= levelType.decoyLetterChance) return letter;
       // A decoy must be absent from the entire clue, not just the current slot.
@@ -5101,6 +5287,9 @@
       tile.querySelector(".letter-glyph").textContent = tile.dataset.letter;
       tile.setAttribute("aria-label", `Letter ${tile.dataset.letter}`);
       tile.dataset.decoy = "false";
+      const glyph = tile.querySelector(".letter-glyph");
+      glyph.classList.remove("greek-decoy");
+      glyph.removeAttribute("lang"); glyph.removeAttribute("dir");
     }
 
     function updateDecoyVisibilityState({ allowCorrection = false } = {}) {
@@ -5158,6 +5347,7 @@
     }
 
     function snapCamera(targetIndex = null, point = null) {
+      if (hasShutterPress() || shutterBlackoutActive || shutterRevealing) return;
       if ((isButterflyRiddle() || isStaticHunt()) && point === null && batterySlotsRemaining === 0) return;
       if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
@@ -5272,10 +5462,81 @@
       captureFinishTimer = levelTimeout(() => finishLetterTransfer(), LETTER_TRANSFER_MS + CONFIG.letters.transferFallbackMs);
     }
 
-    function finishShutterGesture() {
+    function hasShutterPress() {
+      return shutterPointerId !== null || shutterKeyCode !== null;
+    }
+
+    function resolveShutterLookAway() {
+      if (!shutterBlackoutOpaque || !gameplayStarted || gameplayPaused || gameOver || roomCompleted || endlessIntermission) return;
+      const room = levelRooms[activeRoomIndex];
+      if (!room) return;
+      for (const index of visibleRoomLetterIndices()) {
+        if (tiles[index].dataset.decoy === "true") correctDecoy(index);
+      }
+      if (room.dollState?.grayscale) {
+        room.dollState.grayscale = false;
+        room.dollActor?.classList.remove("grayscale-doll");
+      }
+      for (const actor of endlessButterflyFlights.get(room)?.actors || []) {
+        if (!actor.grayscale) continue;
+        actor.grayscale = false;
+        actor.image.classList.remove("grayscale-butterfly");
+      }
+      if (anomalyActive && anomalyRoomIndex === activeRoomIndex) removeAnomalyAndRestartTimer();
+    }
+
+    function confirmShutterBlackout() {
+      shutterBlackoutFrame = 0;
+      if (!shutterBlackoutActive || !hasShutterPress()) return;
+      if (Number(getComputedStyle(sceneEffects).opacity) > .001) {
+        shutterBlackoutFrame = requestAnimationFrame(confirmShutterBlackout);
+        return;
+      }
+      shutterBlackoutOpaque = true;
+      resolveShutterLookAway();
+    }
+
+    function beginShutterPress() {
+      shutterPressStartedAt = performance.now();
+      shutterHoldUsed = false;
+      snapButton.classList.add("held");
+      refreshShutterBitmap();
+      if (CONFIG.shutter.holdBlackoutEnabled) shutterHoldTimer = window.setTimeout(() => {
+        shutterHoldTimer = null;
+        if (!hasShutterPress() || gameplayPaused || menuPage !== null || !gameplayStarted || gameOver || roomCompleted || hintActive || endlessIntermission) return;
+        shutterHoldUsed = shutterBlackoutActive = true;
+        stopShutterEffect();
+        viewport.classList.add("shutter-covered");
+        shutterBlackoutFrame = requestAnimationFrame(confirmShutterBlackout);
+        updateCameraControls();
+      }, CONFIG.shutter.holdBlackoutDelayMs);
+      updateCameraControls();
+    }
+
+    function finishShutterGesture({ immediate = false } = {}) {
       const pointerId = shutterPointerId;
-      shutterPointerId = null;
-      shutterMoved = false;
+      const usedHold = shutterHoldUsed || CONFIG.shutter.holdBlackoutEnabled && shutterPressStartedAt !== null &&
+        performance.now() - shutterPressStartedAt >= CONFIG.shutter.holdBlackoutDelayMs;
+      if (shutterBlackoutOpaque) resolveShutterLookAway();
+      if (shutterHoldTimer !== null) window.clearTimeout(shutterHoldTimer);
+      shutterHoldTimer = null;
+      if (shutterBlackoutFrame) cancelAnimationFrame(shutterBlackoutFrame);
+      shutterBlackoutFrame = 0;
+      shutterPointerId = shutterKeyCode = shutterPressStartedAt = null;
+      shutterHoldUsed = false;
+      const wasCovered = shutterBlackoutActive;
+      shutterBlackoutActive = shutterBlackoutOpaque = false;
+      viewport.classList.remove("shutter-covered");
+      if (wasCovered || immediate) {
+        if (shutterRevealTimer !== null) window.clearTimeout(shutterRevealTimer);
+        shutterRevealTimer = null;
+        shutterRevealing = wasCovered && !immediate;
+        if (shutterRevealing) shutterRevealTimer = window.setTimeout(() => {
+          shutterRevealTimer = null;
+          shutterRevealing = false;
+          updateCameraControls();
+        }, CONFIG.shutter.holdBlackoutRevealMs);
+      }
       snapButton.classList.remove("held");
       refreshShutterBitmap();
       if (pointerId !== null) {
@@ -5283,10 +5544,12 @@
           if (snapButton.hasPointerCapture(pointerId)) snapButton.releasePointerCapture(pointerId);
         } catch {}
       }
+      updateCameraControls();
+      return usedHold;
     }
 
     snapButton.addEventListener("pointerdown", event => {
-      if (snapButton.disabled || event.isPrimary === false || event.button !== 0) return;
+      if (snapButton.disabled || shutterKeyCode !== null || event.isPrimary === false || event.button !== 0) return;
       event.stopPropagation();
       stopKeyboardInput();
       finishPanGesture();
@@ -5294,8 +5557,7 @@
       shutterPointerId = event.pointerId;
       shutterStartX = event.clientX;
       shutterStartY = event.clientY;
-      snapButton.classList.add("held");
-      refreshShutterBitmap();
+      beginShutterPress();
       try { snapButton.setPointerCapture(event.pointerId); } catch {}
     });
     snapButton.addEventListener("pointermove", event => {
@@ -5309,14 +5571,14 @@
     snapButton.addEventListener("pointerup", event => {
       if (event.pointerId !== shutterPointerId) return;
       const rect = snapButton.getBoundingClientRect();
-      const isTap = !shutterMoved &&
+      const isTap = !shutterMoved && !shutterHoldUsed &&
         Math.hypot(event.clientX - shutterStartX, event.clientY - shutterStartY) <= CONFIG.shutter.tapSlopPx &&
         event.clientX >= rect.left && event.clientX <= rect.right &&
         event.clientY >= rect.top && event.clientY <= rect.bottom;
-      finishShutterGesture();
+      const usedHold = finishShutterGesture();
       // Mobile browsers may omit the compatibility click after a drag.
       // Capture on release, then ignore that optional click to avoid duplicates.
-      if (isTap) snapCamera();
+      if (isTap && !usedHold) snapCamera();
     });
     snapButton.addEventListener("pointercancel", event => {
       if (event.pointerId === shutterPointerId) finishShutterGesture();
@@ -5525,20 +5787,10 @@
         drainBatterySlot();
         return;
       }
-      for (const actor of frozen) {
-        actor.frozen = false;
-        actor.frozenCanvas.remove();
-        actor.frozenCanvas = null;
-        actor.image.style.display = "";
-        actor.element.style.setProperty("--butterfly-blur", `${actor.layer === largeButterflyWorld ? CONFIG.butterfly.largeSpriteBlurPx : CONFIG.butterfly.spriteBlurPx}px`);
-        startButterflyRoaming(actor, performance.now() - cameraStartedAt);
-      }
-      if (frozen.length && CONFIG.frozenButterfly.timeBonusSeconds) {
-        addCameraTimeBonus(CONFIG.frozenButterfly.timeBonusSeconds * frozen.length);
-      }
+      wakeFrozenButterflies(frozen);
       for (const actor of hints) {
         removeEndlessButterfly(actor, performance.now() - cameraStartedAt);
-        flyButterflyToScore(actor, frame);
+        fadeCollectedButterfly(actor, frame);
       }
       const collectedLetter = hints.length ? staticHuntLetter : letter;
       if (hints.length || capturesLetter) {
@@ -5585,6 +5837,9 @@
         glyph.className = "letter-glyph";
         glyph.textContent = chooseLetterGlyph(letter, currentWord, index);
         tile.dataset.decoy = String(glyph.textContent !== letter);
+        tile.dataset.decoyKind = isStaticHunt() && glyph.textContent !== letter ? "greek" : "letter";
+        glyph.classList.toggle("greek-decoy", tile.dataset.decoyKind === "greek");
+        if (tile.dataset.decoyKind === "greek") { glyph.lang = "el"; glyph.dir = "ltr"; }
         tile.dataset.decoySeen = "false";
         tile.setAttribute("aria-label", `Letter ${glyph.textContent}`);
         tile.appendChild(glyph);
@@ -5656,7 +5911,7 @@
       if (tile !== tiles[tileIndex] || anchors[tileIndex].hidden || tile.classList.contains("selected")) return;
       const localAnomaly = anomalyActive && anomalyRoomIndex === activeRoomIndex;
       if (localAnomaly || tile.dataset.decoy === "true") {
-        endGame(localAnomaly ? "anomaly" : "decoy");
+        endGame(localAnomaly ? "anomaly" : tile.dataset.decoyKind === "greek" ? "grayscaleAnomaly" : "decoy");
         return;
       }
       const slotIndex = usesPositionalRiddleHud() ? tileIndex : selectedCount;
@@ -5765,12 +6020,12 @@
     }
 
     function showNextEndlessRiddle() {
-      if (!isStaticHunt() && endlessRoomRotationDue()) return rotateEndlessRooms();
+      if (!isAreaHunt() && endlessRoomRotationDue()) return rotateEndlessRooms();
       endlessIntermission = "paper";
       message.classList.remove("show");
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
-      currentPuzzle = isStaticHunt() ? staticHuntPuzzles[completedWordCount] : nextEndlessPuzzle(endlessRunPuzzles, levelRooms.length);
+      currentPuzzle = isAreaHunt() ? staticHuntPuzzles[completedWordCount] : nextEndlessPuzzle(endlessRunPuzzles, levelRooms.length);
       populateClueList();
       clearLevelTimeout(clueDismissTimer);
       clueDismissTimer = null;
@@ -5791,6 +6046,7 @@
       dismissClueIntro();
       cameraOverlay.inert = false;
       cameraOverlay.setAttribute("aria-hidden", "false");
+      if (isButterflyArea()) clearEndlessButterflies();
       words = [currentPuzzle.answer];
       wordLetterRooms = [makeWordRoomOrder(currentPuzzle.answer)];
       startWord(0);
@@ -5798,6 +6054,7 @@
       resumeLevelTimeouts();
       resumeCameraTimer();
       if (isStaticHunt()) resumeEndlessButterflyMotion();
+      else if (isButterflyArea()) startEndlessButterflies();
       resumeSpiderEncounter();
       scheduleAnomalyCheck();
       if (spiderTimer === null && !spiderActive) scheduleSpiderCheck();
@@ -5809,7 +6066,7 @@
       wordTransitionPending = true;
       endlessIntermission = "found";
       completedWordCount++;
-      roomCompleted = completedWordCount === staticHuntPuzzles.length;
+      roomCompleted = isButterflyArea() || completedWordCount === staticHuntPuzzles.length;
       hidePuzzleHint({ immediate: true });
       viewport.classList.add("riddle-intermission");
       const seconds = levelType.clearTimeBonusSeconds + tapBonus;
@@ -5834,12 +6091,13 @@
         video.pause();
         video.muted = true;
         showLevelCompleteScreen(CONFIG.text.nextLevel);
-      }, Math.max(CONFIG.letters.wordTransitionMs, CONFIG.ui.foundFlashMs, TIME_BONUS_ANIMATION_MS),
+      }, Math.max(CONFIG.letters.wordTransitionMs, CONFIG.ui.foundFlashMs, TIME_BONUS_ANIMATION_MS,
+        isButterflyArea() ? CONFIG.butterfly.captureFlightMs : 0),
       { riddleTransition: true });
     }
 
     function completeWord(tapBonus = 0) {
-      if (isStaticHunt()) { completeStaticHuntRiddle(tapBonus); return; }
+      if (isAreaHunt()) { completeStaticHuntRiddle(tapBonus); return; }
       if (wordTransitionPending || gameOver || roomCompleted) return;
       wordTransitionPending = true;
       const endless = isEndlessPuzzle();
@@ -5909,7 +6167,7 @@
 
     function keyboardInputIsAvailable() {
       return CONFIG.keyboard.enabled && menuPage === null && !gameplayPaused && !endlessIntermission && gameplayStarted && roomsReady && !hintActive &&
-        !gameOver && !roomCompleted && !document.hidden;
+        !gameOver && !roomCompleted && !document.hidden && !hasShutterPress() && !shutterRevealing;
     }
 
     function keyboardPanDirection() {
@@ -5925,6 +6183,7 @@
     }
 
     function startKeyboardPan() {
+      if (surveillanceActive) { reverseSurveillanceScan(-keyboardPanDirection()); return; }
       if (keyboardPanFrame || !keyboardPanDirection()) return;
       keyboardPanTime = performance.now();
       const step = time => {
@@ -5956,6 +6215,7 @@
       }
       const code = keyboardEventCode(event), action = keyboardAction(code);
       if (action === "advanceKeys") return; // These keys only advance a visible screen.
+      if (code === shutterKeyCode) { event.preventDefault(); return; }
       if (!action || !keyboardInputIsAvailable()) return;
       // Keep native activation for buttons reached using Tab. A focused HINT
       // already handles Space/Enter itself before this bubbling listener.
@@ -5968,6 +6228,13 @@
       keyboardHeldCodes.add(code);
       if (action === "dismissHandKeys") {
         if (handVisible) hideHand({ continueFromDrag: handDragStarted });
+        return;
+      }
+      if (action === "shutterKeys" && CONFIG.shutter.holdBlackoutEnabled) {
+        if (snapButton.disabled || hasShutterPress()) return;
+        finishPanGesture();
+        shutterKeyCode = code;
+        beginShutterPress();
         return;
       }
       if (handVisible) return;
@@ -5994,6 +6261,13 @@
 
     function keyboardUp(event) {
       const code = keyboardEventCode(event);
+      if (code === shutterKeyCode) {
+        event.preventDefault();
+        keyboardHeldCodes.delete(code);
+        const usedHold = finishShutterGesture();
+        if (!usedHold) snapCamera();
+        return;
+      }
       if (!keyboardHeldCodes.delete(code)) return;
       event.preventDefault();
       if (!keyboardPanDirection()) {
@@ -6028,6 +6302,64 @@
       return true;
     }
     window.addEventListener("keydown", advanceScreenFromKeyboard, true);
+
+    function updateSurveillanceIndicator() {
+      surveillanceIndicator.hidden = !surveillanceActive || !gameplayStarted || gameplayPaused || Boolean(endlessIntermission) ||
+        menuPage !== null || hintActive || handVisible || gameOver || roomCompleted;
+    }
+
+    function stopSurveillanceScan() {
+      if (surveillanceFrame) cancelAnimationFrame(surveillanceFrame);
+      surveillanceFrame = 0;
+      surveillanceActive = false;
+      surveillanceLastTime = null;
+      surveillancePauseRemainingMs = 0;
+      updateSurveillanceIndicator();
+    }
+
+    function startSurveillanceScan() {
+      stopSurveillanceScan();
+      surveillanceActive = isAreaHunt() && CONFIG.surveillance.enabled && Boolean(staticHuntEntry()?.surveillance) && minOffset < -.5;
+      surveillanceDirection = 1; // Look toward the left edge of the room first.
+      surveillanceIndicator.style.setProperty("--surveillance-blink-ms", `${CONFIG.surveillance.blinkMs}ms`);
+      updateSurveillanceIndicator();
+      if (surveillanceActive) surveillanceFrame = requestAnimationFrame(stepSurveillanceScan);
+    }
+
+    function reverseSurveillanceScan(direction) {
+      if (!surveillanceActive || ![-1, 1].includes(direction) || direction === surveillanceDirection) return false;
+      surveillanceDirection = direction;
+      surveillancePauseRemainingMs = 0;
+      surveillanceLastTime = null;
+      return true;
+    }
+
+    function stepSurveillanceScan(time) {
+      surveillanceFrame = 0;
+      updateSurveillanceIndicator();
+      if (!surveillanceActive || gameOver || roomCompleted) { stopSurveillanceScan(); return; }
+      const blocked = gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || Boolean(endlessIntermission) ||
+        hintActive || handVisible || isDragging || captureInProgress;
+      const dt = blocked || surveillanceLastTime === null ? 0 : clamp(time - surveillanceLastTime, 0, 50);
+      surveillanceLastTime = blocked ? null : time;
+      advanceSurveillanceScan(dt);
+      surveillanceFrame = requestAnimationFrame(stepSurveillanceScan);
+    }
+
+    function advanceSurveillanceScan(dt) {
+      if (dt <= 0 || minOffset >= 0) return;
+      if (surveillancePauseRemainingMs > 0) {
+        surveillancePauseRemainingMs = Math.max(0, surveillancePauseRemainingMs - dt);
+        return;
+      }
+      offsetX = clamp(offsetX + surveillanceDirection * viewport.getBoundingClientRect().width *
+        CONFIG.surveillance.speedScreensPerSecond * dt / 1000, minOffset, 0);
+      applyWorldOffset(false, true);
+      if (surveillanceDirection > 0 && offsetX >= 0 || surveillanceDirection < 0 && offsetX <= minOffset) {
+        surveillanceDirection *= -1;
+        surveillancePauseRemainingMs = CONFIG.surveillance.edgePauseMs;
+      }
+    }
 
     function stopCameraMomentum() {
       if (cameraMomentumFrame) cancelAnimationFrame(cameraMomentumFrame);
@@ -6065,7 +6397,7 @@
     function startCameraMomentum(velocity, travel, swipeOrigin = null) {
       stopCameraMomentum();
       if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || isDragging || handVisible || gameOver || roomCompleted || document.hidden) return;
-      if (Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
+      if (surveillanceActive || Math.abs(velocity) < CAMERA_MOMENTUM_MIN_SPEED) return;
 
       const width = viewport.getBoundingClientRect().width;
       const strongFlick = Math.abs(velocity) >= CAMERA_FLICK_SPEED &&
@@ -6133,6 +6465,7 @@
     }
 
     function pointerDown(event) {
+      if (hasShutterPress() || shutterBlackoutActive || shutterRevealing) return;
       // The clue card and its READY button own their own pointer events.
       if (gameplayPaused || endlessIntermission || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted) return;
       if (event.isPrimary === false) return;
@@ -6150,6 +6483,7 @@
       finishPanGesture();
       stopShutterEffect();
       isDragging = true;
+      surveillanceGestureReversed = false;
       panPointerId = event.pointerId;
       dragStartClientX = event.clientX;
       dragStartClientY = event.clientY;
@@ -6191,6 +6525,13 @@
       // then moves immediately instead of having to undo an overshoot first.
       const deltaX = event.clientX - lastPanClientX;
       lastPanClientX = event.clientX;
+      if (surveillanceActive) {
+        if (!surveillanceGestureReversed && Math.abs(dragDistance) >= CONFIG.surveillance.reverseSwipeMinPx &&
+            Math.abs(dragDistance) > 1.25 * Math.abs(event.clientY - dragStartClientY)) {
+          surveillanceGestureReversed = reverseSurveillanceScan(Math.sign(dragDistance));
+        }
+        return;
+      }
       offsetX = clamp(offsetX + deltaX * CAMERA_DRAG_GAIN, minOffset, 0);
       applyWorldOffset(false, true);
     }
@@ -6214,7 +6555,7 @@
       const travel = panDirectionTravel;
       const horizontalSwipe = Math.abs(event.clientX - dragStartClientX) > 1.25 * Math.abs(event.clientY - dragStartClientY);
       const swipeOrigin = horizontalSwipe ? dragStartOffsetX : null;
-      if (movedDuringDrag) {
+      if (movedDuringDrag && !surveillanceActive) {
         offsetX = clamp(offsetX + (event.clientX - lastPanClientX) * CAMERA_DRAG_GAIN, minOffset, 0);
         applyWorldOffset(false, true);
       }
@@ -6740,6 +7081,7 @@
     function beginGameOver(reason) {
       if (gameOver || roomCompleted) return false;
       gameOver = true;
+      stopSurveillanceScan();
       if (usesButterflyMotion()) clearEndlessButterflies();
       hidePuzzleHint({ immediate: true });
       gameOverReason = Object.prototype.hasOwnProperty.call(CONFIG.failures, reason) ? reason : "other";
@@ -6926,7 +7268,7 @@
       handDismissing = false;
       updateCameraControls();
       finishPanGesture();
-      finishShutterGesture();
+      if (!hasShutterPress()) finishShutterGesture();
       finishLetterTransfer();
       stopShutterEffect();
       viewport.classList.add("hand-active");
@@ -7635,7 +7977,19 @@
             puzzle.answer.length <= 32 && normalizeGameWord(puzzle.answer, language) === puzzle.answer)) {
         progress.staticRiddleHunt = {
           level: hunt.level, room: hunt.room, flying: hunt.flying, frozen: hunt.frozen,
+          mode: hunt.mode === "puzzleButterflyHunt" ? "puzzleButterflyHunt" : "puzzleStaticHunt",
+          surveillance: typeof hunt.surveillance === "boolean" ? hunt.surveillance : false,
+          factors: Array.isArray(hunt.factors) && hunt.factors.length === hunt.puzzles.length &&
+            hunt.factors.every(factor => Number.isInteger(factor) && factor >= 1 && factor <= 100) ? [...hunt.factors] : hunt.puzzles.map(() => 1),
           puzzles: hunt.puzzles.map(({ prompt, answer }) => ({ prompt, answer }))
+        };
+      }
+      if (value.version === 7 && hunt?.mode === "puzzleButterflyHunt" && hunt.level === value.completedRooms + 1 &&
+          Number.isSafeInteger(hunt.room) && hunt.room > 0 &&
+          Number.isSafeInteger(hunt.target) && hunt.target >= 2 && hunt.target <= 1000000000000000) {
+        progress.staticRiddleHunt = {
+          level: hunt.level, mode: hunt.mode, room: hunt.room, target: hunt.target,
+          surveillance: Boolean(hunt.surveillance), flying: false, frozen: Boolean(hunt.frozen)
         };
       }
       const entry = value.butterflyRiddle;
@@ -7690,12 +8044,12 @@
       if (completionRecorded) return;
       completionRecorded = true;
       progressState.completedRooms = currentRoomNumber;
-      if (isButterflyRiddle()) progressState.lastButterflyRiddleRoom = currentScene.number;
+      if (isButterflyRiddle() && !isButterflyArea()) progressState.lastButterflyRiddleRoom = currentScene.number;
       else {
         delete progressState.lastButterflyRiddleRoom;
         delete progressState.butterflyRiddle;
       }
-      if (isStaticHunt()) progressState.lastStaticHuntRoom = currentScene.number;
+      if (isAreaHunt()) progressState.lastStaticHuntRoom = currentScene.number;
       else delete progressState.lastStaticHuntRoom;
       delete progressState.staticRiddleHunt;
       saveProgress();
@@ -7859,6 +8213,9 @@
       loadingScreen.classList.remove("hidden");
       levelGeneration++;
       spiderAppearedThisLevel = false;
+      areaFrozenUsed = false;
+      stopSurveillanceScan();
+      finishShutterGesture({ immediate: true });
       clearEndlessButterflies();
       if (!rotateEndlessRooms) butterflyScore = 0;
       ++playbackRevision;
@@ -8077,6 +8434,7 @@
     function configureGamePresentation() {
       batteryLow.textContent = isArabic() ? "البطارية ضعيفة" : "BATTERY LOW";
       const style = document.documentElement.style;
+      viewport.classList.toggle("shutter-blackout-enabled", CONFIG.shutter.holdBlackoutEnabled);
       const letterBlur = usesButterflyActors() ? CONFIG.butterfly.spriteBlurPx : CONFIG.letters.blurPx;
       snapButton.setAttribute("aria-label", isButterflyRiddle() ? "Take photo to capture all butterflies in view" :
         "Take photo to collect the letter in frame");
@@ -8094,6 +8452,8 @@
         "--shutter-max": `${CONFIG.shutter.maxSizePx}px`, "--shutter-size-vh": CONFIG.shutter.heightVh,
         "--shutter-bottom": `${CONFIG.shutter.bottomPercent}%`, "--shutter-ring": `${CONFIG.shutter.ringPx}px`,
         "--shutter-padding": `${CONFIG.shutter.paddingPx}px`, "--shutter-held-scale": CONFIG.shutter.heldScale,
+        "--shutter-blackout-fade-ms": `${CONFIG.shutter.holdBlackoutFadeMs}ms`,
+        "--shutter-blackout-reveal-ms": `${CONFIG.shutter.holdBlackoutRevealMs}ms`,
         "--shutter-press-ms": `${CONFIG.shutter.pressMs}ms`, "--shutter-release-ms": `${CONFIG.shutter.releaseMs}ms`,
         "--centre-flight-ms": `${CONFIG.camera.centreFlightMs}ms`, "--letter-filter": letterBlur ? `blur(${letterBlur}px)` : "none",
         "--letter-fade-ms": `${CONFIG.letters.fadeInMs}ms`, "--letter-vibrate-ms": `${CONFIG.letters.vibrationMs}ms`,
@@ -8183,7 +8543,8 @@
     function updateMenuCopy() {
       const text = menuText();
       const endless = CONFIG.levels.puzzleEndless;
-      const howCopy = CONFIG.levels.puzzleStaticHunt.chance > 0 ? text.staticHuntHowText :
+      const howCopy = CONFIG.levels.puzzleStaticHunt.chance > 0 ? text.staticHuntHowText + (CONFIG.levels.puzzleButterflyHunt.chance > 0 ? "\n\n" + text.butterflyAreaHowText : "") :
+        CONFIG.levels.puzzleButterflyHunt.chance > 0 ? text.butterflyAreaHowText :
         CONFIG.levels.puzzleButterflies.chance > 0 ? text.butterflyRiddleHowText :
         endless.butterflyTargets && endless.chance > 0 ? gameText(text.butterflyHowText, {
         roomBonusSeconds: endless.butterflyRoomTimeBonusSeconds.toLocaleString(isArabic() ? "ar-u-nu-arab" : "en")
@@ -8687,26 +9048,46 @@
       if (entry.flying) addEndlessButterfly(flight, 0, { alreadyInRoom: true });
       if (entry.frozen && CONFIG.frozenButterfly.enabled) {
         const actor = addEndlessButterfly(flight, 0, { alreadyInRoom: true, fixedSizeFraction: CONFIG.butterfly.minSizeFraction });
-        actor.frozen = true;
-        actor.grayscale = false;
-        actor.image.classList.remove("grayscale-butterfly");
-        const canvas = actor.frozenCanvas = document.createElement("canvas");
-        canvas.className = "butterfly-sprite";
-        canvas.width = actor.sprite.naturalWidth;
-        canvas.height = actor.sprite.naturalHeight;
-        // Canvas displays the source GIF's first frame while the original image stays loaded.
-        canvas.getContext("2d").drawImage(actor.sprite, 0, 0);
-        actor.element = document.createElement("span");
-        actor.element.className = "endless-butterfly";
-        actor.element.style.width = actor.element.style.height = `${actor.size}px`;
-        actor.image.className = "butterfly-sprite";
-        actor.image.style.display = "none";
-        actor.element.append(canvas, actor.image);
-        actor.element.style.setProperty("--butterfly-blur", actor.image.style.getPropertyValue("--butterfly-blur"));
-        actor.layer.appendChild(actor.element);
-        const radius = Math.min(actor.radius, flight.geometry.width / 2);
-        actor.x = actor.worldX = actor.goalX = randomButterflyValue(radius, flight.geometry.width - radius);
-        paintEndlessButterfly(actor);
+        freezeRoomButterfly(actor, flight.geometry);
+      }
+    }
+
+    function freezeRoomButterfly(actor, geometry) {
+      const blur = actor.element.style.getPropertyValue("--butterfly-blur");
+      actor.frozen = true;
+      actor.grayscale = false;
+      actor.image.classList.remove("grayscale-butterfly");
+      const canvas = actor.frozenCanvas = document.createElement("canvas");
+      canvas.className = "butterfly-sprite";
+      canvas.width = actor.sprite.naturalWidth;
+      canvas.height = actor.sprite.naturalHeight;
+      // Canvas displays the source GIF's first frame while the original image stays loaded.
+      canvas.getContext("2d").drawImage(actor.sprite, 0, 0);
+      const oldElement = actor.element;
+      actor.element = oldElement === actor.image ? document.createElement("span") : oldElement;
+      actor.element.className = "endless-butterfly";
+      actor.element.style.width = actor.element.style.height = `${actor.size}px`;
+      actor.image.className = "butterfly-sprite";
+      actor.image.style.display = "none";
+      actor.element.prepend(canvas);
+      if (actor.image.parentNode !== actor.element) actor.element.appendChild(actor.image);
+      actor.element.style.setProperty("--butterfly-blur", blur);
+      actor.layer.appendChild(actor.element);
+      const radius = Math.min(actor.radius, geometry.width / 2);
+      actor.x = actor.worldX = actor.goalX = randomButterflyValue(radius, geometry.width - radius);
+      paintEndlessButterfly(actor);
+    }
+
+    function wakeFrozenButterflies(actors) {
+      for (const actor of actors) {
+        actor.frozen = false;
+        actor.frozenCanvas.remove();
+        actor.frozenCanvas = null;
+        actor.image.style.display = "";
+        startButterflyRoaming(actor, performance.now() - cameraStartedAt);
+      }
+      if (actors.length && CONFIG.frozenButterfly.timeBonusSeconds) {
+        addCameraTimeBonus(CONFIG.frozenButterfly.timeBonusSeconds * actors.length);
       }
     }
 
@@ -8777,8 +9158,9 @@
 
     function addEndlessButterfly(flight, elapsed, { predecessor = null, alreadyInRoom = false, fixedSizeFraction = null } = {}) {
       const config = CONFIG.butterfly, { geometry } = flight;
-      const type = isButterflyRiddle() ? butterflyRiddleQueue.pop() : null;
-      const sprite = type?.sprite || chooseScene(butterflySprites);
+      const quotaType = isButterflyRiddle() && !isButterflyArea() ? butterflyRiddleQueue.pop() : null;
+      const sprite = quotaType?.sprite || chooseScene(butterflySprites);
+      const type = isButterflyArea() ? sprite : quotaType;
       const image = sprite.cloneNode();
       image.alt = "";
       image.draggable = false;
@@ -8852,6 +9234,25 @@
       if (!flight || flight.seeded || flight.caught + flight.actors.size >= butterflyRoomGoal) return;
       flight.seeded = true;
       // Place this butterfly during the room change, before its first visible frame.
+      if (isButterflyArea()) {
+        const count = Math.min(levelType.initialButterflies, CONFIG.butterfly.maxPerRoom, butterflyRoomGoal);
+        const elapsed = Math.max(0, performance.now() - cameraStartedAt);
+        const frame = viewport.getBoundingClientRect();
+        const viewLeft = butterflyViewLeft(flight);
+        for (let index = 0; index < count; index++) {
+          const freeze = staticHuntEntry().frozen && !areaFrozenUsed;
+          const actor = addEndlessButterfly(flight, elapsed, {
+            alreadyInRoom: true, fixedSizeFraction: freeze ? CONFIG.butterfly.minSizeFraction : null
+          });
+          if (freeze) { areaFrozenUsed = true; freezeRoomButterfly(actor, flight.geometry); }
+          const radius = Math.min(actor.radius, frame.width / 2);
+          actor.x = actor.worldX = actor.goalX = viewLeft + radius + (frame.width - 2 * radius) * (index + 1) / (count + 1);
+          const band = butterflyFlightBand(actor);
+          actor.y = actor.worldY = actor.goalY = band.top + (band.bottom - band.top) * (index % 2 ? .62 : .38);
+          paintEndlessButterfly(actor);
+        }
+        return;
+      }
       addEndlessButterfly(flight, Math.max(0, performance.now() - cameraStartedAt), { alreadyInRoom: true });
     }
 
@@ -9012,7 +9413,7 @@
     }
 
     function prepareButterflyRiddleTargets() {
-      const factor = butterflyRiddleEntry().factor;
+      const factor = isButterflyArea() ? staticHuntEntry().factors[completedWordCount] : butterflyRiddleEntry().factor;
       const positionsByLetter = new Map();
       [...currentWord].forEach((letter, index) => {
         if (!positionsByLetter.has(letter)) positionsByLetter.set(letter, []);
@@ -9030,7 +9431,8 @@
     }
 
     function startButterflyRoomTargets(elapsed) {
-      if (!isButterflyRiddle()) {
+      if (isButterflyArea()) butterflyRoomGoal = staticHuntEntry().target;
+      else if (!isButterflyRiddle()) {
         const targetArea = rollButterflyTargetLevel(levelType.butterflyRoomTargetMaxArea);
         butterflyRoomGoal = levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel;
       }
@@ -9138,6 +9540,23 @@
       return best;
     }
 
+    function fadeCollectedButterfly(actor, frame) {
+      const image = actor.image;
+      image.className = "endless-butterfly-capture";
+      image.style.display = "";
+      image.style.setProperty("--butterfly-blur", `${actor.layer === largeButterflyWorld ? CONFIG.butterfly.largeSpriteBlurPx : CONFIG.butterfly.spriteBlurPx}px`);
+      Object.assign(image.style, {
+        left: `${actor.worldX + offsetX - actor.size / 2}px`, top: `${actor.worldY - actor.size / 2}px`,
+        width: `${actor.size}px`, height: `${actor.size}px`, transform: `rotate(${actor.bank}deg) scaleX(${actor.facing})`
+      });
+      captureEffects.appendChild(image);
+      const animation = image.animate([{ opacity: 1 }, { opacity: 0 }], {
+        duration: CONFIG.butterfly.captureFadeMs, easing: "ease-out", fill: "forwards"
+      });
+      butterflyCaptureAnimations.add(animation);
+      animation.finished.catch(() => {}).finally(() => { butterflyCaptureAnimations.delete(animation); image.remove(); });
+    }
+
     function flyButterflyToScore(actor, frame) {
       const target = (isButterflyRiddle() || isStaticHunt() ? status : butterflyProgress).getBoundingClientRect(), image = actor.image;
       const left = actor.worldX + offsetX - actor.size / 2, top = actor.worldY - actor.size / 2;
@@ -9190,7 +9609,42 @@
       if (count >= 3) rechargeBatterySlots(Math.floor(count / 3));
     }
 
+    function captureButterflyAreaShot(actor, directTap) {
+      const frame = viewport.getBoundingClientRect(), room = levelRooms[activeRoomIndex];
+      const flight = endlessButterflyFlights.get(room);
+      const visible = [...flight.actors].filter(target => butterflyOverlapsView(target, frame));
+      const captures = directTap ? (endlessButterflyInFrame(actor, frame) ? [actor] : []) : visible;
+      if (grayscaleDollInView(room, frame) || visible.some(target => target.grayscale)) {
+        endGame("grayscaleAnomaly"); return;
+      }
+      if (captures.length && anomalyActive && anomalyRoomIndex === activeRoomIndex) {
+        endGame("anomaly"); return;
+      }
+      if (!captures.length) {
+        butterflyTapAt = null; butterflyBatteryCombo = null;
+        drainBatterySlot(); return;
+      }
+      const frozen = captures.filter(target => target.frozen);
+      const caught = captures.filter(target => !target.frozen);
+      wakeFrozenButterflies(frozen);
+      const now = performance.now();
+      for (const target of caught) {
+        removeEndlessButterfly(target, now - cameraStartedAt);
+        flyButterflyToScore(target, frame);
+      }
+      butterflyScore += caught.length;
+      flight.caught += caught.length;
+      if (caught.length) {
+        awardButterflyBatteryCombo(caught);
+        const bonus = butterflyTapTimeBonus(directTap, now);
+        if (bonus) addCameraTimeBonus(bonus);
+      }
+      if (flight.caught === butterflyRoomGoal) completeStaticHuntRiddle(0);
+      else updateCameraControls();
+    }
+
     function collectButterflyRiddleShot(actor, directTap) {
+      if (isButterflyArea()) { captureButterflyAreaShot(actor, directTap); return; }
       const frame = viewport.getBoundingClientRect(), room = levelRooms[activeRoomIndex];
       const flight = endlessButterflyFlights.get(room);
       if (directTap && !endlessButterflyInFrame(actor, frame)) {

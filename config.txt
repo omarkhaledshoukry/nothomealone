@@ -209,13 +209,13 @@ dollAnomalyChance = 0.05
 # One room and 1–3 riddles. One stationary letter appears at a time in random answer order.
 [levels.puzzleStaticHunt]
 startLevel = 1
-chance = 1
+chance = 0.80
 wordCount = 1
 # Every new level and retry starts with this clock and a full battery.
 timeLimitMs = 60000
 # Each solved riddle adds this bonus. The clock then waits for the next paper's Ready.
-clearTimeBonusSeconds = 20
-tapTimeBonusSeconds = 2
+clearTimeBonusSeconds = 10
+tapTimeBonusSeconds = 1
 # Unlock targets of 1, 2 and 3 riddles at these levels. After the final milestone, roll 1–3.
 riddleCountStartLevels = [1,2,3]
 # Rooms unlock by their numeric suffix. These settings override rooms.txt for this type.
@@ -229,11 +229,48 @@ butterflyAnomalyStartLevel = 3
 butterflyAnomalyChance = 0.05
 dollAnomalyStartLevel = 5
 dollAnomalyChance = 0.05
-evadingLetterStartLevel = 8
+evadingLetterStartLevel = 9
 evadingLetterChance = 0.20
 flyingLetters = false
 evadesCamera = false
 decoyLetterChance = 0
+
+# Greek decoys clear only after they have been seen, then leave the viewport completely.
+greekDecoyStartLevel = 5
+greekDecoyChance = 0.10
+# Independent chance for an automatic camera scan in this type.
+surveillanceChance = 0.25
+
+# Catch-the-flies area with one target and no riddles. Weight 0.20 after area 4.
+[levels.puzzleButterflyHunt]
+startLevel = 5
+chance = 0.2
+wordCount = 1
+timeLimitMs = 60000
+clearTimeBonusSeconds = 20
+tapTimeBonusSeconds = 2
+roomsInitiallyUnlocked = 3
+roomUnlockStartLevel = 5
+roomUnlockEveryLevels = 5
+butterflyAnomalyStartLevel = 3
+butterflyAnomalyChance = 0.05
+dollAnomalyStartLevel = 5
+dollAnomalyChance = 0.05
+evadingLetterStartLevel = 9
+evadingLetterChance = 0.2
+flyingLetters = false
+evadesCamera = false
+decoyLetterChance = 0
+surveillanceChance = 0.25
+butterflyComboWindowMs = 2000
+
+# One target for the whole area, with no riddles or letter slots.
+# Target = base + (selected area - 1) * increase. Beyond the cap, select area 1..cap randomly.
+butterflyRoomTarget = 3
+butterflyRoomTargetPerLevel = 1
+butterflyRoomTargetMaxArea = 10
+# Several butterflies are already visible in the middle when Ready is pressed.
+initialButterflies = 3
 
 # One riddle, flying/evasive letters and wrong-letter decoys.
 # Disabled by chance=0 in this version; set a weight to re-enable, and startLevel to its unlock level.
@@ -432,8 +469,19 @@ momentumEasePower = 3
 centreFlightMs = 420
 timerRefreshMs = 250
 
+# Automatic surveillance: start toward the left room edge, dwell, then scan back.
+# Type-specific surveillanceChance is set in each active level section above.
+[surveillance]
+enabled = true
+speedScreensPerSecond = 0.12
+edgePauseMs = 1000
+reverseSwipeMinPx = 24
+blinkMs = 800
+
 # Uniform random scale and rotation; positive padding keeps letters clear of the UI. Time values in milliseconds.
 [letters]
+# Lowercase Greek characters chosen to look different from English letters.
+greekDecoyCharacters = "ξψφωζ"
 # A stationary scene tap takes a targeted photo (empty space is a miss).
 # Dragging always wins, including when the press starts on/overlapping a letter.
 # A letter hit on press remains the tap target while it flies beneath your finger.
@@ -530,6 +578,8 @@ escapeSpeedMultiplier = 2.15
 gatedEntryChance = 0.4
 entrySpeedMultiplier = 1.55
 captureFlightMs = 420
+# Fast stationary fade for collected butterflies in the two area types.
+captureFadeMs = 140
 
 # A separate roll for a stationary butterfly using its existing GIF's first frame.
 # Spawn anywhere across the room panorama at butterfly.minSizeFraction, with matching depth and blur.
@@ -615,6 +665,12 @@ blurPx = 3
 
 # Color also drives the older-Android bitmap. zoom=1.014 is a very slight centered zoom.
 [shutter]
+# Short tap takes a photo; holding closes the view without using battery or taking a photo on release.
+# The full-black view clears current-room look-away anomalies, even when the hand is present.
+holdBlackoutEnabled = true
+holdBlackoutDelayMs = 180
+holdBlackoutFadeMs = 120
+holdBlackoutRevealMs = 220
 durationMs = 240
 blurPx = 2
 zoom = 1.014
@@ -676,9 +732,12 @@ exit = "EXIT"
 # Used for both languages; the title is selected below and Arabic uses Arabic digits.
 puzzleLevelFormat = "{title} #{number}"
 hint = "HINT"
-puzzleTitle = "Level"
+puzzleTitle = "Area"
+# Instruction on fly-catching area papers.
+catchFliesInstruction = "catch the flies"
+catchFliesInstructionAr = "التقط الفراشات"
 # Used on the paper only when language.code="ar".
-puzzleTitleAr = "المستوى"
+puzzleTitleAr = "المنطقة"
 previousRoom = "PREV"
 nextRoom = "NEXT"
 clueFormat = "{current}/{total}"
@@ -754,13 +813,15 @@ back = "Back"
 home = "Home"
 butterflyHowText = "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
 butterflyRiddleHowText = "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again."
-staticHuntHowText = "Read the riddle and press Ready. Find one still letter at a time. Each correct letter tap adds two seconds. A photo captures the visible letter and butterflies. Only missed captures use a battery slot. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Each solved riddle adds twenty seconds and pauses the clock until Ready. Finish the riddle target to complete the level. Turn the camera away from grayscale butterflies and dolls before capturing."
+staticHuntHowText = "Read the riddle and press Ready. Find one still letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
 howText = "Drag to look around, and use Prev and Next to switch rooms. Collect letters in any order. Tapping a letter adds time. Spelling the answer in order earns more time and restores battery. Hold the # counter to reread the clue. Press Ready to resume. If you see an anomaly, look away before collecting a letter in that room."
 storyText = "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you."
+
+butterflyAreaHowText = "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle; look left and right for the rest. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Wake a still butterfly first for five seconds, then catch it. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 
 [menu.ar]
 start = "ابدأ"
@@ -775,10 +836,12 @@ back = "رجوع"
 home = "الرئيسية"
 butterflyHowText = "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
 butterflyRiddleHowText = "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا."
-staticHuntHowText = "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة للحرف تضيف ثانيتين. تلتقط الصورة الحرف والفراشات الظاهرة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. حل كل لغز يضيف عشرين ثانية ويوقف الساعة حتى تضغط استعداد. أكمل عدد الألغاز المطلوب لإنهاء المستوى. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط."
+staticHuntHowText = "اقرأ اللغز ثم اضغط استعداد. ابحث عن حرف ثابت واحد في كل مرة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
 howText = "اسحب لتنظر حولك، وتنقّل بين الغرف بزرّي السابق والتالي. المس الحروف أو صوّرها بأي ترتيب. لمس الحرف يزيد الوقت، وجمع الحروف بترتيب الكلمة يمنحك وقتًا أطول ويشحن البطارية. اضغط مطولًا على رقم اللغز لقراءته مجددًا. اضغط «جاهز» للمتابعة. إذا رأيت شيئًا غريبًا، فانظر بعيدًا قبل جمع أي حرف في تلك الغرفة."
 storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك."
+
+butterflyAreaHowText = "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف؛ انظر يمينًا ويسارًا للعثور على الباقي. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أيقظ الفراشة الساكنة أولاً لإضافة خمس ثوانٍ ثم التقطها. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
