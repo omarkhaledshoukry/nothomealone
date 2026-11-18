@@ -224,7 +224,7 @@
       display: block;
       color: var(--letter-beige);
       font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      font-size: calc(var(--letter-base-size, 53px) * var(--letter-scale, 1));
+      font-size: calc(var(--letter-base-size, 53px) * var(--letter-scale, 1) * var(--surveillance-letter-fit, 1));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -1635,7 +1635,7 @@
       "decoyLetterChance": 0,
       "greekDecoyStartLevel": 5,
       "greekDecoyChance": 0.1,
-      "surveillanceChance": 0.25
+      "surveillanceChance": 1
     },
     "flyingPuzzle": {
       "chance": 0,
@@ -1720,8 +1720,8 @@
       "surveillanceChance": 0.25,
       "butterflyFactorMaxLevel": 10,
       "butterflyComboWindowMs": 2000,
-      "butterflyRoomTarget": 3,
-      "butterflyRoomTargetPerLevel": 1,
+      "butterflyRoomTarget": 4,
+      "butterflyRoomTargetPerLevel": 4,
       "butterflyRoomTargetMaxArea": 10,
       "initialButterflies": 3
     }
@@ -1828,7 +1828,8 @@
     "tapSlopPx": 8,
     "tapMaxMs": 400,
     "tapHitPaddingPx": 8,
-    "greekDecoyCharacters": "ξψφωζ"
+    "greekDecoyCharacters": "ξψφωζ",
+    "surveillanceMinGapPx": 48
   },
   "butterfly": {
     "minSpeed": 44,
@@ -2205,7 +2206,7 @@
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
-      "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Surveillance areas show all letters together; other areas reveal one letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
+      "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle; look left and right for the rest. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Wake a still butterfly first for five seconds, then catch it. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
     },
     "ar": {
@@ -2227,7 +2228,7 @@
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
-      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تظهر جميع الحروف معًا في مناطق كاميرا المراقبة، ويظهر حرف واحد في كل مرة في المناطق الأخرى. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
+      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف؛ انظر يمينًا ويسارًا للعثور على الباقي. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أيقظ الفراشة الساكنة أولاً لإضافة خمس ثوانٍ ثم التقطها. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
     }
   },
@@ -2285,6 +2286,7 @@
       "surveillance.edgePauseMs": [0, 10000, true],
       "surveillance.reverseSwipeMinPx": [4, 200],
       "surveillance.blinkMs": [400, 4000, true],
+      "letters.surveillanceMinGapPx": [8, 160],
       "shutter.holdBlackoutDelayMs": [80, 1000, true],
       "shutter.holdBlackoutFadeMs": [30, 1000, true],
       "shutter.holdBlackoutRevealMs": [30, 2000, true],
@@ -4207,24 +4209,26 @@
     async function planFlyTargetArea(catalog) {
       let entry = staticHuntEntry();
       butterflySprites = await discoverButterflySprites();
+      const targetRule = `${levelType.butterflyRoomTarget}:${levelType.butterflyRoomTargetPerLevel}:${levelType.butterflyRoomTargetMaxArea}`;
+      const targetForArea = () => levelType.butterflyRoomTarget +
+        (rollButterflyTargetLevel(levelType.butterflyRoomTargetMaxArea) - 1) * levelType.butterflyRoomTargetPerLevel;
       if (!entry) {
         const previous = progressState.lastStaticHuntRoom ?? progressState.lastButterflyRiddleRoom ?? lastSceneNumber;
         const eligible = catalog.filter(scene => scene.number <= staticHuntRoomLimit() && scene.number !== previous);
         if (!eligible.length) throw new Error("Add another unlocked room and matching jumpscare, or adjust this mode's room unlock settings.");
         const scene = chooseScene(eligible);
-        const targetArea = rollButterflyTargetLevel(levelType.butterflyRoomTargetMaxArea);
         entry = {
           level: progressionLevel(), mode: levelType.name, room: scene.number,
-          target: levelType.butterflyRoomTarget + (targetArea - 1) * levelType.butterflyRoomTargetPerLevel,
+          target: targetForArea(), targetRule,
           surveillance: CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance,
           flying: false, frozen: CONFIG.frozenButterfly.enabled && levelIsUnlocked(CONFIG.frozenButterfly.startLevel) &&
             Math.random() < CONFIG.frozenButterfly.spawnChance
         };
-      } else if (!Number.isSafeInteger(entry.target)) {
-        // Keep the remaining area's original overall quota when upgrading an older multi-riddle save.
+      } else if (!Number.isSafeInteger(entry.target) || entry.targetRule !== targetRule) {
+        // Refresh an older quota once; subsequent retries keep this selected target.
         entry = {
           level: entry.level, mode: levelType.name, room: entry.room, surveillance: Boolean(entry.surveillance),
-          target: entry.puzzles.reduce((total, puzzle, index) => total + puzzle.answer.length * (entry.factors?.[index] || 1), 0),
+          target: targetForArea(), targetRule,
           flying: false, frozen: entry.frozen
         };
       }
@@ -4239,6 +4243,10 @@
     async function planStaticRiddleHunt(catalog) {
       if (isButterflyArea()) return planFlyTargetArea(catalog);
       let entry = staticHuntEntry();
+      if (entry && CONFIG.surveillance.enabled && levelType.surveillanceChance === 1 && !entry.surveillance) {
+        entry.surveillance = true;
+        saveProgress();
+      }
       const needsSprites = isButterflyArea() || (entry ? entry.flying || entry.frozen :
         levelType.flyingButterflyChance > 0 || CONFIG.frozenButterfly.enabled);
       const [data, sprites] = await Promise.all([
@@ -5865,7 +5873,126 @@
       return { top, bottom };
     }
 
+    function surveillanceLetterFootprints() {
+      return anchors.map((anchor, index) => {
+        const tile = tiles[index], glyph = tile.querySelector(".letter-glyph");
+        const wasHidden = anchor.hidden;
+        const text = glyph.textContent, greek = glyph.classList.contains("greek-decoy");
+        const lang = glyph.getAttribute("lang"), dir = glyph.getAttribute("dir");
+        anchor.hidden = false;
+        let width = 0, height = 0;
+        const measure = () => {
+          const box = glyph.getBoundingClientRect(), origin = anchor.getBoundingClientRect();
+          const x = origin.left + origin.width / 2, y = origin.top + origin.height / 2;
+          // Inline font baselines can offset a rotated glyph from its anchor; reserve both sides of that anchor.
+          width = Math.max(width, 2 * Math.abs(x - box.left), 2 * Math.abs(box.right - x));
+          height = Math.max(height, 2 * Math.abs(y - box.top), 2 * Math.abs(box.bottom - y));
+        };
+        try {
+          measure();
+          if (tile.dataset.decoy === "true") {
+            glyph.textContent = tile.dataset.letter;
+            glyph.classList.remove("greek-decoy");
+            glyph.removeAttribute("lang"); glyph.removeAttribute("dir");
+            measure();
+          }
+        } finally {
+          glyph.textContent = text;
+          glyph.classList.toggle("greek-decoy", greek);
+          if (lang === null) glyph.removeAttribute("lang"); else glyph.setAttribute("lang", lang);
+          if (dir === null) glyph.removeAttribute("dir"); else glyph.setAttribute("dir", dir);
+          anchor.hidden = wasHidden;
+        }
+        return { width: Math.max(1, width), height: Math.max(1, height) };
+      });
+    }
+
+    function layoutSurveillanceLetters() {
+      if (!anchors.length) return;
+      const frame = viewport.getBoundingClientRect(), band = getSafeLetterBand();
+      const padding = CONFIG.letters.paddingPx;
+      const width = Math.max(1, (renderedVideoWidth || frame.width) - 2 * padding);
+      const height = Math.max(1, band.bottom - band.top - 2 * padding);
+      const gap = CONFIG.letters.surveillanceMinGapPx;
+      letterWorld.style.setProperty("--surveillance-letter-fit", "1");
+      let footprints = surveillanceLetterFootprints();
+      const count = anchors.length;
+      let seed = 2166136261;
+      for (const anchor of anchors) {
+        seed = Math.imul(seed ^ Math.round(Number(anchor.dataset.worldX) * 1e9), 16777619);
+        seed = Math.imul(seed ^ Math.round(Number(anchor.dataset.worldY) * 1e9), 16777619);
+      }
+      const random = () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let value = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        value ^= value + Math.imul(value ^ value >>> 7, 61 | value);
+        return ((value ^ value >>> 14) >>> 0) / 4294967296;
+      };
+      const coordinates = (footprint, x, y) => ({
+        x: padding + footprint.width / 2 + x * Math.max(0, width - footprint.width),
+        y: band.top + padding + footprint.height / 2 + y * Math.max(0, height - footprint.height),
+        ...footprint
+      });
+      const separate = (a, b) => Math.abs(a.x - b.x) >= (a.width + b.width) / 2 + gap ||
+        Math.abs(a.y - b.y) >= (a.height + b.height) / 2 + gap;
+      let placed = [];
+      for (let index = 0; index < count; index++) {
+        const footprint = footprints[index], anchor = anchors[index];
+        let candidate = null;
+        if (footprint.width <= width && footprint.height <= height) {
+          for (let trial = 0; trial < 384; trial++) {
+            const point = coordinates(footprint, trial ? random() : Number(anchor.dataset.worldX), trial ? random() : Number(anchor.dataset.worldY));
+            if (placed.every(other => separate(point, other))) { candidate = point; break; }
+          }
+        }
+        if (!candidate) { placed = []; break; }
+        placed.push(candidate);
+      }
+      if (placed.length !== count) {
+        // Guaranteed grid fallback: each cell reserves half the gap at every edge, with random placement inside it.
+        const maximum = () => ({ width: Math.max(...footprints.map(item => item.width)), height: Math.max(...footprints.map(item => item.height)) });
+        let max = maximum(), best = null;
+        for (let columns = 1; columns <= count; columns++) {
+          const rows = Math.ceil(count / columns);
+          const fit = Math.min((width / columns - gap) / max.width, (height / rows - gap) / max.height);
+          if (!best || fit > best.fit) best = { columns, rows, fit };
+        }
+        // A frame that is still being measured will be laid out again once the room/viewport is ready.
+        if (best.fit <= 0) return;
+        let fit = Math.min(1, best.fit * .98);
+        for (let attempt = 0; attempt < 4; attempt++) {
+          letterWorld.style.setProperty("--surveillance-letter-fit", String(fit));
+          footprints = surveillanceLetterFootprints();
+          max = maximum();
+          const correction = Math.min((width / best.columns - gap) / max.width, (height / best.rows - gap) / max.height);
+          if (correction >= 1) break;
+          fit *= correction * .98;
+        }
+        const cells = Array.from({ length: best.columns * best.rows }, (_, index) => index);
+        for (let index = cells.length - 1; index > 0; index--) {
+          const other = Math.floor(random() * (index + 1));
+          [cells[index], cells[other]] = [cells[other], cells[index]];
+        }
+        const cellWidth = width / best.columns, cellHeight = height / best.rows;
+        placed = footprints.map((footprint, index) => {
+          const cell = cells[index], column = cell % best.columns, row = Math.floor(cell / best.columns);
+          return { ...footprint,
+            x: padding + column * cellWidth + gap / 2 + footprint.width / 2 + random() * Math.max(0, cellWidth - gap - footprint.width),
+            y: band.top + padding + row * cellHeight + gap / 2 + footprint.height / 2 + random() * Math.max(0, cellHeight - gap - footprint.height)
+          };
+        });
+      }
+      placed.forEach((point, index) => {
+        const anchor = anchors[index];
+        anchor.style.left = `${point.x}px`; anchor.style.top = `${point.y}px`;
+        anchor.dataset.worldX = String((point.x - padding - point.width / 2) / Math.max(1, width - point.width));
+        anchor.dataset.worldY = String((point.y - band.top - padding - point.height / 2) / Math.max(1, height - point.height));
+      });
+    }
+
     function relayoutScatteredLetters() {
+      if (isSurveillanceWord()) { layoutSurveillanceLetters(); return; }
+      letterWorld.style.removeProperty("--surveillance-letter-fit");
       const band = getSafeLetterBand();
       const frame = viewport.getBoundingClientRect();
       const worldWidth = renderedVideoWidth || frame.width;
@@ -7991,6 +8118,7 @@
           Number.isSafeInteger(hunt.target) && hunt.target >= 2 && hunt.target <= 1000000000000000) {
         progress.staticRiddleHunt = {
           level: hunt.level, mode: hunt.mode, room: hunt.room, target: hunt.target,
+          targetRule: typeof hunt.targetRule === "string" && /^\d+:\d+:\d+$/.test(hunt.targetRule) ? hunt.targetRule : null,
           surveillance: Boolean(hunt.surveillance), flying: false, frozen: Boolean(hunt.frozen)
         };
       }

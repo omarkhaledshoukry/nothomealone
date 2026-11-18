@@ -206,7 +206,8 @@ butterflyAnomalyChance = 0.05
 dollAnomalyStartLevel = 5
 dollAnomalyChance = 0.05
 
-# One room and 1–3 riddles. One stationary letter appears at a time in random answer order.
+# Active variants: surveillance letters (80%), normal butterflies (15%), surveillance butterflies (5%).
+# One surveillance room and 1–3 riddles. All stationary letters appear together, scattered apart.
 [levels.puzzleStaticHunt]
 startLevel = 1
 chance = 0.80
@@ -238,8 +239,8 @@ decoyLetterChance = 0
 # Greek decoys clear only after they have been seen, then leave the viewport completely.
 greekDecoyStartLevel = 5
 greekDecoyChance = 0.10
-# Independent chance for an automatic camera scan in this type.
-surveillanceChance = 0.25
+# Always surveillance for letter areas: normal letter areas are disabled for now.
+surveillanceChance = 1
 
 # Catch-the-flies area with one target and no riddles. Weight 0.20 after area 4.
 [levels.puzzleButterflyHunt]
@@ -265,9 +266,9 @@ surveillanceChance = 0.25
 butterflyComboWindowMs = 2000
 
 # One target for the whole area, with no riddles or letter slots.
-# Target = base + (selected area - 1) * increase. Beyond the cap, select area 1..cap randomly.
-butterflyRoomTarget = 3
-butterflyRoomTargetPerLevel = 1
+# Four per area: Area 5 = 20, Area 10 = 40. Later areas roll a previous target from 4 to 40.
+butterflyRoomTarget = 4
+butterflyRoomTargetPerLevel = 4
 butterflyRoomTargetMaxArea = 10
 # Several butterflies are already visible in the middle when Ready is pressed.
 initialButterflies = 3
@@ -481,6 +482,8 @@ blinkMs = 800
 
 # Uniform random scale and rotation; positive padding keeps letters clear of the UI. Time values in milliseconds.
 [letters]
+# Minimum clear gap between rotated surveillance letter bounds, in scene CSS pixels.
+surveillanceMinGapPx = 48
 # Lowercase Greek characters chosen to look different from English letters.
 greekDecoyCharacters = "ξψφωζ"
 # A stationary scene tap takes a targeted photo (empty space is a miss).
@@ -814,7 +817,7 @@ back = "Back"
 home = "Home"
 butterflyHowText = "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out."
 butterflyRiddleHowText = "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again."
-staticHuntHowText = "Read the riddle and press Ready. Find the still letters around the room. Surveillance areas show all letters together; other areas reveal one letter at a time. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
+staticHuntHowText = "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
@@ -837,7 +840,7 @@ back = "رجوع"
 home = "الرئيسية"
 butterflyHowText = "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي."
 butterflyRiddleHowText = "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا."
-staticHuntHowText = "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تظهر جميع الحروف معًا في مناطق كاميرا المراقبة، ويظهر حرف واحد في كل مرة في المناطق الأخرى. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
+staticHuntHowText = "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
 exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
