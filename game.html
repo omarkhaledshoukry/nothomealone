@@ -1523,7 +1523,7 @@
       "startLevel": 1
     },
     "decoy": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 60000,
       "decoyLetterChance": 0.1,
@@ -1532,7 +1532,7 @@
       "startLevel": 1
     },
     "butterfly": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 30000,
       "decoyLetterChance": 0,
@@ -1541,7 +1541,7 @@
       "startLevel": 1
     },
     "flyingDecoy": {
-      "chance": 0.0,
+      "chance": 0,
       "wordCount": 3,
       "timeLimitMs": 120000,
       "decoyLetterChance": 0.1,
@@ -1610,7 +1610,7 @@
     },
     "puzzleStaticHunt": {
       "startLevel": 1,
-      "chance": 0.8,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 60000,
       "clearTimeBonusSeconds": 10,
@@ -1694,8 +1694,8 @@
       ]
     },
     "puzzleButterflyHunt": {
-      "startLevel": 5,
-      "chance": 0.2,
+      "startLevel": 1,
+      "chance": 1,
       "wordCount": 1,
       "timeLimitMs": 60000,
       "clearTimeBonusSeconds": 20,
@@ -1713,7 +1713,7 @@
       "dollAnomalyStartLevel": 5,
       "dollAnomalyChance": 0.05,
       "evadingLetterStartLevel": 9,
-      "evadingLetterChance": 0.2,
+      "evadingLetterChance": 0.45,
       "flyingLetters": false,
       "evadesCamera": false,
       "decoyLetterChance": 0,
@@ -1723,13 +1723,13 @@
       "butterflyRoomTarget": 4,
       "butterflyRoomTargetPerLevel": 4,
       "butterflyRoomTargetMaxArea": 10,
-      "initialButterflies": 3
+      "initialButterflies": 6
     }
   },
   "frozenButterfly": {
-    "enabled": true,
+    "enabled": false,
     "startLevel": 3,
-    "spawnChance": 0.25,
+    "spawnChance": 0,
     "timeBonusSeconds": 5
   },
   "failures": {
@@ -1875,17 +1875,24 @@
     "maxSizeFraction": 0.24,
     "spriteBlurPx": 0.6,
     "largeSpriteBlurPx": 1.2,
-    "maxPerRoom": 3,
-    "minSpawnMs": 700,
-    "maxSpawnMs": 1300,
+    "maxPerRoom": 12,
+    "minSpawnMs": 140,
+    "maxSpawnMs": 320,
     "escapeChance": 0.42,
-    "escapeAfterMinMs": 3600,
-    "escapeAfterMaxMs": 8100,
+    "escapeAfterMinMs": 1800,
+    "escapeAfterMaxMs": 4500,
     "escapeSpeedMultiplier": 2.15,
-    "gatedEntryChance": 0.4,
-    "entrySpeedMultiplier": 1.55,
+    "gatedEntryChance": 0.05,
+    "entrySpeedMultiplier": 2.3,
     "captureFlightMs": 420,
-    "captureFadeMs": 140
+    "captureFadeMs": 140,
+    "areaSpeedMultiplier": 2.4,
+    "areaTurnMultiplier": 0.45,
+    "areaSwayMultiplier": 1.6,
+    "areaMinPaceFraction": 0.65,
+    "minReturnMs": 100,
+    "maxReturnMs": 300,
+    "gatedEntryMaxWaitMs": 650
   },
   "anomaly": {
     "enabled": false,
@@ -2206,8 +2213,8 @@
       "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
-      "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. First tap or photograph a still butterfly to wake it for five seconds, then capture it again to reveal a letter. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
-      "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle; look left and right for the rest. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Wake a still butterfly first for five seconds, then catch it. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
+      "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
+      "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap one butterfly or photograph all butterflies in view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Look away from black-and-white butterflies and dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
     },
     "ar": {
       "start": "ابدأ",
@@ -2228,8 +2235,8 @@
       "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
-      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. المس الفراشة الساكنة أو صورها أولاً لإيقاظها وإضافة خمس ثوانٍ، ثم التقطها مرة أخرى لكشف حرف. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
-      "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف؛ انظر يمينًا ويسارًا للعثور على الباقي. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أيقظ الفراشة الساكنة أولاً لإضافة خمس ثوانٍ ثم التقطها. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
+      "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
+      "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو صور جميع الفراشات الظاهرة. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. انظر بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
     }
   },
   "surveillance": {
@@ -2243,7 +2250,8 @@
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
     const CONFIG_RANGE_PAIRS = [["camera", "momentumMinMs", "momentumMaxMs"], ["letters", "minScale", "maxScale"], ["letters", "minRotationDeg", "maxRotationDeg"], ["letters", "minFontPx", "maxFontPx"], ["letters", "hudMinFontPx", "hudMaxFontPx"], ["butterfly", "minSpeed", "maxSpeed"], ["butterfly", "minTurnMs", "maxTurnMs"], ["butterfly", "minSwayXPx", "maxSwayXPx"], ["butterfly", "minSwayYPx", "maxSwayYPx"], ["hand", "minCheckMs", "maxCheckMs"], ["shutter", "minSizePx", "maxSizePx"], ["ui", "minFontPx", "maxFontPx"], ["ui", "batteryMinWidthPx", "batteryMaxWidthPx"], ["ui", "gameOverMinFontPx", "gameOverMaxFontPx"], ["ui", "retryMinFontPx", "retryMaxFontPx"], ["puzzles", "minAnswerLength", "maxAnswerLength"], ["puzzles", "minFontPx", "maxFontPx"], ["puzzles.en", "minFontPx", "maxFontPx"], ["puzzles.ar", "minFontPx", "maxFontPx"], ["doll", "minXFraction", "maxXFraction"]];
     CONFIG_RANGE_PAIRS.push(["butterfly", "minSizeFraction", "maxSizeFraction"],
-      ["butterfly", "minSpawnMs", "maxSpawnMs"], ["butterfly", "escapeAfterMinMs", "escapeAfterMaxMs"]);
+      ["butterfly", "minSpawnMs", "maxSpawnMs"], ["butterfly", "escapeAfterMinMs", "escapeAfterMaxMs"],
+      ["butterfly", "minReturnMs", "maxReturnMs"]);
     Object.assign(CONFIG_LIMITS, {
       "levels.puzzleEndless.butterflyComboWindowMs": [100, 10000, true],
       "levels.puzzleEndless.butterflyAnomalyDeadlineMs": [500, 60000, true],
@@ -2291,6 +2299,10 @@
       "shutter.holdBlackoutFadeMs": [30, 1000, true],
       "shutter.holdBlackoutRevealMs": [30, 2000, true],
       "butterfly.captureFadeMs": [50, 1000, true],
+      "butterfly.minReturnMs": [0, 60000, true], "butterfly.maxReturnMs": [0, 60000, true],
+      "butterfly.gatedEntryMaxWaitMs": [0, 60000, true],
+      "butterfly.areaSpeedMultiplier": [.25, 10], "butterfly.areaTurnMultiplier": [.05, 4],
+      "butterfly.areaSwayMultiplier": [0, 5], "butterfly.areaMinPaceFraction": [0, 1],
       "levels.puzzleButterflyHunt.butterflyRoomTarget": [2, 1000000, true],
       "levels.puzzleButterflyHunt.butterflyRoomTargetPerLevel": [0, 1000000, true],
       "levels.puzzleButterflyHunt.butterflyRoomTargetMaxArea": [1, 1000000001, true],
@@ -2682,7 +2694,7 @@
       const saved = progressState.staticRiddleHunt;
       if (saved?.level === progressionLevel()) {
         const mode = saved.mode || "puzzleStaticHunt";
-        if (LEVEL_TYPES[mode]) return effectiveLevelRules(LEVEL_TYPES[mode]);
+        if (LEVEL_TYPES[mode]?.chance > 0 && levelIsUnlocked(LEVEL_TYPES[mode].startLevel)) return effectiveLevelRules(LEVEL_TYPES[mode]);
       }
       const types = Object.values(LEVEL_TYPES).filter(level => level.chance > 0 && levelIsUnlocked(level.startLevel));
       if (!types.length) {
@@ -4232,6 +4244,7 @@
           flying: false, frozen: entry.frozen
         };
       }
+      if (!CONFIG.frozenButterfly.enabled) entry.frozen = false;
       progressState.staticRiddleHunt = entry;
       saveProgress();
       const scene = catalog.find(room => room.number === entry.room);
@@ -4243,6 +4256,7 @@
     async function planStaticRiddleHunt(catalog) {
       if (isButterflyArea()) return planFlyTargetArea(catalog);
       let entry = staticHuntEntry();
+      if (entry?.frozen && !CONFIG.frozenButterfly.enabled) { entry.frozen = false; saveProgress(); }
       if (entry && CONFIG.surveillance.enabled && levelType.surveillanceChance === 1 && !entry.surveillance) {
         entry.surveillance = true;
         saveProgress();
@@ -9183,6 +9197,7 @@
     }
 
     function freezeRoomButterfly(actor, geometry) {
+      if (!CONFIG.frozenButterfly.enabled) return;
       const blur = actor.element.style.getPropertyValue("--butterfly-blur");
       actor.frozen = true;
       actor.grayscale = false;
@@ -9274,6 +9289,7 @@
     }
 
     function chooseButterflySide(flight, radius) {
+      if (isButterflyArea()) return Math.random() < .5 ? -1 : 1;
       const { geometry } = flight;
       const viewLeft = butterflyViewLeft(flight), viewRight = viewLeft + geometry.viewWidth;
       const overlap = edge => {
@@ -9284,6 +9300,14 @@
       if (left !== right) return left < right ? -1 : 1;
       const balance = [...flight.actors].reduce((sum, actor) => sum + actor.edge, 0);
       return balance ? -Math.sign(balance) : Math.random() < .5 ? -1 : 1;
+    }
+
+    function placeButterflyOutsideView(actor) {
+      const { flight } = actor;
+      const left = isButterflyArea() ? butterflyViewLeft(flight) : 0;
+      const right = isButterflyArea() ? left + flight.geometry.viewWidth : flight.geometry.width;
+      // New arrivals and returning actors stay fully outside the image until they fly in.
+      actor.x = actor.worldX = butterflyBoundary(actor, left, right);
     }
 
     function addEndlessButterfly(flight, elapsed, { predecessor = null, alreadyInRoom = false, fixedSizeFraction = null } = {}) {
@@ -9318,7 +9342,7 @@
         levelIsUnlocked(levelType.butterflyAnomalyStartLevel) && Math.random() < levelType.butterflyAnomalyChance;
       image.classList.toggle("grayscale-butterfly", grayscale);
       const actor = { flight, element, image, sprite, layer, type, grayscale, predecessor, sizeFraction, size, radius,
-        edge, facing, speed: randomButterflyValue(config.minSpeed, config.maxSpeed),
+        edge, facing, speed: randomButterflyValue(config.minSpeed, config.maxSpeed) * (isButterflyArea() ? config.areaSpeedMultiplier : 1),
         phase: randomButterflyValue(0, Math.PI * 2), bornAt: elapsed, nextTurn: elapsed, escapeAt: Infinity,
         escapes: Math.random() < config.escapeChance,
         evadesCamera: evadeChance > 0 && Math.random() < evadeChance,
@@ -9332,7 +9356,7 @@
         actor.x = actor.worldX = actor.goalX = left + (right - left) * randomButterflyValue(.3, .7);
         startButterflyRoaming(actor, elapsed);
       } else {
-        actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
+        placeButterflyOutsideView(actor);
         if (!predecessor) setButterflyEntryGoal(actor);
       }
       element.style.width = element.style.height = `${actor.size}px`;
@@ -9343,9 +9367,17 @@
     }
 
     function setButterflyEntryGoal(actor) {
-      const { left, right } = butterflyHorizontalBand(actor.flight.geometry, actor.radius, actor.edge);
-      actor.goalX = left + (right - left) * randomButterflyValue(.32, .68);
-      actor.goalY = actor.y;
+      const geometry = actor.flight.geometry;
+      if (isButterflyArea()) {
+        const inset = Math.min(actor.radius, geometry.width / 2);
+        actor.goalX = clamp(butterflyViewLeft(actor.flight) + geometry.viewWidth * randomButterflyValue(.3, .7), inset, geometry.width - inset);
+        const band = butterflyFlightBand(actor);
+        actor.goalY = randomButterflyValue(band.top, band.bottom);
+      } else {
+        const { left, right } = butterflyHorizontalBand(geometry, actor.radius, actor.edge);
+        actor.goalX = left + (right - left) * randomButterflyValue(.32, .68);
+        actor.goalY = actor.y;
+      }
       actor.facing = -actor.edge;
       actor.mode = "entering";
       actor.element.hidden = false;
@@ -9370,15 +9402,15 @@
         const frame = viewport.getBoundingClientRect();
         const viewLeft = butterflyViewLeft(flight);
         for (let index = 0; index < count; index++) {
-          const freeze = staticHuntEntry().frozen && !areaFrozenUsed;
+          const freeze = CONFIG.frozenButterfly.enabled && staticHuntEntry().frozen && !areaFrozenUsed;
           const actor = addEndlessButterfly(flight, elapsed, {
             alreadyInRoom: true, fixedSizeFraction: freeze ? CONFIG.butterfly.minSizeFraction : null
           });
           if (freeze) { areaFrozenUsed = true; freezeRoomButterfly(actor, flight.geometry); }
           const radius = Math.min(actor.radius, frame.width / 2);
-          actor.x = actor.worldX = actor.goalX = viewLeft + radius + (frame.width - 2 * radius) * (index + 1) / (count + 1);
+          actor.x = actor.worldX = actor.goalX = viewLeft + radius + (frame.width - 2 * radius) * (index + randomButterflyValue(.35, .85)) / count;
           const band = butterflyFlightBand(actor);
-          actor.y = actor.worldY = actor.goalY = band.top + (band.bottom - band.top) * (index % 2 ? .62 : .38);
+          actor.y = actor.worldY = actor.goalY = randomButterflyValue(band.top, band.bottom);
           paintEndlessButterfly(actor);
         }
         return;
@@ -9422,7 +9454,7 @@
           for (const key of ["x", "worldX", "goalX"]) if (actor[key] !== undefined) actor[key] *= xScale;
           for (const key of ["y", "worldY", "goalY", "evadeGoalY"]) actor[key] = geometry.top + (actor[key] - previous.top) * yScale;
           if (actor.mode === "waiting" || actor.mode === "outside") {
-            actor.x = actor.worldX = butterflyBoundary(actor, 0, geometry.width);
+            placeButterflyOutsideView(actor);
           }
           actor.element.style.width = actor.element.style.height = `${actor.size}px`;
           paintEndlessButterfly(actor);
@@ -9452,33 +9484,42 @@
       for (const follower of flight.actors) {
         if (follower.mode !== "waiting" || follower.predecessor !== actor) continue;
         follower.predecessor = null;
+        if (isButterflyArea()) placeButterflyOutsideView(follower);
         setButterflyEntryGoal(follower);
       }
     }
 
     function waitForButterflyReturn(actor, elapsed) {
-      const { minSpawnMs, maxSpawnMs } = CONFIG.butterfly;
+      const config = CONFIG.butterfly;
+      const minWait = isButterflyArea() ? config.minReturnMs : config.minSpawnMs;
+      const maxWait = isButterflyArea() ? config.maxReturnMs : config.maxSpawnMs;
       // Keep the same butterfly in the room's quota while it is outside.
-      actor.edge = actor.worldX < 0 ? -1 : 1;
-      actor.x = actor.worldX = butterflyBoundary(actor, 0, actor.flight.geometry.width);
+      actor.edge = isButterflyArea() ? chooseButterflySide(actor.flight, actor.radius) : actor.worldX < 0 ? -1 : 1;
+      placeButterflyOutsideView(actor);
       actor.y = actor.worldY;
       actor.vx = actor.vy = actor.bank = 0;
       actor.mode = "outside";
-      actor.returnAt = elapsed + randomButterflyValue(minSpawnMs, maxSpawnMs);
+      actor.returnAt = elapsed + randomButterflyValue(minWait, maxWait);
       actor.element.hidden = true;
       paintEndlessButterfly(actor);
     }
 
     function moveEndlessButterfly(actor, elapsed, dt) {
       if (actor.frozen) return;
-      if (actor.mode === "waiting") return;
+      if (actor.mode === "waiting") {
+        if (!isButterflyArea() || elapsed - actor.bornAt < CONFIG.butterfly.gatedEntryMaxWaitMs) return;
+        actor.predecessor = null;
+        placeButterflyOutsideView(actor);
+        setButterflyEntryGoal(actor);
+      }
       if (actor.mode === "outside") {
         if (elapsed < actor.returnAt) return;
+        placeButterflyOutsideView(actor);
         setButterflyEntryGoal(actor);
       }
       const config = CONFIG.butterfly, { flight, radius } = actor;
       const { width, viewWidth } = flight.geometry;
-      const roamsWholeRoom = isStaticHunt() || isButterflyRiddle() && actor.evadesCamera;
+      const roamsWholeRoom = isAreaHunt() || isButterflyRiddle() && actor.evadesCamera;
       const inset = Math.min(radius, width / 2);
       const horizontalBand = roamsWholeRoom ? { left: inset, right: width - inset } :
         butterflyHorizontalBand(flight.geometry, radius, actor.edge);
@@ -9497,7 +9538,15 @@
       const reachedGoal = roamsWholeRoom && Math.abs(actor.x - actor.goalX) < actor.size * .2;
       if (roaming && (elapsed >= actor.nextTurn || reachedGoal)) {
         let turnDelay = randomButterflyValue(config.minTurnMs, config.maxTurnMs);
-        if (roamsWholeRoom) {
+        if (isButterflyArea()) {
+          turnDelay *= config.areaTurnMultiplier;
+          if (Math.random() < .65) {
+            const spread = (right - left) * .35;
+            actor.goalX = actor.x < width / 2 ? randomButterflyValue(right - spread, right) : randomButterflyValue(left, left + spread);
+            // Give long sweeps time to cross the middle; mix in shorter, erratic turns.
+            turnDelay = Math.max(turnDelay, 1000 * Math.abs(actor.goalX - actor.x) / (actor.speed * config.horizontalSpeedMultiplier));
+          } else actor.goalX = clamp(actor.x + randomButterflyValue(-viewWidth, viewWidth), left, right);
+        } else if (roamsWholeRoom) {
           const spread = (right - left) * .2;
           actor.goalX = actor.x < width / 2 ? randomButterflyValue(right - spread, right) : randomButterflyValue(left, left + spread);
           turnDelay = Math.max(turnDelay, 2500 * Math.abs(actor.goalX - actor.x) / actor.speed);
@@ -9505,7 +9554,8 @@
           const travel = Math.random() < config.longArcChance ? config.longHorizontalTravelPx : config.horizontalTravelPx;
           actor.goalX = clamp(actor.x + randomButterflyValue(-travel, travel), left, right);
         }
-        actor.goalY = clamp(actor.y + randomButterflyValue(-config.verticalTravelPx, config.verticalTravelPx), top, bottom);
+        actor.goalY = isButterflyArea() ? randomButterflyValue(top, bottom) :
+          clamp(actor.y + randomButterflyValue(-config.verticalTravelPx, config.verticalTravelPx), top, bottom);
         actor.nextTurn = elapsed + turnDelay;
       }
       let targetX = actor.goalX, targetY = actor.goalY, intensity = 0;
@@ -9517,7 +9567,8 @@
       const dx = targetX - actor.x, dy = targetY - actor.y;
       const distance = Math.max(1, Math.hypot(dx, dy));
       const hover = .5 + .5 * Math.sin(t * config.hoverFrequency + actor.phase);
-      const roamSpeed = actor.speed * (config.minPaceFraction + (1 - config.minPaceFraction) * hover * hover) * Math.min(1, distance / config.slowdownDistancePx);
+      const minPace = isButterflyArea() ? config.areaMinPaceFraction : config.minPaceFraction;
+      const roamSpeed = actor.speed * (minPace + (1 - minPace) * hover * hover) * Math.min(1, distance / config.slowdownDistancePx);
       const speed = roaming ? roamSpeed * (1 + intensity * (config.evadeMaxSpeedMultiplier - 1)) : Math.max(actor.speed, viewWidth / 2.1) *
         (actor.mode === "escaping" ? config.escapeSpeedMultiplier : config.entrySpeedMultiplier);
       const turn = 1 - Math.exp(-dt * config.steering * (1 + intensity * (config.evadeSteeringMultiplier - 1)));
@@ -9525,7 +9576,7 @@
       actor.vy += (dy / distance * speed - actor.vy) * turn;
       actor.x += actor.vx * dt;
       actor.y += actor.vy * dt;
-      const sway = roaming ? 1 + intensity * (config.evadeSwayMultiplier - 1) : .22;
+      const sway = roaming ? (1 + intensity * (config.evadeSwayMultiplier - 1)) * (isButterflyArea() ? config.areaSwayMultiplier : 1) : .22;
       const priorX = actor.worldX;
       actor.worldX = actor.x + Math.sin(t * config.swayXFrequency + actor.phase) * actor.swayX * sway;
       if (roaming) actor.worldX = clamp(actor.worldX, left, right);
