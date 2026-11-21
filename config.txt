@@ -311,7 +311,7 @@ initialButterflies = 0
 chance = 1
 startLevel = 1
 wordCount = 1
-timeLimitMs = 120000
+timeLimitMs = 60000
 clearTimeBonusSeconds = 20
 tapTimeBonusSeconds = 2
 comboWindowMs = 2000
@@ -342,6 +342,8 @@ decoyLetterChance = 0
 [hiddenObjects]
 roomNumbers = "all"
 filePattern = "room_{number}.txt"
+# Arabic mode uses this list for the same room number; no English fallback.
+arabicFilePattern = "room_{number}_ar.txt"
 # Direct-tap hit radius in CSS pixels. Shutter capture checks horizontal visibility only.
 tapRadiusPx = 28
 

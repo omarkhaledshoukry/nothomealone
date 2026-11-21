@@ -1260,6 +1260,10 @@
       text-align: center; pointer-events: none;
     }
     #objectTarget[hidden] { display: none; }
+    :root[data-game-language="ar"] #objectTarget {
+      font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
+      direction: rtl;
+    }
     .endless-butterfly, .endless-butterfly-capture {
       position: absolute;
       left: 0;
@@ -2389,6 +2393,7 @@
   "hiddenObjects": {
     "roomNumbers": "all",
     "filePattern": "room_{number}.txt",
+    "arabicFilePattern": "room_{number}_ar.txt",
     "tapRadiusPx": 28
   }
 };
@@ -2555,7 +2560,7 @@
           level <= 1000000001 && (!index || level > value[index - 1]));
       if (path === "hiddenObjects.roomNumbers") return value === "all" || Array.isArray(value) && value.length >= 1 && value.length <= 512 &&
         new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
-      if (path === "hiddenObjects.filePattern") return typeof value === "string" && value.length <= 200 &&
+      if (path === "hiddenObjects.filePattern" || path === "hiddenObjects.arabicFilePattern") return typeof value === "string" && value.length <= 200 &&
         /^[A-Za-z0-9_.-]*\{number\}[A-Za-z0-9_.-]*\.txt$/i.test(value) && !value.includes("..");
       if (path === "letters.greekDecoyCharacters") return typeof value === "string" && /^[α-ω]{1,32}$/u.test(value);
       if (path === "loading.mediaLoadAttempts") return Number.isInteger(value) && value >= 1 && value <= 3;
@@ -4408,8 +4413,9 @@
     }
 
     function hiddenObjectFilename(number = staticHuntEntry()?.room ||
-        (Array.isArray(CONFIG.hiddenObjects.roomNumbers) ? CONFIG.hiddenObjects.roomNumbers[0] : 1)) {
-      return CONFIG.hiddenObjects.filePattern.replace("{number}", String(number));
+        (Array.isArray(CONFIG.hiddenObjects.roomNumbers) ? CONFIG.hiddenObjects.roomNumbers[0] : 1), config = CONFIG) {
+      const pattern = config.language.code === "ar" ? config.hiddenObjects.arabicFilePattern : config.hiddenObjects.filePattern;
+      return pattern.replace("{number}", String(number));
     }
 
     function hiddenObjectRoomAllowed(number, config = CONFIG) {
@@ -4424,15 +4430,20 @@
         return Number.isSafeInteger(number) && number > 0 && hiddenObjectRoomAllowed(number, config) ? [number] : [];
       }))];
       for (const number of numbers) {
-        const name = config.hiddenObjects.filePattern.replace("{number}", String(number));
-        const file = findFile(name);
-        if (!file) continue;
-        try {
-          if (file.size > 512000) throw new Error("Object list is oversized.");
-          const text = await file.text();
-          parseHiddenObjectList(text);
-          objectFiles[name] = text;
-        } catch (error) { console.info(`Skipping unusable object list ${name}.`, error.message); }
+        // Cache both languages when available, so menu language changes use
+        // the matching room list without falling back to the other language.
+        for (const language of ["en", "ar"]) {
+          const name = hiddenObjectFilename(number, { ...config, language: { code: language } });
+          if (Object.prototype.hasOwnProperty.call(objectFiles, name)) continue;
+          const file = findFile(name);
+          if (!file) continue;
+          try {
+            if (file.size > 512000) throw new Error("Object list is oversized.");
+            const text = await file.text();
+            parseHiddenObjectList(text);
+            objectFiles[name] = text;
+          } catch (error) { console.info(`Skipping unusable object list ${name}.`, error.message); }
+        }
       }
       return objectFiles;
     }
@@ -4450,7 +4461,11 @@
             !Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0) {
           throw new Error(`Invalid room object at line ${index + 1}. Use name,x,y with non-negative pixel coordinates.`);
         }
-        const base = name.replace(/[_\s-]+\d+$/, "").trim();
+        // Arabic numbered copies may place the number inside the translated
+        // name (الملف_1_داخل_الدرج); they share a target just like suffix copies.
+        const base = /[\u0600-\u06ff]/u.test(name)
+          ? name.replace(/[_\s-]+[0-9٠-٩۰-۹]+(?=[_\s-]|$)/g, "").trim()
+          : name.replace(/[_\s-]+\d+$/, "").trim();
         const key = base.toLowerCase();
         if (!key) throw new Error(`Missing object name at line ${index + 1}.`);
         if (!groups.has(key)) groups.set(key, { key, label: base.replace(/_/g, " ").replace(/\s+/g, " "), points: [] });
@@ -4496,7 +4511,7 @@
           if (usable.length) return chooseScene(usable);
         }
       }
-      throw new Error(`No unlocked room has a usable object list. Add matching room_N media, jumpscare_N media and ${CONFIG.hiddenObjects.filePattern.replace("{number}", "N")} in ${CONFIG.assets.levelsDirectory}, or check the room unlock settings.`);
+      throw new Error(`No unlocked room has a usable object list. Add matching room_N media, jumpscare_N media and ${hiddenObjectFilename("N")} in ${CONFIG.assets.levelsDirectory}, or check the room unlock settings.`);
     }
 
     async function planHiddenObjectHunt(catalog) {
@@ -4868,7 +4883,7 @@
       wordLoadTitle.textContent = "Choose your game folder";
       const butterflyRiddles = CONFIG.levels.puzzleButterflies.chance > 0 || CONFIG.levels.puzzleStaticHunt.chance > 0;
       const butterflyMode = CONFIG.levels.puzzleEndless.chance > 0 && CONFIG.levels.puzzleEndless.butterflyTargets;
-      wordLoadReason.textContent = reason || (CONFIG.levels.hiddenObjectHunt.chance > 0 ? "Select the game folder containing config.txt, the room media and matching levels/room_N.txt object files." : butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
+      wordLoadReason.textContent = reason || (CONFIG.levels.hiddenObjectHunt.chance > 0 ? `Select the game folder containing config.txt, the room media and matching ${CONFIG.assets.levelsDirectory}${hiddenObjectFilename("N")} object files.` : butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
         butterflyMode ? "Select the game folder containing config.txt, rooms.txt and your butterfly sprites." :
         "Select the folder containing config.txt, your word list and puzzle file.");
       wordLoadHelp.textContent = "The text files will be read together. A missing or invalid config uses the built-in settings.";
@@ -4994,7 +5009,7 @@
         const objectFiles = {};
         if (selectedConfig.levels.hiddenObjectHunt.chance > 0) {
           Object.assign(objectFiles, await readHiddenObjectFolderLists(levelFiles, selectedConfig, name => find(levelsPrefix + name)));
-          if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no usable object lists for its rooms in ${levelsPrefix}. Add matching room_N.txt files, then choose the folder again.`);
+          if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no usable object lists for its rooms in ${levelsPrefix}. Add matching ${hiddenObjectFilename("N", selectedConfig)} files, then choose the folder again.`);
         }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
@@ -9322,6 +9337,8 @@
       document.documentElement.dataset.gameLanguage = CONFIG.language.code;
       clueList.lang = CONFIG.language.code;
       clueList.dir = isArabic() ? "rtl" : "ltr";
+      objectTarget.lang = CONFIG.language.code;
+      objectTarget.dir = isArabic() ? "rtl" : "ltr";
       const fontRule = family => [...document.styleSheets[0].cssRules].find(rule => rule.type === CSSRule.FONT_FACE_RULE && rule.style.fontFamily.replace(/["']/g, "") === family);
       const arabicRule = fontRule("Game Arabic");
       if (arabicRule) arabicRule.style.setProperty("src", [...CONFIG.assets.arabicFontLocalNames.map(name => `local(${JSON.stringify(name)})`),
