@@ -1812,6 +1812,7 @@
       "itemTargetPerLevel": 4,
       "itemTargetMaxArea": 10,
       "itemTargetMax": 18,
+      "surveillanceTargetMaxMultiplier": 0.5,
       "flyingLetters": false,
       "evadesCamera": false,
       "decoyLetterChance": 0
@@ -1822,14 +1823,14 @@
     "startLevel": 5,
     "spawnChance": 0.1,
     "imageScale": 0.5,
-    "flightMs": 650,
+    "flightMs": 325,
     "afterHalfChance": 0.85,
     "lateMinFraction": 0.52,
     "lateMaxFraction": 0.82,
     "earlyMinFraction": 0.35,
     "earlyMaxFraction": 0.49,
-    "minYFraction": 0.25,
-    "maxYFraction": 0.65,
+    "minYFraction": 0.42,
+    "maxYFraction": 0.58,
     "blurPx": 4,
     "blurFadeMs": 100,
     "blurRecoverMs": 180,
@@ -2474,6 +2475,7 @@
       "levels.hiddenObjectHunt.roomUnlockEveryLevels": [1, 1000000, true], "levels.hiddenObjectHunt.itemTarget": [1, 1000000, true],
       "levels.hiddenObjectHunt.itemTargetPerLevel": [0, 1000000, true], "levels.hiddenObjectHunt.itemTargetMaxArea": [1, 1000000001, true],
       "levels.hiddenObjectHunt.itemTargetMax": [1, 10000, true],
+      "levels.hiddenObjectHunt.surveillanceTargetMaxMultiplier": [0.01, 1],
       "levels.hiddenObjectHunt.tapTimeBonusSeconds": [0, 600, true], "levels.hiddenObjectHunt.comboWindowMs": [100, 10000, true],
       "crow.startLevel": [1, 1000000001, true], "crow.imageScale": [0.05, 2], "crow.flightMs": [200, 5000, true],
       "crow.blurPx": [0, 20], "crow.blurFadeMs": [1, 2000, true], "crow.blurRecoverMs": [1, 2000, true],
@@ -4512,20 +4514,23 @@
       } else ({ scene, data } = await chooseHiddenObjectRoom(eligible));
       wordLoadInfo.url = data.source;
       const previousRule = `${levelType.itemTarget}:${levelType.itemTargetPerLevel}:${levelType.itemTargetMaxArea}`;
-      const rule = `${previousRule}:${levelType.itemTargetMax}`;
-      // Keep an unfinished area's room, camera style and item order when adding
-      // the cap to an older save. Retrying that area keeps this shortened order.
-      if (entry?.targetRule === previousRule && Array.isArray(entry.order) && entry.order.every(key => data.groups.has(key))) {
-        entry.target = Math.min(entry.target, levelType.itemTargetMax);
+      const surveillance = entry ? Boolean(entry.surveillance) : CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance;
+      const maximum = surveillance ? Math.max(1, Math.floor(levelType.itemTargetMax * levelType.surveillanceTargetMaxMultiplier)) : levelType.itemTargetMax;
+      const rule = `${previousRule}:${maximum}`;
+      // A cap change shortens an unfinished area's existing list without
+      // rerolling its room, camera style or remaining item order.
+      if ((entry?.targetRule === previousRule || entry?.targetRule?.startsWith(`${previousRule}:`)) &&
+          Array.isArray(entry.order) && entry.order.every(key => data.groups.has(key))) {
+        entry.target = Math.min(entry.target, maximum);
         entry.order = entry.order.slice(0, entry.target);
         entry.targetRule = rule;
       }
       if (!entry || entry.targetRule !== rule || !Array.isArray(entry.order) || entry.order.some(key => !data.groups.has(key))) {
         const targetArea = rollButterflyTargetLevel(levelType.itemTargetMaxArea);
-        const target = Math.min(data.groups.size, levelType.itemTargetMax, levelType.itemTarget + (targetArea - 1) * levelType.itemTargetPerLevel);
+        const target = Math.min(data.groups.size, maximum, levelType.itemTarget + (targetArea - 1) * levelType.itemTargetPerLevel);
         entry = { level: progressionLevel(), mode: levelType.name, room: scene.number, target, targetRule: rule,
           order: shuffleArray([...data.groups.keys()]).slice(0, target),
-          surveillance: entry ? Boolean(entry.surveillance) : CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance,
+          surveillance,
           flying: false, frozen: false };
       }
       hiddenObjectGroups = data.groups;
@@ -6910,7 +6915,7 @@
 
     function updateSurveillanceIndicator() {
       surveillanceIndicator.hidden = !surveillanceActive || !gameplayStarted || gameplayPaused || Boolean(endlessIntermission) ||
-        menuPage !== null || hintActive || handVisible || gameOver || roomCompleted;
+        menuPage !== null || hintActive || gameOver || roomCompleted;
     }
 
     function stopSurveillanceScan() {
@@ -6944,7 +6949,7 @@
       updateSurveillanceIndicator();
       if (!surveillanceActive || gameOver || roomCompleted) { stopSurveillanceScan(); return; }
       const blocked = gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || Boolean(endlessIntermission) ||
-        hintActive || handVisible || isDragging || captureInProgress;
+        hintActive || isDragging || captureInProgress;
       const dt = blocked || surveillanceLastTime === null ? 0 : clamp(time - surveillanceLastTime, 0, 50);
       surveillanceLastTime = blocked ? null : time;
       advanceSurveillanceScan(dt);
@@ -7341,8 +7346,7 @@
           endlessIntermission || gameOver || roomCompleted) return;
       if (performance.now() - cameraStartedAt < (ROOM_TIME_LIMIT_MS + cameraBonusMs) * crowPlan.fraction) return;
       crowPlan.used = true;
-      crowFlight = { elapsed: 0, entered: false,
-        yFraction: CONFIG.crow.minYFraction + Math.random() * (CONFIG.crow.maxYFraction - CONFIG.crow.minYFraction) };
+      crowFlight = { elapsed: 0, entered: false };
       clearLevelTimeout(crowRecoveryTimer);
       crowRecoveryTimer = null;
       viewport.classList.remove("crow-recovering");
@@ -7361,7 +7365,8 @@
       const width = crowMeta.width * scale, height = crowMeta.height * scale;
       const progress = Math.min(1, crowFlight.elapsed / CONFIG.crow.flightMs);
       const x = -width - 2 + progress * (frame.width + width + 4);
-      const y = clamp(frame.height * crowFlight.yFraction - height / 2 - Math.sin(progress * Math.PI) * 12,
+      const centreY = frame.height * (CONFIG.crow.maxYFraction + (CONFIG.crow.minYFraction - CONFIG.crow.maxYFraction) * progress);
+      const y = clamp(centreY - height / 2,
         0, Math.max(0, frame.height - height));
       crowImage.style.width = `${width}px`;
       crowImage.style.height = `${height}px`;
@@ -7874,7 +7879,7 @@
 
     function updateAnomalyVisibilityState({ allowClear = true } = {}) {
       if (!anomalyActive || anomalyRoomIndex !== activeRoomIndex || !anomalyWorldBox || gameOver ||
-          gameplayPaused || endlessIntermission || hintActive || handVisible) return;
+          gameplayPaused || endlessIntermission || hintActive) return;
       if (isEndlessButterflies() && !updateButterflyAnomalyClock()) return;
       if (horizontalBoxesIntersect(anomalyWorldBox, currentVisibleWorldRange())) anomalyHasBeenSeen = true;
       else if (allowClear && anomalyHasBeenSeen) removeAnomalyAndRestartTimer();
@@ -8088,6 +8093,8 @@
 
     function showHand() {
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || handVisible || gameOver || roomCompleted) return;
+      // The hand blocks player input; camera scanning, encounter jobs,
+      // animation frames, room media and the clock keep running beneath it.
       handVisible = true;
       handDismissing = false;
       updateCameraControls();
@@ -10525,7 +10532,7 @@
       const dt = Math.min(CONFIG.butterfly.maxStepMs, Math.max(0, time - (endlessButterflyLastFrame ?? time))) / 1000;
       endlessButterflyLastFrame = time;
       for (const flight of endlessButterflyFlights.values()) {
-        if (isButterflyRush() && (handVisible || hintActive || shutterBlackoutActive || shutterRevealing)) {
+        if (isButterflyRush() && (hintActive || shutterBlackoutActive || shutterRevealing)) {
           delayButterflyRush(flight, dt * 1000);
           continue;
         }

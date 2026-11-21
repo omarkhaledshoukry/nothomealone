@@ -311,7 +311,7 @@ initialButterflies = 0
 chance = 1
 startLevel = 1
 wordCount = 1
-timeLimitMs = 120000
+timeLimitMs = 60000
 clearTimeBonusSeconds = 20
 tapTimeBonusSeconds = 2
 comboWindowMs = 2000
@@ -325,6 +325,9 @@ itemTargetMaxArea = 10
 # Hard cap on items per area: 4, 8, 12, 16, 18, 18...
 # After itemTargetMaxArea, pick a previous area's target, still capped here.
 itemTargetMax = 18
+# Surveillance uses half this maximum (18 -> 9); fractions round down, minimum 1.
+# Early-area growth is unchanged until it reaches the surveillance cap.
+surveillanceTargetMaxMultiplier = 0.5
 flyingLetters = false
 evadesCamera = false
 decoyLetterChance = 0
@@ -353,15 +356,17 @@ enabled = true
 startLevel = 5
 spawnChance = 0.10
 imageScale = 0.5
-flightMs = 650
+flightMs = 325
 # 85% of selected flybys use the late window; the rest use the earlier window.
 afterHalfChance = 0.85
 lateMinFraction = 0.52
 lateMaxFraction = 0.82
 earlyMinFraction = 0.35
 earlyMaxFraction = 0.49
-minYFraction = 0.25
-maxYFraction = 0.65
+# Left-to-right rising path: start at maxYFraction, end at minYFraction.
+# 0 = top, 0.5 = centre, 1 = bottom. Crow crosses twice as fast as before.
+minYFraction = 0.42
+maxYFraction = 0.58
 blurPx = 4
 blurFadeMs = 100
 blurRecoverMs = 180
