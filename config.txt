@@ -206,7 +206,7 @@ butterflyAnomalyChance = 0.05
 dollAnomalyStartLevel = 5
 dollAnomalyChance = 0.05
 
-# Only surveillanceButterflyRush is active. All earlier variants are disabled by chance=0.
+# Only hiddenObjectHunt is active; all other level types have chance=0.
 # One surveillance room and 1–3 riddles. All stationary letters appear together, scattered apart.
 [levels.puzzleStaticHunt]
 startLevel = 1
@@ -274,10 +274,10 @@ butterflyRoomTargetMaxArea = 10
 initialButterflies = 6
 
 
-# Only active type: surveillance butterfly encounters, from Area 1.
+# Previous surveillance butterfly type, currently disabled.
 [levels.surveillanceButterflyRush]
 startLevel = 1
-chance = 1
+chance = 0
 wordCount = 1
 timeLimitMs = 60000
 clearTimeBonusSeconds = 20
@@ -302,6 +302,37 @@ butterflyRoomTarget = 4
 butterflyRoomTargetPerLevel = 4
 butterflyRoomTargetMaxArea = 10
 initialButterflies = 0
+
+
+# Only active type: item hunts, equally likely manual or surveillance camera.
+[levels.hiddenObjectHunt]
+chance = 1
+startLevel = 1
+wordCount = 1
+timeLimitMs = 60000
+clearTimeBonusSeconds = 20
+tapTimeBonusSeconds = 2
+comboWindowMs = 2000
+roomsInitiallyUnlocked = 3
+roomUnlockStartLevel = 5
+roomUnlockEveryLevels = 5
+surveillanceChance = 0.5
+itemTarget = 4
+itemTargetPerLevel = 4
+itemTargetMaxArea = 10
+flyingLetters = false
+evadesCamera = false
+decoyLetterChance = 0
+
+# Only room 1 is enabled for now. Add other room numbers when their video and object list are ready.
+# The level's existing room milestones still limit which listed rooms are unlocked.
+# Object files are read from assets.levelsDirectory. Coordinates use the original room media pixels.
+# Number suffixes (_1, _2, ...) are grouped automatically; all listed X/Y positions remain valid.
+[hiddenObjects]
+roomNumbers = [1]
+filePattern = "room_{number}.txt"
+# Direct-tap hit radius in CSS pixels. Shutter capture checks horizontal visibility only.
+tapRadiusPx = 28
 
 # Encounter timing applies only to surveillanceButterflyRush. Durations are milliseconds.
 # At most two live/captured butterflies are visible. Every arrival starts beyond a viewport edge.
@@ -675,7 +706,7 @@ allowedRooms = [1,2,5,7,10,12,14]
 riddleAfterWords = 0
 # Checks are allowed from saved progression level 12, subject to allowedRooms.
 startLevel = 12
-enabled = false
+enabled = true
 afterWords = 1
 checkMs = 15000
 spawnChance = 0.5
@@ -686,7 +717,7 @@ androidBrightness = 1.3
 
 # The second doll shares the same roll as the original. Only one can be active at a time.
 [anomaly2]
-enabled = false
+enabled = true
 # Unlocks at saved progression level 24 (after 23 solved riddles).
 startLevel = 24
 # "all" allows every room. Use [] or enabled = false to disable the second doll.
@@ -833,6 +864,9 @@ clearProgress = "CLEAR"
 # An explicit empty list (for example "3":[]) disables that doll's eligible rooms.
 # Map each doll number to the scenes it may inhabit; if several match, choose one uniformly.
 # Example: roomAssignments = {"1":[2,4,5,7,8,10],"2":[1,3,6]}
+findItemsInstruction = "find the items"
+findItemsInstructionAr = "اعثر على الأشياء"
+
 [doll]
 enabled = true
 startLevel = 1
@@ -897,6 +931,7 @@ storyText = "You came to clean the house. Something else is already here. Throug
 
 butterflyAreaHowText = "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 butterflyRushHowText = "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI."
+hiddenObjectHowText = "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before capturing; a capture while an anomaly remains in the room triggers a jumpscare. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
 
 [menu.ar]
 start = "ابدأ"
@@ -921,4 +956,5 @@ storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عب�
 
 butterflyAreaHowText = "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
 butterflyRushHowText = "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة."
+hiddenObjectHowText = "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط يظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ التصوير أثناء بقاء الظاهرة في الغرفة يفعّل لقطة مخيفة. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
 

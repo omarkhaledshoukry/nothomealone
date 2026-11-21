@@ -1226,6 +1226,12 @@
     @keyframes surveillanceBlink { 50% { opacity: 0; } }
     #portraitViewport.level-paused #surveillanceIndicator { animation-play-state: paused; }
     #wordDisplay[hidden] { display: none; }
+    #objectTarget {
+      font: calc(var(--ui-font-size, 18px) * var(--ui-text-scale) * .56)/1.3 var(--camera-font);
+      margin: 0 auto; width: 100%; white-space: normal; overflow-wrap: anywhere;
+      text-align: center; pointer-events: none;
+    }
+    #objectTarget[hidden] { display: none; }
     .endless-butterfly, .endless-butterfly-capture {
       position: absolute;
       left: 0;
@@ -1376,6 +1382,7 @@
         </div>
         <div id="hud">
           <div id="wordDisplay" aria-live="polite"></div>
+          <div id="objectTarget" aria-live="polite" lang="en" dir="ltr" hidden></div>
           <output id="butterflyProgress" aria-label="Butterflies captured and target" dir="ltr" hidden></output>
           <div id="butterflyDanger" role="img" hidden>
             <span class="butterfly-danger-light" aria-hidden="true"></span>
@@ -1727,7 +1734,7 @@
     },
     "surveillanceButterflyRush": {
       "startLevel": 1,
-      "chance": 1,
+      "chance": 0,
       "wordCount": 1,
       "timeLimitMs": 60000,
       "clearTimeBonusSeconds": 20,
@@ -1756,6 +1763,25 @@
       "butterflyRoomTargetPerLevel": 4,
       "butterflyRoomTargetMaxArea": 10,
       "initialButterflies": 0
+    },
+    "hiddenObjectHunt": {
+      "chance": 1,
+      "startLevel": 1,
+      "wordCount": 1,
+      "timeLimitMs": 60000,
+      "clearTimeBonusSeconds": 20,
+      "tapTimeBonusSeconds": 2,
+      "comboWindowMs": 2000,
+      "roomsInitiallyUnlocked": 3,
+      "roomUnlockStartLevel": 5,
+      "roomUnlockEveryLevels": 5,
+      "surveillanceChance": 0.5,
+      "itemTarget": 4,
+      "itemTargetPerLevel": 4,
+      "itemTargetMaxArea": 10,
+      "flyingLetters": false,
+      "evadesCamera": false,
+      "decoyLetterChance": 0
     }
   },
   "frozenButterfly": {
@@ -1927,7 +1953,7 @@
     "gatedEntryMaxWaitMs": 650
   },
   "anomaly": {
-    "enabled": false,
+    "enabled": true,
     "afterWords": 1,
     "riddleAfterWords": 0,
     "checkMs": 15000,
@@ -2069,7 +2095,9 @@
     "mediaPreparationPrompt": "Tap to finish loading.",
     "mediaPreparationFailed": "Loading could not finish. Tap to try again.",
     "catchFliesInstruction": "catch the flies",
-    "catchFliesInstructionAr": "التقط الفراشات"
+    "catchFliesInstructionAr": "التقط الفراشات",
+    "findItemsInstruction": "find the items",
+    "findItemsInstructionAr": "اعثر على الأشياء"
   },
   "rooms": {
     "count": 4,
@@ -2247,7 +2275,8 @@
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
-      "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI."
+      "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
+      "hiddenObjectHowText": "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before capturing; a capture while an anomaly remains in the room triggers a jumpscare. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
     },
     "ar": {
       "start": "ابدأ",
@@ -2270,7 +2299,8 @@
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
-      "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة."
+      "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
+      "hiddenObjectHowText": "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط يظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ التصوير أثناء بقاء الظاهرة في الغرفة يفعّل لقطة مخيفة. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
     }
   },
   "surveillance": {
@@ -2303,6 +2333,13 @@
     "maxReturnMs": 2700,
     "returnChance": 0.55,
     "verticalEntryChance": 0.24
+  },
+  "hiddenObjects": {
+    "roomNumbers": [
+      1
+    ],
+    "filePattern": "room_{number}.txt",
+    "tapRadiusPx": 28
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2381,6 +2418,15 @@
     for (const [min, max] of [["openingDelayMinMs", "openingDelayMaxMs"], ["minGapMs", "maxGapMs"],
       ["quietExtraMinMs", "quietExtraMaxMs"], ["pairGapMinMs", "pairGapMaxMs"], ["fastPassMinMs", "fastPassMaxMs"],
       ["slowVisitMinMs", "slowVisitMaxMs"], ["minReturnMs", "maxReturnMs"]]) CONFIG_RANGE_PAIRS.push(["butterflyRush", min, max]);
+    Object.assign(CONFIG_LIMITS, {
+      "levels.hiddenObjectHunt.startLevel": [1, 1000000001, true], "levels.hiddenObjectHunt.wordCount": [1, 1, true],
+      "levels.hiddenObjectHunt.timeLimitMs": [1000, 86400000, true], "levels.hiddenObjectHunt.clearTimeBonusSeconds": [0, 600, true],
+      "levels.hiddenObjectHunt.roomsInitiallyUnlocked": [1, 1000000, true], "levels.hiddenObjectHunt.roomUnlockStartLevel": [1, 1000000001, true],
+      "levels.hiddenObjectHunt.roomUnlockEveryLevels": [1, 1000000, true], "levels.hiddenObjectHunt.itemTarget": [1, 1000000, true],
+      "levels.hiddenObjectHunt.itemTargetPerLevel": [0, 1000000, true], "levels.hiddenObjectHunt.itemTargetMaxArea": [1, 1000000001, true],
+      "levels.hiddenObjectHunt.tapTimeBonusSeconds": [0, 600, true], "levels.hiddenObjectHunt.comboWindowMs": [100, 10000, true],
+      "hiddenObjects.tapRadiusPx": [4, 80]
+    });
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
     const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
@@ -2451,6 +2497,10 @@
       if (/^levels\.(puzzleStaticHunt|puzzleButterflyHunt|surveillanceButterflyRush)\.riddleCountStartLevels$/.test(path)) return Array.isArray(value) && value.length === 3 &&
         value[0] === 1 && value.every((level, index) => Number.isSafeInteger(level) && level >= 1 &&
           level <= 1000000001 && (!index || level > value[index - 1]));
+      if (path === "hiddenObjects.roomNumbers") return Array.isArray(value) && value.length >= 1 && value.length <= 512 &&
+        new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
+      if (path === "hiddenObjects.filePattern") return typeof value === "string" && value.length <= 200 &&
+        /^[A-Za-z0-9_.-]*\{number\}[A-Za-z0-9_.-]*\.txt$/i.test(value) && !value.includes("..");
       if (path === "letters.greekDecoyCharacters") return typeof value === "string" && /^[α-ω]{1,32}$/u.test(value);
       if (path === "loading.mediaLoadAttempts") return Number.isInteger(value) && value >= 1 && value <= 3;
       if (path === "language.code") return value === "en" || value === "ar";
@@ -2560,7 +2610,7 @@
         for (const name of KEYBOARD_BINDINGS) resolved.keyboard[name] = [...CONFIG_DEFAULTS.keyboard[name]];
         warnings.push("Keyboard actions share a key; default key bindings used.");
       }
-      for (const name of ["puzzleButterflies", "puzzleStaticHunt", "puzzleButterflyHunt", "surveillanceButterflyRush"]) {
+      for (const name of ["puzzleButterflies", "puzzleStaticHunt", "puzzleButterflyHunt", "surveillanceButterflyRush", "hiddenObjectHunt"]) {
         if (!values.has(`levels.${name}.chance`) && Object.keys(resolved.levels).some(other => values.has(`levels.${other}.chance`))) {
           resolved.levels[name].chance = 0;
         }
@@ -2636,7 +2686,7 @@
       return config.language.code === "ar" ? config.assets.arabicWordsFile : config.assets.wordsFile;
     }
     function isSequentialType(name) { return name === "singleRoomSequential" || name === "singleRoomFixed"; }
-    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies" || name === "puzzleStaticHunt" || isButterflyAreaType(name); }
+    function isSingleRoomType(name) { return isSequentialType(name) || name === "singleRoomSpread" || name === "puzzleButterflies" || name === "puzzleStaticHunt" || name === "hiddenObjectHunt" || isButterflyAreaType(name); }
     function isSingleRoomLevel() { return isSingleRoomType(levelType.name); }
     function isSequentialLetterLevel() { return isSequentialType(levelType.name); }
     function isSurveillanceWord() {
@@ -2651,12 +2701,14 @@
     function isButterflyRush() { return levelType.name === "surveillanceButterflyRush"; }
     function isButterflyArea() { return isButterflyAreaType(levelType.name); }
     function isButterflyRiddle() { return levelType.name === "puzzleButterflies" || isButterflyArea(); }
-    function isAreaHunt() { return isStaticHunt() || isButterflyArea(); }
+    function isHiddenObjectHunt() { return levelType.name === "hiddenObjectHunt"; }
+    function isTargetArea() { return isButterflyArea() || isHiddenObjectHunt(); }
+    function isAreaHunt() { return isStaticHunt() || isTargetArea(); }
     function isStaticHunt() { return levelType.name === "puzzleStaticHunt"; }
     function usesButterflyActors() { return isEndlessButterflies() || isButterflyRiddle(); }
     function usesButterflyMotion() { return usesButterflyActors() || isStaticHunt(); }
     function usesPositionalRiddleHud() { return isEndlessPuzzle() || isButterflyRiddle() || isStaticHunt(); }
-    function requiresPuzzleData(name, rules) { return isPuzzleType(name) && !isButterflyAreaType(name) && !(name === "puzzleEndless" && rules.butterflyTargets); }
+    function requiresPuzzleData(name, rules) { return isPuzzleType(name) && !isButterflyAreaType(name) && name !== "hiddenObjectHunt" && !(name === "puzzleEndless" && rules.butterflyTargets); }
     function anomalyWordThreshold() { return isPuzzleLevel() ? CONFIG.anomaly.riddleAfterWords : CONFIG.anomaly.afterWords; }
     function progressionLevel() { return Math.max(1, currentRoomNumber); }
     function levelIsUnlocked(startLevel) { return !CONFIG.milestones.enabled || progressionLevel() >= startLevel; }
@@ -2698,7 +2750,7 @@
     function puzzlesFileFor(config = CONFIG) {
       return config.language.code === "ar" ? config.assets.arabicPuzzlesFile : config.assets.puzzlesFile;
     }
-    function levelDataFile() { return isPuzzleLevel() ? puzzlesFileFor() : WORDS_FILE; }
+    function levelDataFile() { return isHiddenObjectHunt() ? hiddenObjectFilename() : isPuzzleLevel() ? puzzlesFileFor() : WORDS_FILE; }
     function isArabic() { return CONFIG.language.code === "ar"; }
     function normalizeGameWord(value, language = CONFIG.language.code) {
       let word = String(value).trim().normalize("NFKC");
@@ -3033,6 +3085,10 @@
     let words = [];
     let currentPuzzle = null;
     let staticHuntPuzzles = [], staticHuntLetter = -1;
+    const objectTarget = document.getElementById("objectTarget");
+    const cameraClock = document.getElementById("cameraClock");
+    let hiddenObjectGroups = new Map(), hiddenObjectSource = "";
+    let hiddenObjectScore = 0, hiddenObjectGoal = 0, hiddenObjectTapAt = null;
     let areaFrozenUsed = false;
     let puzzleFilePromise = null;
     let endlessRunPuzzles = null;
@@ -3921,7 +3977,7 @@
       levelLoading = true;
       try {
         const [catalog] = await Promise.all([discoverScenes(), discoverDollFiles()]);
-        if (isEndlessPuzzle() || isButterflyRiddle() || isStaticHunt()) {
+        if (isEndlessPuzzle() || isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) {
           if (isEndlessButterflies()) {
             const plan = await planEndlessButterflies(catalog);
             if (gameOver) return;
@@ -4293,6 +4349,149 @@
       return progressionLevel() > starts[2] ? 1 + Math.floor(Math.random() * 3) : milestoneStage(starts) + 1;
     }
 
+    function hiddenObjectFilename(number = staticHuntEntry()?.room || CONFIG.hiddenObjects.roomNumbers[0]) {
+      return CONFIG.hiddenObjects.filePattern.replace("{number}", String(number));
+    }
+
+    function parseHiddenObjectList(text) {
+      if (!text.trim() || text.length > 512000 || /^\s*</.test(text)) throw new Error("Empty or invalid room object list. Expected name,x,y on each line.");
+      const groups = new Map();
+      for (const [index, raw] of text.replace(/^\uFEFF/, "").split(/\r\n?|\n/).entries()) {
+        const line = raw.trim();
+        if (!line || /^[#;]/.test(line)) continue;
+        const fields = line.split(",").map(value => value.trim());
+        const [name, xText, yText] = fields;
+        const x = Number(xText), y = Number(yText);
+        if (fields.length !== 3 || !name || name.length > 160 || !xText || !yText ||
+            !Number.isFinite(x) || !Number.isFinite(y) || x < 0 || y < 0) {
+          throw new Error(`Invalid room object at line ${index + 1}. Use name,x,y with non-negative pixel coordinates.`);
+        }
+        const base = name.replace(/[_\s-]+\d+$/, "").trim();
+        const key = base.toLowerCase();
+        if (!key) throw new Error(`Missing object name at line ${index + 1}.`);
+        if (!groups.has(key)) groups.set(key, { key, label: base.replace(/_/g, " ").replace(/\s+/g, " "), points: [] });
+        const points = groups.get(key).points;
+        if (!points.some(point => point.x === x && point.y === y)) points.push({ x, y });
+        if (groups.size > 10000) throw new Error("The room object list contains too many targets.");
+      }
+      if (!groups.size) throw new Error("The room object list has no valid targets.");
+      return groups;
+    }
+
+    async function loadHiddenObjects(scene) {
+      const filename = hiddenObjectFilename(scene.number);
+      const url = new URL(filename, levelBaseURL).href;
+      wordLoadInfo.url = url;
+      let text;
+      if (localFolderImport) {
+        text = localFolderImport.objectFiles?.[filename];
+        if (typeof text !== "string") throw new Error(`The selected folder has no ${CONFIG.assets.levelsDirectory}/${filename}. Use Change local files to select the updated game folder.`);
+      } else {
+        text = await fetchLevelResource(url, {}, async response => {
+          if (!response.ok) throw new Error(`Could not load ${CONFIG.assets.levelsDirectory}/${filename} (HTTP ${response.status}).`);
+          return response.text();
+        });
+      }
+      return { groups: parseHiddenObjectList(text), source: url };
+    }
+
+    async function planHiddenObjectHunt(catalog) {
+      const saved = staticHuntEntry();
+      let entry = saved?.mode === "hiddenObjectHunt" ? saved : null;
+      const eligible = catalog.filter(scene => CONFIG.hiddenObjects.roomNumbers.includes(scene.number) && scene.number <= staticHuntRoomLimit());
+      if (!eligible.length) throw new Error("No unlocked object-hunt room is available. Add room_1 and its jumpscare to levels/, or adjust hiddenObjects.roomNumbers.");
+      let scene = entry && eligible.find(scene => scene.number === entry.room);
+      if (entry && !scene) throw new Error("Restore the saved object-hunt room, or include its number in hiddenObjects.roomNumbers.");
+      if (!scene) {
+        const previous = progressState.lastStaticHuntRoom ?? lastSceneNumber;
+        const fresh = eligible.filter(scene => scene.number !== previous);
+        // A single configured room is intentionally reusable until more rooms are enabled.
+        scene = chooseScene(fresh.length ? fresh : eligible);
+      }
+      const data = await loadHiddenObjects(scene);
+      const rule = `${levelType.itemTarget}:${levelType.itemTargetPerLevel}:${levelType.itemTargetMaxArea}`;
+      if (!entry || entry.targetRule !== rule || !Array.isArray(entry.order) || entry.order.some(key => !data.groups.has(key))) {
+        const targetArea = rollButterflyTargetLevel(levelType.itemTargetMaxArea);
+        const target = Math.min(data.groups.size, levelType.itemTarget + (targetArea - 1) * levelType.itemTargetPerLevel);
+        entry = { level: progressionLevel(), mode: levelType.name, room: scene.number, target, targetRule: rule,
+          order: shuffleArray([...data.groups.keys()]).slice(0, target),
+          surveillance: entry ? Boolean(entry.surveillance) : CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance,
+          flying: false, frozen: false };
+      }
+      hiddenObjectGroups = data.groups;
+      hiddenObjectSource = data.source;
+      progressState.staticRiddleHunt = entry;
+      saveProgress();
+      return { puzzle: { prompt: isArabic() ? CONFIG.text.findItemsInstructionAr : CONFIG.text.findItemsInstruction, answer: "" },
+        scenes: [scene], line: null, data: null };
+    }
+
+    function currentHiddenObject() {
+      return hiddenObjectGroups.get(staticHuntEntry()?.order?.[hiddenObjectScore]) || null;
+    }
+
+    function hiddenObjectProgressText() {
+      return `${hiddenObjectScore}/${hiddenObjectGoal}`;
+    }
+
+    function updateHiddenObjectLabel() {
+      const target = isHiddenObjectHunt() ? currentHiddenObject() : null;
+      objectTarget.hidden = !target || !gameplayStarted || gameOver || roomCompleted || hintActive ||
+        Boolean(endlessIntermission) || menuPage !== null || gameplayPaused;
+      objectTarget.textContent = target?.label || "";
+    }
+
+    function hiddenObjectScreenPoint(point) {
+      const frame = viewport.getBoundingClientRect(), dimensions = getRoomDimensions();
+      if (!dimensions.width || !dimensions.height) return null;
+      return { x: point.x * renderedVideoWidth / dimensions.width + offsetX,
+        y: point.y * frame.height / dimensions.height };
+    }
+
+    function hiddenObjectIsInView(target = currentHiddenObject()) {
+      if (!target) return false;
+      const frame = viewport.getBoundingClientRect();
+      return target.points.some(point => {
+        const at = hiddenObjectScreenPoint(point);
+        return at && at.x >= 0 && at.x <= frame.width;
+      });
+    }
+
+    function hiddenObjectTapIsValid(clientPoint) {
+      const frame = viewport.getBoundingClientRect(), target = currentHiddenObject();
+      if (!target || !clientPoint) return false;
+      const x = clientPoint.x - frame.left, y = clientPoint.y - frame.top;
+      return x >= 0 && x <= frame.width && y >= 0 && y <= frame.height && target.points.some(point => {
+        const at = hiddenObjectScreenPoint(point);
+        return at && at.x >= 0 && at.x <= frame.width && Math.hypot(x - at.x, y - at.y) <= CONFIG.hiddenObjects.tapRadiusPx;
+      });
+    }
+
+    function captureHiddenObjectShot(point) {
+      if (anomalyActive && anomalyRoomIndex === activeRoomIndex) {
+        triggerJumpscare("anomaly");
+        return;
+      }
+      const correct = point ? hiddenObjectTapIsValid(point) : hiddenObjectIsInView();
+      if (!correct) {
+        hiddenObjectTapAt = null;
+        drainBatterySlot();
+        return;
+      }
+      hiddenObjectScore++;
+      selectedCount = hiddenObjectScore;
+      const now = performance.now();
+      const combo = point && hiddenObjectTapAt !== null && now - hiddenObjectTapAt <= levelType.comboWindowMs;
+      hiddenObjectTapAt = point && !combo ? now : null;
+      if (combo && levelType.tapTimeBonusSeconds) addCameraTimeBonus(levelType.tapTimeBonusSeconds);
+      if (hiddenObjectScore === hiddenObjectGoal) completeStaticHuntRiddle(0);
+      else {
+        updateCameraControls();
+        objectTarget.animate([{ opacity: .3 }, { opacity: 1 }], { duration: 140, easing: "ease-out" });
+      }
+    }
+
+
     async function planFlyTargetArea(catalog) {
       let entry = staticHuntEntry();
       butterflySprites = await discoverButterflySprites();
@@ -4331,6 +4530,7 @@
     }
 
     async function planStaticRiddleHunt(catalog) {
+      if (isHiddenObjectHunt()) return planHiddenObjectHunt(catalog);
       if (isButterflyArea()) return planFlyTargetArea(catalog);
       let entry = staticHuntEntry();
       if (entry?.frozen && !CONFIG.frozenButterfly.enabled) { entry.frozen = false; saveProgress(); }
@@ -4409,7 +4609,7 @@
     }
 
     function applyEndlessRiddlePlan({ puzzle, scenes, line, data, count }) {
-      if (isButterflyArea()) {
+      if (isTargetArea()) {
         currentPuzzle = puzzle;
         endlessRunPuzzles = null;
         staticHuntPuzzles = [];
@@ -4417,10 +4617,13 @@
         words = []; currentWord = ""; wordLetterRooms = [];
         tiles = []; anchors = [];
         letterWorld.replaceChildren(); wordDisplay.replaceChildren();
-        butterflyRoomGoal = staticHuntEntry().target;
+        if (isHiddenObjectHunt()) {
+          hiddenObjectGoal = staticHuntEntry().target;
+          hiddenObjectScore = 0; hiddenObjectTapAt = null;
+        } else butterflyRoomGoal = staticHuntEntry().target;
         butterflyScore = selectedCount = 0;
         wordsReadyForClue = true;
-        wordLoadInfo = { status: "loaded", url: "", count: 0, error: null };
+        wordLoadInfo = { status: "loaded", url: isHiddenObjectHunt() ? hiddenObjectSource : "", count: isHiddenObjectHunt() ? hiddenObjectGroups.size : 0, error: null };
         wordLoadError.hidden = true;
         loadingWord.hidden = false;
         populateClueList();
@@ -4482,10 +4685,10 @@
       wordLoadError.hidden = false;
       wordLoadReason.textContent = reason;
       wordLoadTitle.textContent = `Couldn’t load ${levelDataFile()}`;
-      wordLoadHelp.textContent = isPuzzleLevel() ? "Retry, or choose your puzzle text file directly." : "Retry, or choose your word list directly.";
+      wordLoadHelp.textContent = isHiddenObjectHunt() ? "Place the room object list in levels/ with one name,x,y entry per line, then retry." : isPuzzleLevel() ? "Retry, or choose your puzzle text file directly." : "Retry, or choose your word list directly.";
       document.getElementById("retryWordsButton").hidden = false;
       const wordFileButton = document.getElementById("chooseWordsButton");
-      wordFileButton.hidden = false;
+      wordFileButton.hidden = isHiddenObjectHunt();
       wordFileButton.textContent = `Choose ${levelDataFile()}`;
       wordLoadUrl.hidden = false;
       wordLoadUrl.href = wordLoadInfo.url;
@@ -4500,7 +4703,7 @@
       wordLoadTitle.textContent = "Choose your game folder";
       const butterflyRiddles = CONFIG.levels.puzzleButterflies.chance > 0 || CONFIG.levels.puzzleStaticHunt.chance > 0;
       const butterflyMode = CONFIG.levels.puzzleEndless.chance > 0 && CONFIG.levels.puzzleEndless.butterflyTargets;
-      wordLoadReason.textContent = reason || (butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
+      wordLoadReason.textContent = reason || (CONFIG.levels.hiddenObjectHunt.chance > 0 ? "Select the game folder containing config.txt and levels/room_1.txt." : butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
         butterflyMode ? "Select the game folder containing config.txt, rooms.txt and your butterfly sprites." :
         "Select the folder containing config.txt, your word list and puzzle file.");
       wordLoadHelp.textContent = "The text files will be read together. A missing or invalid config uses the built-in settings.";
@@ -4508,7 +4711,7 @@
       document.getElementById("retryWordsButton").hidden = true;
       chooseGameFolderButton.hidden = false;
       const wordFileButton = document.getElementById("chooseWordsButton");
-      wordFileButton.hidden = butterflyMode || butterflyRiddles;
+      wordFileButton.hidden = butterflyMode || butterflyRiddles || CONFIG.levels.hiddenObjectHunt.chance > 0;
       wordFileButton.textContent = "Choose word list only";
       if (!("webkitdirectory" in gameFolderInput)) chooseGameFolderButton.textContent = "Choose config and words";
       readyButton.disabled = true;
@@ -4623,6 +4826,15 @@
         } catch { /* An optional room list never blocks the local folder. */ }
         const levelsPrefix = selectedFolderPath(selectedConfig.assets.levelsDirectory).replace(/\/?$/, "/");
         const levelFiles = [...entries.keys()].filter(path => path.startsWith(levelsPrefix) && !path.slice(levelsPrefix.length).includes("/")).map(path => path.slice(levelsPrefix.length));
+        const objectFiles = {};
+        if (selectedConfig.levels.hiddenObjectHunt.chance > 0) {
+          for (const number of selectedConfig.hiddenObjects.roomNumbers) {
+            const name = selectedConfig.hiddenObjects.filePattern.replace("{number}", String(number));
+            const file = find(levelsPrefix + name);
+            if (file) { const text = await file.text(); parseHiddenObjectList(text); objectFiles[name] = text; }
+          }
+          if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no object lists in ${levelsPrefix}. Add room_1.txt, then choose the folder again.`);
+        }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
         for (const language of ["en", "ar"]) {
@@ -4639,7 +4851,7 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, languageFiles };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, languageFiles, objectFiles };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -4893,11 +5105,12 @@
       const single = usesSingleRoomControls(), control = puzzleHintControl();
       const riddleNumber = `#${completedWordCount + 1}`;
       const butterflies = isEndlessButterflies(), riddle = isPuzzleLevel() && !butterflies;
-      wordDisplay.hidden = butterflies || isButterflyArea();
+      wordDisplay.hidden = butterflies || isTargetArea();
+      updateHiddenObjectLabel();
       butterflyProgress.hidden = !butterflies || !gameplayStarted ||
         Boolean(endlessIntermission) || gameOver || roomCompleted || hintActive;
       updateSurveillanceIndicator();
-      status.textContent = isButterflyArea() ? butterflyScoreText() : isStaticHunt() ? `${completedWordCount}/${staticHuntPuzzles.length}` : isButterflyRiddle() ? butterflyScoreText() :
+      status.textContent = isHiddenObjectHunt() ? hiddenObjectProgressText() : isButterflyArea() ? butterflyScoreText() : isStaticHunt() ? `${completedWordCount}/${staticHuntPuzzles.length}` : isButterflyRiddle() ? butterflyScoreText() :
         butterflies ? `Area #${progressionLevel()}` : isEndlessPuzzle() ? riddleNumber : riddle ? CONFIG.text.hunt :
         gameText(CONFIG.text.clueFormat, { current: wordIndex + 1, total: words.length });
       status.classList.toggle("butterfly-area", butterflies);
@@ -4909,7 +5122,7 @@
       if (riddle) {
         if (control === status) { control.setAttribute("role", "button"); control.setAttribute("tabindex", "0"); }
         control.setAttribute("aria-controls", "clueIntro");
-        const label = isButterflyArea() ? (isArabic() ? "اضغط مطولًا لقراءة المهمة" : "Hold to read the task") :
+        const label = isTargetArea() ? (isArabic() ? "اضغط مطولًا لقراءة المهمة" : "Hold to read the task") :
           isArabic() ? "اضغط مطولًا لقراءة اللغز" : "Hold to read the riddle";
         control.setAttribute("aria-label", isEndlessPuzzle() ? `${riddleNumber}: ${label}` : `${CONFIG.text.hint}: ${label}`);
         control.setAttribute("aria-expanded", String(hintActive));
@@ -5237,7 +5450,7 @@
       if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = baseBlocked || hintActive || wordTransitionPending || captureInProgress || shutterRevealing ||
         (handVisible && !CONFIG.shutter.holdBlackoutEnabled) ||
-        ((isButterflyRiddle() || isStaticHunt()) && batterySlotsRemaining === 0);
+        ((isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) && batterySlotsRemaining === 0);
       if (usesSingleRoomControls()) {
         prevRoomButton.disabled = blocked || !isPuzzleLevel();
         nextRoomButton.disabled = blocked || hintActive;
@@ -5351,7 +5564,15 @@
     }
 
     function isSceneTapPoint(x, y) {
-      const frame = viewport.getBoundingClientRect(), band = getSafeLetterBand();
+      const frame = viewport.getBoundingClientRect();
+      if (isHiddenObjectHunt()) {
+        const overUI = [cameraBattery, cameraClock, status, objectTarget].some(element => {
+          const box = element.getBoundingClientRect();
+          return !element.hidden && x >= box.left && x <= box.right && y >= box.top && y <= box.bottom;
+        });
+        return !overUI && x >= frame.left && x <= frame.right && y >= frame.top && y <= frame.bottom;
+      }
+      const band = getSafeLetterBand();
       return x >= frame.left && x <= frame.right && y >= frame.top + band.top && y <= frame.top + band.bottom;
     }
 
@@ -5449,7 +5670,7 @@
 
     function snapCamera(targetIndex = null, point = null) {
       if (hasShutterPress() || shutterBlackoutActive || shutterRevealing) return;
-      if ((isButterflyRiddle() || isStaticHunt()) && point === null && batterySlotsRemaining === 0) return;
+      if ((isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) && point === null && batterySlotsRemaining === 0) return;
       if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
       // throttled the interval while the tab was in the background.
@@ -5468,7 +5689,8 @@
       clearLevelTimeout(shutterAnimationTimer);
       shutterAnimationTimer = levelTimeout(() => snapButton.classList.remove("snapping"), CONFIG.shutter.classResetMs);
 
-      if (isStaticHunt()) captureStaticHuntShot(index, point !== null);
+      if (isHiddenObjectHunt()) captureHiddenObjectShot(point);
+      else if (isStaticHunt()) captureStaticHuntShot(index, point !== null);
       else if (isButterflyRiddle()) collectButterflyRiddleShot(index, point !== null);
       else if (butterflies) collectEndlessButterfly(point ? index : findEndlessButterfly(), point !== null);
       else if (isCurrentLetterInFrame(index)) {
@@ -6286,7 +6508,7 @@
       wordTransitionPending = true;
       endlessIntermission = "found";
       completedWordCount++;
-      roomCompleted = isButterflyArea() || completedWordCount === staticHuntPuzzles.length;
+      roomCompleted = isTargetArea() || completedWordCount === staticHuntPuzzles.length;
       hidePuzzleHint({ immediate: true });
       viewport.classList.add("riddle-intermission");
       const seconds = levelType.clearTimeBonusSeconds + tapBonus;
@@ -8213,6 +8435,14 @@
           surveillance: Boolean(hunt.surveillance), flying: false, frozen: Boolean(hunt.frozen)
         };
       }
+      if (value.version === 7 && hunt?.mode === "hiddenObjectHunt" && hunt.level === value.completedRooms + 1 &&
+          Number.isSafeInteger(hunt.room) && hunt.room > 0 && Number.isSafeInteger(hunt.target) && hunt.target >= 1 && hunt.target <= 10000 &&
+          Array.isArray(hunt.order) && hunt.order.length === hunt.target && new Set(hunt.order).size === hunt.order.length &&
+          hunt.order.every(key => typeof key === "string" && key.length >= 1 && key.length <= 160)) {
+        progress.staticRiddleHunt = { level: hunt.level, mode: hunt.mode, room: hunt.room, target: hunt.target,
+          targetRule: typeof hunt.targetRule === "string" && /^\d+:\d+:\d+$/.test(hunt.targetRule) ? hunt.targetRule : null,
+          order: [...hunt.order], surveillance: Boolean(hunt.surveillance), flying: false, frozen: false };
+      }
       const entry = value.butterflyRiddle;
       if (value.version === 7 && entry?.level === value.completedRooms + 1 &&
           Number.isSafeInteger(entry.timeMs) && entry.timeMs > 0 &&
@@ -8514,6 +8744,9 @@
       words = []; currentWord = ""; currentPuzzle = null;
       staticHuntPuzzles = [];
       staticHuntLetter = -1;
+      hiddenObjectGroups.clear(); hiddenObjectSource = "";
+      hiddenObjectScore = hiddenObjectGoal = 0; hiddenObjectTapAt = null;
+      objectTarget.hidden = true; objectTarget.textContent = "";
       endlessRunPuzzles = null;
       if (!rotateEndlessRooms) {
         completedWordCount = 0;
@@ -8657,7 +8890,7 @@
       const style = document.documentElement.style;
       viewport.classList.toggle("shutter-blackout-enabled", CONFIG.shutter.holdBlackoutEnabled);
       const letterBlur = usesButterflyActors() ? CONFIG.butterfly.spriteBlurPx : CONFIG.letters.blurPx;
-      snapButton.setAttribute("aria-label", isButterflyArea() ? "Take photo to capture the butterfly nearest the centre of the view" :
+      snapButton.setAttribute("aria-label", isHiddenObjectHunt() ? "Take photo to capture the named item in view" : isButterflyArea() ? "Take photo to capture the butterfly nearest the centre of the view" :
         isButterflyRiddle() ? "Take photo to capture all butterflies in view" :
         "Take photo to collect the letter in frame");
       const cssSettings = {
@@ -8765,7 +8998,8 @@
     function updateMenuCopy() {
       const text = menuText();
       const endless = CONFIG.levels.puzzleEndless;
-      const howCopy = CONFIG.levels.surveillanceButterflyRush.chance > 0 ? text.butterflyRushHowText :
+      const howCopy = CONFIG.levels.hiddenObjectHunt.chance > 0 ? text.hiddenObjectHowText :
+        CONFIG.levels.surveillanceButterflyRush.chance > 0 ? text.butterflyRushHowText :
         CONFIG.levels.puzzleStaticHunt.chance > 0 ? text.staticHuntHowText + (CONFIG.levels.puzzleButterflyHunt.chance > 0 ? "\n\n" + text.butterflyAreaHowText : "") :
         CONFIG.levels.puzzleButterflyHunt.chance > 0 ? text.butterflyAreaHowText :
         CONFIG.levels.puzzleButterflies.chance > 0 ? text.butterflyRiddleHowText :
