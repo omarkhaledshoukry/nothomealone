@@ -6949,7 +6949,7 @@
       updateSurveillanceIndicator();
       if (!surveillanceActive || gameOver || roomCompleted) { stopSurveillanceScan(); return; }
       const blocked = gameplayPaused || isPageInactive() || menuPage !== null || !gameplayStarted || Boolean(endlessIntermission) ||
-        hintActive || isDragging || captureInProgress;
+        hintActive || handVisible || isDragging || captureInProgress;
       const dt = blocked || surveillanceLastTime === null ? 0 : clamp(time - surveillanceLastTime, 0, 50);
       surveillanceLastTime = blocked ? null : time;
       advanceSurveillanceScan(dt);
@@ -8093,8 +8093,8 @@
 
     function showHand() {
       if (!CONFIG.hand.enabled || !levelIsUnlocked(CONFIG.hand.startLevel) || handVisible || gameOver || roomCompleted) return;
-      // The hand blocks player input; camera scanning, encounter jobs,
-      // animation frames, room media and the clock keep running beneath it.
+      // The hand holds automatic camera movement until fully lowered.
+      // Encounter jobs, animation frames, room media and the clock keep running.
       handVisible = true;
       handDismissing = false;
       updateCameraControls();
