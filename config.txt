@@ -89,6 +89,8 @@ anomalyFiles = ["anomaly.png"]
 anomaly2File = "anomaly_2.png"
 spiderFrames = ["spider-1.png", "spider-2.png"]
 spiderSound = "spider.wav"
+crowFile = "crow.gif"
+crowSound = "crow.wav"
 letterFontFile = "Dudu_Calligraphy.ttf"
 letterFontLocalNames = ["Dudu Calligraphy", "DuduCalligraphy", "Dudu_Calligraphy"]
 
@@ -320,6 +322,9 @@ surveillanceChance = 0.5
 itemTarget = 4
 itemTargetPerLevel = 4
 itemTargetMaxArea = 10
+# Hard cap on items per area: 4, 8, 12, 16, 18, 18...
+# After itemTargetMaxArea, pick a previous area's target, still capped here.
+itemTargetMax = 18
 flyingLetters = false
 evadesCamera = false
 decoyLetterChance = 0
@@ -333,6 +338,31 @@ roomNumbers = [1]
 filePattern = "room_{number}.txt"
 # Direct-tap hit radius in CSS pixels. Shutter capture checks horizontal visibility only.
 tapRadiusPx = 28
+
+# Optional crow flyby: one 10% roll per eligible area attempt; at most one flyby.
+# imageScale multiplies the image's NATIVE size. 0.5 = 50%; the supplied
+# 313x313 GIF is displayed at 156.5x156.5 CSS pixels, flying left to right.
+# Timing uses a fraction of the clock including earned time, usually after halfway.
+# Sound begins on entry. The scene blurs; UI and crow stay sharp.
+# The crow is above all scene/UI layers, with only the hand above it.
+[crow]
+enabled = true
+startLevel = 5
+spawnChance = 0.10
+imageScale = 0.5
+flightMs = 650
+# 85% of selected flybys use the late window; the rest use the earlier window.
+afterHalfChance = 0.85
+lateMinFraction = 0.52
+lateMaxFraction = 0.82
+earlyMinFraction = 0.35
+earlyMaxFraction = 0.49
+minYFraction = 0.25
+maxYFraction = 0.65
+blurPx = 4
+blurFadeMs = 100
+blurRecoverMs = 180
+volume = 1
 
 # Encounter timing applies only to surveillanceButterflyRush. Durations are milliseconds.
 # At most two live/captured butterflies are visible. Every arrival starts beyond a viewport edge.
