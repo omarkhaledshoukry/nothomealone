@@ -329,12 +329,15 @@ flyingLetters = false
 evadesCamera = false
 decoyLetterChance = 0
 
-# Only room 1 is enabled for now. Add other room numbers when their video and object list are ready.
-# The level's existing room milestones still limit which listed rooms are unlocked.
+# Automatically choose from rooms with matching media and a readable, valid object list.
+# Room milestones above still apply: rooms 1-3 initially, room 4 at Area 5,
+# room 5 at Area 10, then another room every five areas. Missing lists are skipped.
+# "all" discovers every room; an array such as [1,2,5] optionally restricts the pool.
+# Prefer a different room from the previous area when another usable room is unlocked.
 # Object files are read from assets.levelsDirectory. Coordinates use the original room media pixels.
 # Number suffixes (_1, _2, ...) are grouped automatically; all listed X/Y positions remain valid.
 [hiddenObjects]
-roomNumbers = [1]
+roomNumbers = "all"
 filePattern = "room_{number}.txt"
 # Direct-tap hit radius in CSS pixels. Shutter capture checks horizontal visibility only.
 tapRadiusPx = 28

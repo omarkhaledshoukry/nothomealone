@@ -2386,9 +2386,7 @@
     "verticalEntryChance": 0.24
   },
   "hiddenObjects": {
-    "roomNumbers": [
-      1
-    ],
+    "roomNumbers": "all",
     "filePattern": "room_{number}.txt",
     "tapRadiusPx": 28
   }
@@ -2553,7 +2551,7 @@
       if (/^levels\.(puzzleStaticHunt|puzzleButterflyHunt|surveillanceButterflyRush)\.riddleCountStartLevels$/.test(path)) return Array.isArray(value) && value.length === 3 &&
         value[0] === 1 && value.every((level, index) => Number.isSafeInteger(level) && level >= 1 &&
           level <= 1000000001 && (!index || level > value[index - 1]));
-      if (path === "hiddenObjects.roomNumbers") return Array.isArray(value) && value.length >= 1 && value.length <= 512 &&
+      if (path === "hiddenObjects.roomNumbers") return value === "all" || Array.isArray(value) && value.length >= 1 && value.length <= 512 &&
         new Set(value).size === value.length && value.every(number => Number.isSafeInteger(number) && number >= 1 && number <= 1000000000);
       if (path === "hiddenObjects.filePattern") return typeof value === "string" && value.length <= 200 &&
         /^[A-Za-z0-9_.-]*\{number\}[A-Za-z0-9_.-]*\.txt$/i.test(value) && !value.includes("..");
@@ -4407,8 +4405,34 @@
       return progressionLevel() > starts[2] ? 1 + Math.floor(Math.random() * 3) : milestoneStage(starts) + 1;
     }
 
-    function hiddenObjectFilename(number = staticHuntEntry()?.room || CONFIG.hiddenObjects.roomNumbers[0]) {
+    function hiddenObjectFilename(number = staticHuntEntry()?.room ||
+        (Array.isArray(CONFIG.hiddenObjects.roomNumbers) ? CONFIG.hiddenObjects.roomNumbers[0] : 1)) {
       return CONFIG.hiddenObjects.filePattern.replace("{number}", String(number));
+    }
+
+    function hiddenObjectRoomAllowed(number, config = CONFIG) {
+      return config.hiddenObjects.roomNumbers === "all" || config.hiddenObjects.roomNumbers.includes(number);
+    }
+
+    async function readHiddenObjectFolderLists(levelFiles, config, findFile) {
+      const objectFiles = {};
+      const numbers = [...new Set(levelFiles.flatMap(name => {
+        const match = /^room_(\d+)\.(?:png|webp|jpe?g|mp4|webm|m4v|mov)$/i.exec(name);
+        const number = match ? Number(match[1]) : 0;
+        return Number.isSafeInteger(number) && number > 0 && hiddenObjectRoomAllowed(number, config) ? [number] : [];
+      }))];
+      for (const number of numbers) {
+        const name = config.hiddenObjects.filePattern.replace("{number}", String(number));
+        const file = findFile(name);
+        if (!file) continue;
+        try {
+          if (file.size > 512000) throw new Error("Object list is oversized.");
+          const text = await file.text();
+          parseHiddenObjectList(text);
+          objectFiles[name] = text;
+        } catch (error) { console.info(`Skipping unusable object list ${name}.`, error.message); }
+      }
+      return objectFiles;
     }
 
     function parseHiddenObjectList(text) {
@@ -4439,34 +4463,54 @@
     async function loadHiddenObjects(scene) {
       const filename = hiddenObjectFilename(scene.number);
       const url = new URL(filename, levelBaseURL).href;
-      wordLoadInfo.url = url;
       let text;
       if (localFolderImport) {
         text = localFolderImport.objectFiles?.[filename];
         if (typeof text !== "string") throw new Error(`The selected folder has no ${CONFIG.assets.levelsDirectory}/${filename}. Use Change local files to select the updated game folder.`);
       } else {
         text = await fetchLevelResource(url, {}, async response => {
-          if (!response.ok) throw new Error(`Could not load ${CONFIG.assets.levelsDirectory}/${filename} (HTTP ${response.status}).`);
+          if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) {
+            throw new Error(`Could not load an object list from ${CONFIG.assets.levelsDirectory}/${filename} (HTTP ${response.status}).`);
+          }
           return response.text();
         });
       }
       return { groups: parseHiddenObjectList(text), source: url };
     }
 
+    async function chooseHiddenObjectRoom(candidates) {
+      const previous = progressState.lastStaticHuntRoom ?? lastSceneNumber;
+      // Shuffle before checking so every usable, unlocked room has a fair
+      // chance. Prefer a different room; reuse the previous one only when
+      // none of the other unlocked rooms has a readable, valid object list.
+      const pools = [candidates.filter(scene => scene.number !== previous),
+        candidates.filter(scene => scene.number === previous)];
+      for (const pool of pools) {
+        const shuffled = shuffleArray(pool);
+        for (let i = 0; i < shuffled.length; i += CONFIG.loading.levelProbeBatchSize) {
+          const results = await Promise.allSettled(shuffled.slice(i, i + CONFIG.loading.levelProbeBatchSize)
+            .map(async scene => ({ scene, data: await loadHiddenObjects(scene) })));
+          const usable = results.filter(result => result.status === "fulfilled").map(result => result.value);
+          if (usable.length) return chooseScene(usable);
+        }
+      }
+      throw new Error(`No unlocked room has a usable object list. Add matching room_N media, jumpscare_N media and ${CONFIG.hiddenObjects.filePattern.replace("{number}", "N")} in ${CONFIG.assets.levelsDirectory}, or check the room unlock settings.`);
+    }
+
     async function planHiddenObjectHunt(catalog) {
       const saved = staticHuntEntry();
       let entry = saved?.mode === "hiddenObjectHunt" ? saved : null;
-      const eligible = catalog.filter(scene => CONFIG.hiddenObjects.roomNumbers.includes(scene.number) && scene.number <= staticHuntRoomLimit());
-      if (!eligible.length) throw new Error("No unlocked object-hunt room is available. Add room_1 and its jumpscare to levels/, or adjust hiddenObjects.roomNumbers.");
+      const eligible = catalog.filter(scene => hiddenObjectRoomAllowed(scene.number) && scene.number <= staticHuntRoomLimit());
+      if (!eligible.length) throw new Error("No unlocked object-hunt room has matching room/jumpscare media. Check the levels folder, room milestones and hiddenObjects.roomNumbers.");
       let scene = entry && eligible.find(scene => scene.number === entry.room);
-      if (entry && !scene) throw new Error("Restore the saved object-hunt room, or include its number in hiddenObjects.roomNumbers.");
-      if (!scene) {
-        const previous = progressState.lastStaticHuntRoom ?? lastSceneNumber;
-        const fresh = eligible.filter(scene => scene.number !== previous);
-        // A single configured room is intentionally reusable until more rooms are enabled.
-        scene = chooseScene(fresh.length ? fresh : eligible);
-      }
-      const data = await loadHiddenObjects(scene);
+      if (entry && !scene) throw new Error("Restore the saved object-hunt room and its unlock settings to retry this area.");
+      let data;
+      if (scene) {
+        // An unfinished area keeps its room and targets. A removed or invalid
+        // file must not silently replace the player's saved area with another.
+        data = await loadHiddenObjects(scene);
+      } else ({ scene, data } = await chooseHiddenObjectRoom(eligible));
+      wordLoadInfo.url = data.source;
       const previousRule = `${levelType.itemTarget}:${levelType.itemTargetPerLevel}:${levelType.itemTargetMaxArea}`;
       const rule = `${previousRule}:${levelType.itemTargetMax}`;
       // Keep an unfinished area's room, camera style and item order when adding
@@ -4819,7 +4863,7 @@
       wordLoadTitle.textContent = "Choose your game folder";
       const butterflyRiddles = CONFIG.levels.puzzleButterflies.chance > 0 || CONFIG.levels.puzzleStaticHunt.chance > 0;
       const butterflyMode = CONFIG.levels.puzzleEndless.chance > 0 && CONFIG.levels.puzzleEndless.butterflyTargets;
-      wordLoadReason.textContent = reason || (CONFIG.levels.hiddenObjectHunt.chance > 0 ? "Select the game folder containing config.txt and levels/room_1.txt." : butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
+      wordLoadReason.textContent = reason || (CONFIG.levels.hiddenObjectHunt.chance > 0 ? "Select the game folder containing config.txt, the room media and matching levels/room_N.txt object files." : butterflyRiddles ? `Select the game folder containing config.txt, ${puzzlesFileFor()} and your butterfly sprites.` :
         butterflyMode ? "Select the game folder containing config.txt, rooms.txt and your butterfly sprites." :
         "Select the folder containing config.txt, your word list and puzzle file.");
       wordLoadHelp.textContent = "The text files will be read together. A missing or invalid config uses the built-in settings.";
@@ -4944,12 +4988,8 @@
         const levelFiles = [...entries.keys()].filter(path => path.startsWith(levelsPrefix) && !path.slice(levelsPrefix.length).includes("/")).map(path => path.slice(levelsPrefix.length));
         const objectFiles = {};
         if (selectedConfig.levels.hiddenObjectHunt.chance > 0) {
-          for (const number of selectedConfig.hiddenObjects.roomNumbers) {
-            const name = selectedConfig.hiddenObjects.filePattern.replace("{number}", String(number));
-            const file = find(levelsPrefix + name);
-            if (file) { const text = await file.text(); parseHiddenObjectList(text); objectFiles[name] = text; }
-          }
-          if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no object lists in ${levelsPrefix}. Add room_1.txt, then choose the folder again.`);
+          Object.assign(objectFiles, await readHiddenObjectFolderLists(levelFiles, selectedConfig, name => find(levelsPrefix + name)));
+          if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no usable object lists for its rooms in ${levelsPrefix}. Add matching room_N.txt files, then choose the folder again.`);
         }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
