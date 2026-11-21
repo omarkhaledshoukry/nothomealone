@@ -336,6 +336,23 @@
       transform-origin: right top;
     }
     #cameraTimeBonus.show { animation: timeBonus var(--time-bonus-ms) ease-out both; }
+    .object-capture-marker { position: absolute; pointer-events: none; }
+    .object-capture-bonus {
+      display: block; color: #ffd986; white-space: nowrap; pointer-events: none;
+      font: calc(var(--ui-font-size, 18px) * var(--ui-text-scale) * .8)/1 var(--camera-font, monospace);
+      transform-origin: center;
+      animation: objectCaptureBonus var(--time-bonus-ms, 820ms) ease-out both;
+    }
+    @keyframes objectCaptureBonus {
+      0% { opacity: 0; transform: translate(-50%, -50%) translateY(0) scale(.6); }
+      24% { opacity: 1; transform: translate(-50%, -50%) translateY(-4px) scale(1.2); }
+      45% { opacity: 1; transform: translate(-50%, -50%) translateY(-12px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -50%) translateY(-36px) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .object-capture-bonus { animation-name: objectCaptureBonusFade; transform: translate(-50%, -50%); }
+      @keyframes objectCaptureBonusFade { 0%, 65% { opacity: 1; } 100% { opacity: 0; } }
+    }
     @keyframes timeBonus {
       0% { opacity: 0; transform: translateY(0) scale(.6); }
       24% { opacity: 1; transform: translateY(2px) scale(1.2); }
@@ -2276,7 +2293,7 @@
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
-      "hiddenObjectHowText": "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before capturing; a capture while an anomaly remains in the room triggers a jumpscare. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
+      "hiddenObjectHowText": "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
     },
     "ar": {
       "start": "ابدأ",
@@ -2300,7 +2317,7 @@
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
-      "hiddenObjectHowText": "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط يظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ التصوير أثناء بقاء الظاهرة في الغرفة يفعّل لقطة مخيفة. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
+      "hiddenObjectHowText": "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
     }
   },
   "surveillance": {
@@ -4467,8 +4484,57 @@
       });
     }
 
+    function hiddenObjectCapturePoint(clientPoint = null) {
+      const frame = viewport.getBoundingClientRect(), target = currentHiddenObject();
+      if (!target) return null;
+      const x = clientPoint ? clientPoint.x - frame.left : frame.width / 2;
+      const y = clientPoint ? clientPoint.y - frame.top : frame.height / 2;
+      let best = null, distance = Infinity;
+      for (const point of target.points) {
+        const at = hiddenObjectScreenPoint(point);
+        if (!at || at.x < 0 || at.x > frame.width) continue;
+        const rank = clientPoint ? Math.hypot(at.x - x, at.y - y) : Math.abs(at.x - x);
+        if (rank < distance) { distance = rank; best = point; }
+      }
+      return best;
+    }
+
+    function positionObjectCaptureMarkers() {
+      const frame = viewport.getBoundingClientRect(), dimensions = getRoomDimensions();
+      if (!dimensions.width || !dimensions.height) return;
+      for (const marker of captureEffects.querySelectorAll(".object-capture-marker")) {
+        marker.style.left = `${Number(marker.dataset.objectX) * renderedVideoWidth / dimensions.width}px`;
+        marker.style.top = `${Number(marker.dataset.objectY) * frame.height / dimensions.height}px`;
+        marker.style.transform = `translateX(${offsetX}px)`;
+      }
+    }
+
+    function showObjectCaptureBonus(point) {
+      if (!point) return;
+      const marker = document.createElement("span"), bonus = document.createElement("span");
+      marker.className = "object-capture-marker";
+      marker.dataset.objectX = point.x;
+      marker.dataset.objectY = point.y;
+      marker.style.setProperty("--camera-font", getComputedStyle(cameraOverlay).getPropertyValue("--camera-font"));
+      bonus.className = "object-capture-bonus";
+      bonus.dir = "ltr";
+      bonus.textContent = "+1";
+      marker.appendChild(bonus);
+      captureEffects.appendChild(marker);
+      positionObjectCaptureMarkers();
+      bonus.addEventListener("animationend", () => marker.remove(), { once: true });
+      levelTimeout(() => marker.remove(), TIME_BONUS_ANIMATION_MS + 100);
+    }
+
+    function hiddenObjectAnomalyInView() {
+      const box = anomalyWorldBox;
+      return anomalyActive && anomalyRoomIndex === activeRoomIndex && box &&
+        box.bottom > 0 && box.top < viewport.getBoundingClientRect().height &&
+        horizontalBoxesIntersect(box, currentVisibleWorldRange());
+    }
+
     function captureHiddenObjectShot(point) {
-      if (anomalyActive && anomalyRoomIndex === activeRoomIndex) {
+      if (!point && hiddenObjectAnomalyInView()) {
         triggerJumpscare("anomaly");
         return;
       }
@@ -4478,6 +4544,7 @@
         drainBatterySlot();
         return;
       }
+      showObjectCaptureBonus(hiddenObjectCapturePoint(point));
       hiddenObjectScore++;
       selectedCount = hiddenObjectScore;
       const now = performance.now();
@@ -5331,6 +5398,7 @@
       spiderWorld.style.transform = transform;
       dollWorld.style.transform = `translateX(${offsetX * CONFIG.doll.parallaxMultiplier}px)`;
       jumpscareVideo.style.transform = transform;
+      positionObjectCaptureMarkers();
       // Only actual camera movement counts as looking away from a decoy or anomaly.
       if (fromCameraInput) {
         updateDecoyVisibilityState({ allowCorrection: cameraMoved });
@@ -8746,6 +8814,7 @@
       staticHuntLetter = -1;
       hiddenObjectGroups.clear(); hiddenObjectSource = "";
       hiddenObjectScore = hiddenObjectGoal = 0; hiddenObjectTapAt = null;
+      captureEffects.querySelectorAll(".object-capture-marker").forEach(marker => marker.remove());
       objectTarget.hidden = true; objectTarget.textContent = "";
       endlessRunPuzzles = null;
       if (!rotateEndlessRooms) {
