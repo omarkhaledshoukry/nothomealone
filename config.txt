@@ -91,6 +91,11 @@ spiderFrames = ["spider-1.png", "spider-2.png"]
 spiderSound = "spider.wav"
 crowFile = "crow.gif"
 crowSound = "crow.wav"
+# Scare portraits live beside the HTML: scare.png, scare_1.png, scare_2.png, ...
+# Optional paths support custom portrait filenames. Missing sprites disable the effect gracefully.
+scareFile = "scare.png"
+scareFiles = []
+scareSound = "scare.wav"
 letterFontFile = "Dudu_Calligraphy.ttf"
 letterFontLocalNames = ["Dudu Calligraphy", "DuduCalligraphy", "Dudu_Calligraphy"]
 
@@ -372,6 +377,20 @@ maxYFraction = 0.58
 blurPx = 4
 blurFadeMs = 100
 blurRecoverMs = 180
+volume = 1
+
+# Brief camera scare on a missed SHUTTER exposure that actually consumes battery.
+# One independent 10% roll per miss from Area 7; successful shots, scene taps and holds do not roll.
+# Times form one black close -> white portrait flash -> black blink -> recovery sequence.
+[scare]
+enabled = true
+startLevel = 7
+spawnChance = 0.10
+blackInMs = 24
+flashHoldMs = 26
+flashFadeMs = 84
+blackBlinkMs = 24
+recoverMs = 44
 volume = 1
 
 # Encounter timing applies only to surveillanceButterflyRush. Durations are milliseconds.
@@ -736,28 +755,37 @@ startLevel = 3
 spawnChance = 0
 timeBonusSeconds = 5
 
-# Both anomalies share these check intervals, spawn odds, word gates and artwork settings.
-# allowedRooms, startLevel and enabled apply to the original anomaly only.
+# Anomaly 1 uses one room roll after halfway; anomaly 2 retains periodic checks if enabled.
+# Word gates and artwork settings here are shared. Each anomaly has its own enable/unlock/room/chance settings.
 [anomaly]
 # Actual room_N scene numbers. [] disables appearances; "all" allows every scene.
 allowedRooms = [1,2,5,7,10,12,14]
 # Single-riddle modes have no completed word before the level ends.
 # Start their anomaly checks from READY by default; multiword modes retain afterWords.
 riddleAfterWords = 0
-# Checks are allowed from saved progression level 12, subject to allowedRooms.
+# Anomaly 1 unlocks from saved progression level 12, subject to allowedRooms.
 startLevel = 12
-enabled = false
+enabled = true
 afterWords = 1
+# Periodic interval used only by anomaly 2 if it is enabled.
 checkMs = 15000
-spawnChance = 0.5
+# A single 10% roll per eligible room attempt, not a repeated roll every check.
+# Selected anomalies wait until this fraction of the room clock (including bonus time).
+# Placement retries only wait for an offscreen opportunity; they never reroll the chance.
+spawnChance = 0.10
+roomMinFraction = 0.52
+roomMaxFraction = 0.85
+placementRetryMs = 1000
 offscreenMarginPx = 8
 alphaThreshold = 8
 # Android anomaly artwork multiplier. 1 uses the original colours, 1.3 brightens by 30%.
 androidBrightness = 1.3
 
-# The second doll shares the same roll as the original. Only one can be active at a time.
+# The second doll uses its own periodic roll. Only one scene anomaly can be active at a time.
 [anomaly2]
 enabled = false
+# Independent periodic probability if this second anomaly is enabled later.
+spawnChance = 0.5
 # Unlocks at saved progression level 24 (after 23 solved riddles).
 startLevel = 24
 # "all" allows every room. Use [] or enabled = false to disable the second doll.

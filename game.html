@@ -907,6 +907,17 @@
     }
     #portraitViewport.scene-blackout > #blackFlash { display: block; }
 
+    #scareFlashWorld { position: absolute; inset: 0; z-index: 350; overflow: hidden; pointer-events: none; }
+    #scareFlashWorld[hidden] { display: none; }
+    #scareFlashBlack, #scareFlashWhite { position: absolute; inset: 0; opacity: 0; }
+    #scareFlashBlack { background: #000; }
+    #scareFlashWhite { background: #fff; }
+    #scareFlashImage {
+      position: absolute; left: 50%; top: 50%; height: 100%; width: auto;
+      max-width: none; max-height: none; transform: translate(-50%, -50%);
+      opacity: 0; pointer-events: none;
+    }
+
     .jumpscare-video {
       position: absolute;
       z-index: 150;
@@ -1448,6 +1459,10 @@
       </div>
 
       <div id="blackFlash" aria-hidden="true"></div>
+      <div id="scareFlashWorld" aria-hidden="true" hidden>
+        <div id="scareFlashBlack"></div><div id="scareFlashWhite"></div>
+        <img id="scareFlashImage" alt="" draggable="false" />
+      </div>
       <video id="jumpscareVideo" class="jumpscare-video" preload="auto" muted playsinline></video>
       <div id="resumePlayback" hidden><button id="resumePlaybackButton" type="button">TAP TO RESUME</button></div>
       <div id="gameOverScreen" role="button" tabindex="0" aria-label="Game over. Tap to retry.">
@@ -1519,6 +1534,9 @@
     "spiderSound": "spider.wav",
     "crowFile": "crow.gif",
     "crowSound": "crow.wav",
+    "scareFile": "scare.png",
+    "scareFiles": [],
+    "scareSound": "scare.wav",
     "letterFontFile": "Dudu_Calligraphy.ttf",
     "letterFontLocalNames": [
       "Dudu Calligraphy",
@@ -1804,7 +1822,7 @@
       "chance": 1,
       "startLevel": 1,
       "wordCount": 1,
-      "timeLimitMs": 60000,
+      "timeLimitMs": 120000,
       "clearTimeBonusSeconds": 20,
       "tapTimeBonusSeconds": 2,
       "comboWindowMs": 2000,
@@ -1838,6 +1856,17 @@
     "blurPx": 4,
     "blurFadeMs": 100,
     "blurRecoverMs": 180,
+    "volume": 1
+  },
+  "scare": {
+    "enabled": true,
+    "startLevel": 7,
+    "spawnChance": 0.1,
+    "blackInMs": 24,
+    "flashHoldMs": 26,
+    "flashFadeMs": 84,
+    "blackBlinkMs": 24,
+    "recoverMs": 44,
     "volume": 1
   },
   "frozenButterfly": {
@@ -2013,7 +2042,10 @@
     "afterWords": 1,
     "riddleAfterWords": 0,
     "checkMs": 15000,
-    "spawnChance": 0.5,
+    "spawnChance": 0.1,
+    "roomMinFraction": 0.52,
+    "roomMaxFraction": 0.85,
+    "placementRetryMs": 1000,
     "offscreenMarginPx": 8,
     "alphaThreshold": 8,
     "androidBrightness": 1.3,
@@ -2029,7 +2061,8 @@
     ]
   },
   "anomaly2": {
-    "enabled": true,
+    "enabled": false,
+    "spawnChance": 0.5,
     "startLevel": 24,
     "allowedRooms": "all",
     "blurPx": 1.2
@@ -2484,10 +2517,16 @@
       "levels.hiddenObjectHunt.tapTimeBonusSeconds": [0, 600, true], "levels.hiddenObjectHunt.comboWindowMs": [100, 10000, true],
       "crow.startLevel": [1, 1000000001, true], "crow.imageScale": [0.05, 2], "crow.flightMs": [200, 5000, true],
       "crow.blurPx": [0, 20], "crow.blurFadeMs": [1, 2000, true], "crow.blurRecoverMs": [1, 2000, true],
+      "scare.startLevel": [1, 1000000001, true],
+      "scare.blackInMs": [1, 250, true], "scare.flashHoldMs": [1, 250, true], "scare.flashFadeMs": [1, 500, true],
+      "scare.blackBlinkMs": [1, 250, true], "scare.recoverMs": [1, 500, true],
+      "anomaly.roomMinFraction": [0.5, 0.98], "anomaly.roomMaxFraction": [0.5, 0.98],
+      "anomaly.placementRetryMs": [100, 15000, true],
       "hiddenObjects.tapRadiusPx": [4, 80]
     });
     CONFIG_RANGE_PAIRS.push(["crow", "lateMinFraction", "lateMaxFraction"],
       ["crow", "earlyMinFraction", "earlyMaxFraction"], ["crow", "minYFraction", "maxYFraction"]);
+    CONFIG_RANGE_PAIRS.push(["anomaly", "roomMinFraction", "roomMaxFraction"]);
     const CONFIG = JSON.parse(JSON.stringify(CONFIG_DEFAULTS));
     let configLoadInfo = { status: "pending", warnings: [] };
     const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
@@ -2609,7 +2648,7 @@
         return value >= bounds[0] && value <= bounds[1] && (!bounds[2] || Number.isInteger(value));
       }
       if (typeof fallback === "boolean") return typeof value === "boolean";
-      if (Array.isArray(fallback)) return Array.isArray(value) && (value.length > 0 || path === "assets.butterflyFiles") && value.length <= 64 &&
+      if (Array.isArray(fallback)) return Array.isArray(value) && (value.length > 0 || path === "assets.butterflyFiles" || path === "assets.scareFiles") && value.length <= 64 &&
         value.every(item => typeof item === "string" && item.trim() && item.length <= 2048 && !/[\r\n]/.test(item)) &&
         (!/Colors$/.test(path) || value.every(item => CSS.supports("color", item)));
       if (typeof fallback === "string") return typeof value === "string" && value.trim().length > 0 && value.length <= 2048 &&
@@ -4088,7 +4127,7 @@
     }
 
     async function preloadSelectedRooms() {
-      const results = await Promise.allSettled([prepareCrowAssets(), preloadLevelDolls(), ...levelRooms.flatMap(room => [
+      const results = await Promise.allSettled([prepareScareAssets(), prepareCrowAssets(), preloadLevelDolls(), ...levelRooms.flatMap(room => [
         preloadRoomBackdrop(room), prepareRoomJumpscare(room)
       ])]);
       const failure = results.find(result => result.status === "rejected");
@@ -4137,6 +4176,9 @@
     }
 
     function clearPreparedLevelCache() {
+      ++scareAssetsRun;
+      scareSprites = []; scareSpriteLoad = null;
+      stopScareFlash();
       levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
       roomGroupsPromise = puzzleFilePromise = null;
       butterflySpriteLoad = null;
@@ -4654,7 +4696,7 @@
       const correct = point ? hiddenObjectTapIsValid(point) : hiddenObjectIsInView();
       if (!correct) {
         hiddenObjectTapAt = null;
-        drainBatterySlot();
+        handleMissedCameraShot(Boolean(point));
         return;
       }
       showObjectCaptureBonus(hiddenObjectCapturePoint(point));
@@ -5012,6 +5054,7 @@
           if (!Object.keys(objectFiles).length) throw new Error(`The selected folder has no usable object lists for its rooms in ${levelsPrefix}. Add matching ${hiddenObjectFilename("N", selectedConfig)} files, then choose the folder again.`);
         }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
+        const scareFiles = [...entries.keys()].filter(path => !path.includes("/") && isScareSpritePath(path));
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
         for (const language of ["en", "ar"]) {
           if (language === selectedConfig.language.code) continue;
@@ -5027,7 +5070,7 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, languageFiles, objectFiles };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -5235,6 +5278,7 @@
       unmuteParkedScares();
       unlockSpiderSound();
       unlockCrowSound();
+      unlockScareSound();
       if (gameOver) return;
       gameplayStarting = false;
       gameplayStarted = true;
@@ -5244,6 +5288,7 @@
       cameraOverlay.setAttribute("aria-hidden", "false");
       updateCameraControls();
       planCrowEncounter();
+      planRoomAnomalies();
       if (rotatingRooms) resumeCameraTimer();
       else startCameraTimer();
       if (usesButterflyActors()) {
@@ -5628,6 +5673,7 @@
       const blocked = baseBlocked || handVisible || hasShutterPress() || shutterBlackoutActive || shutterRevealing;
       if (blocked || hintActive) stopKeyboardInput();
       snapButton.disabled = baseBlocked || hintActive || wordTransitionPending || captureInProgress || shutterRevealing ||
+        scareFlashActive ||
         (handVisible && !CONFIG.shutter.holdBlackoutEnabled) ||
         ((isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) && batterySlotsRemaining === 0);
       if (usesSingleRoomControls()) {
@@ -5663,6 +5709,7 @@
         endGame("timeout");
       }
       maybeStartCrowEncounter();
+      maybeSpawnRoomAnomaly();
     }
 
     function startCameraTimer() {
@@ -5848,8 +5895,207 @@
       if (!shutterBitmapFrame) shutterBitmapFrame = requestAnimationFrame(drawShutterBitmap);
     }
 
+    const scareFlashWorld = document.getElementById("scareFlashWorld");
+    const scareFlashBlack = document.getElementById("scareFlashBlack");
+    const scareFlashWhite = document.getElementById("scareFlashWhite");
+    const scareFlashImage = document.getElementById("scareFlashImage");
+    let scareSprites = [], scareSpriteLoad = null, scareAssetsRun = 0;
+    let scareFlashActive = false, scareFlashAnimations = [], scareAfterFlash = null, scareSoundTimer = null;
+    let scareAudio = null, scareAudioSource = "", scareAudioReady = false, scareAudioPreparing = null;
+    let scareSoundPlaying = false, scareSoundRun = 0, scarePausedSoundTime = null;
+
+    function isScareSpritePath(path) {
+      return typeof path === "string" && /^scare[^/]*\.png$/i.test(path.split("/").pop());
+    }
+
+    async function loadScareSprite(source) {
+      const image = new Image();
+      const loaded = waitForMedia(image, "load", CONFIG.loading.resourceTimeoutMs);
+      image.src = source;
+      try {
+        await loaded;
+        if (!image.naturalWidth || !image.naturalHeight) return null;
+        if (image.decode) await image.decode();
+        return image;
+      } catch { image.removeAttribute("src"); return null; }
+    }
+
+    async function prepareScareAssets() {
+      if (!CONFIG.scare.enabled || !levelIsUnlocked(CONFIG.scare.startLevel) || CONFIG.scare.spawnChance === 0) return;
+      prepareScareAudio();
+      if (scareSpriteLoad) return scareSpriteLoad;
+      const run = scareAssetsRun;
+      scareSpriteLoad = (async () => {
+        const directory = new URL(".", document.baseURI);
+        const listed = directory.protocol === "file:" ? [] : (await readAssetDirectory(directory)).filter(isScareSpritePath);
+        const local = Array.isArray(localFolderImport?.scareFiles) ? localFolderImport.scareFiles : [];
+        const sources = new Set([new URL(CONFIG.assets.scareFile, document.baseURI).href,
+          ...CONFIG.assets.scareFiles.map(path => new URL(path, document.baseURI).href),
+          ...local.map(path => new URL(path.split("/").map(encodeURIComponent).join("/"), document.baseURI).href),
+          ...listed.map(name => new URL(encodeURIComponent(name), directory).href)]);
+        const known = await Promise.all([...sources].map(loadScareSprite));
+        const sprites = known.filter(Boolean);
+        // Static hosts without a directory listing still support numbered PNGs.
+        if (!listed.length) {
+          let absent = 0;
+          const batchSize = CONFIG.loading.levelProbeBatchSize;
+          for (let next = 1; absent < LEVEL_PROBE_GAP && next <= 128; next += batchSize) {
+            const batch = await Promise.all(Array.from({ length: Math.min(batchSize, 129 - next) }, (_, index) => {
+              const source = new URL(`scare_${next + index}.png`, directory).href;
+              return sources.has(source) ? null : loadScareSprite(source);
+            }));
+            for (const sprite of batch) {
+              if (sprite) { sprites.push(sprite); absent = 0; }
+              else absent++;
+            }
+          }
+        }
+        if (run === scareAssetsRun) scareSprites = [...new Map(sprites.map(sprite => [sprite.src, sprite])).values()];
+      })().catch(() => { if (run === scareAssetsRun) scareSprites = []; });
+      return scareSpriteLoad;
+    }
+
+    function prepareScareAudio() {
+      const source = new URL(CONFIG.assets.scareSound, document.baseURI).href;
+      if (scareAudio && source === scareAudioSource) return scareAudio;
+      stopScareSound();
+      scareAudioSource = source;
+      const audio = scareAudio = new Audio();
+      scareAudioReady = false;
+      audio.preload = "auto"; audio.muted = true; audio.src = source;
+      audio.addEventListener("ended", () => {
+        if (audio === scareAudio) { scareSoundPlaying = false; scarePausedSoundTime = null; }
+      });
+      audio.addEventListener("error", () => {
+        if (audio === scareAudio) { stopScareSound(); scareAudioReady = false; }
+      });
+      audio.load();
+      return audio;
+    }
+
+    function unlockScareSound({ refreshAudio = false } = {}) {
+      if (!CONFIG.scare.enabled || CONFIG.scare.spawnChance === 0 || !levelIsUnlocked(CONFIG.scare.startLevel) || isPageInactive()) return;
+      const audio = prepareScareAudio();
+      if (scarePausedSoundTime !== null) { playScareSound(scarePausedSoundTime); return; }
+      if (scareSoundPlaying || scareAudioPreparing || scareAudioReady && !refreshAudio) return;
+      const run = ++scareSoundRun;
+      scareAudioReady = false;
+      try {
+        audio.muted = true;
+        scareAudioPreparing = boundedMediaAction(Promise.resolve(audio.play())).then(() => {
+          if (audio !== scareAudio || run !== scareSoundRun) return;
+          audio.pause(); audio.currentTime = 0; scareAudioReady = true;
+        }).catch(() => {
+          if (audio === scareAudio && run === scareSoundRun) audio.pause();
+        }).finally(() => {
+          if (audio === scareAudio && run === scareSoundRun) scareAudioPreparing = null;
+        });
+      } catch { audio.pause(); }
+    }
+
+    function stopScareSound() {
+      ++scareSoundRun;
+      scareAudioPreparing = null; scareSoundPlaying = false; scarePausedSoundTime = null;
+      scareAudio?.pause();
+    }
+
+    function playScareSound(offset = 0) {
+      const audio = scareAudio;
+      if (!audio || !scareAudioReady || isPageInactive() || menuPage !== null) return;
+      stopScareSound();
+      const run = scareSoundRun;
+      try {
+        audio.currentTime = offset; audio.volume = CONFIG.scare.volume; audio.muted = CONFIG.scare.volume === 0;
+        scareSoundPlaying = true;
+        audio.play()?.catch(() => { if (audio === scareAudio && run === scareSoundRun) scareSoundPlaying = false; });
+      } catch { scareSoundPlaying = false; }
+    }
+
+    function stopScareFlash({ keepSound = false } = {}) {
+      scareFlashActive = false;
+      scareAfterFlash = null;
+      clearLevelTimeout(scareSoundTimer); scareSoundTimer = null;
+      for (const animation of scareFlashAnimations) animation.cancel();
+      scareFlashAnimations = [];
+      scareFlashWorld.hidden = true;
+      if (!keepSound) stopScareSound();
+      updateCameraControls();
+    }
+
+    function playScareFlash(after = null) {
+      if (scareFlashActive || !scareSprites.length || gameOver || roomCompleted) return false;
+      const sprite = chooseScene(scareSprites), generation = levelGeneration;
+      const { blackInMs, flashHoldMs, flashFadeMs, blackBlinkMs, recoverMs } = CONFIG.scare;
+      const burst = blackInMs, fadeEnd = burst + flashHoldMs + flashFadeMs;
+      const blinkEnd = fadeEnd + blackBlinkMs, duration = blinkEnd + recoverMs;
+      const at = milliseconds => milliseconds / duration;
+      const justBefore = milliseconds => at(Math.max(0, milliseconds - .01));
+      scareFlashActive = true;
+      scareAfterFlash = after;
+      scareFlashImage.src = sprite.src;
+      scareFlashWorld.hidden = false;
+      stopShutterEffect();
+      // A single exposure: fast shutter close, a harsh pulse with a short
+      // decaying tail, then the dark blink and rapid return to ambient light.
+      const black = scareFlashBlack.animate([
+        { opacity: 0, offset: 0, easing: "cubic-bezier(.2,0,.8,1)" },
+        { opacity: 1, offset: at(burst * .45) },
+        { opacity: 1, offset: justBefore(burst) }, { opacity: 0, offset: at(burst) },
+        { opacity: 0, offset: justBefore(fadeEnd) }, { opacity: 1, offset: at(fadeEnd) },
+        { opacity: 1, offset: at(blinkEnd), easing: "cubic-bezier(.1,.8,.2,1)" }, { opacity: 0, offset: 1 }
+      ], { duration, fill: "both" });
+      const pulse = [
+        { opacity: 0, offset: 0 }, { opacity: 0, offset: justBefore(burst) },
+        { opacity: 1, offset: at(burst) }, { opacity: .92, offset: at(burst + flashHoldMs) },
+        { opacity: .26, offset: at(burst + flashHoldMs + flashFadeMs * .35) },
+        { opacity: 0, offset: at(fadeEnd) }, { opacity: 0, offset: 1 }
+      ];
+      const white = scareFlashWhite.animate(pulse, { duration, fill: "both" });
+      const portrait = scareFlashImage.animate(pulse, { duration, fill: "both" });
+      scareFlashAnimations = [black, white, portrait];
+      const start = document.timeline.currentTime;
+      if (start !== null) for (const animation of scareFlashAnimations) animation.startTime = start;
+      scareSoundTimer = levelTimeout(() => { scareSoundTimer = null; playScareSound(); }, burst);
+      updateCameraControls();
+      black.finished.then(() => {
+        if (!scareFlashActive || generation !== levelGeneration) return;
+        const finish = scareAfterFlash;
+        stopScareFlash({ keepSound: true });
+        if (!gameOver && !roomCompleted) finish?.();
+      }).catch(() => {});
+      return true;
+    }
+
+    function handleMissedCameraShot(directTap = false) {
+      const lost = Math.min(batterySlotsRemaining, CONFIG.battery.missCost);
+      // A final-charge miss goes straight to the existing battery failure.
+      const selected = !directTap && lost > 0 && batterySlotsRemaining > lost && CONFIG.scare.enabled && levelIsUnlocked(CONFIG.scare.startLevel) &&
+        scareSprites.length > 0 && !scareFlashActive && Math.random() < CONFIG.scare.spawnChance;
+      if (!selected) { drainBatterySlot(); return; }
+      unlockScareSound();
+      drainBatterySlot(CONFIG.battery.missCost, { deferFailure: true });
+      const finish = () => { if (batterySlotsRemaining === 0) endGame("battery"); };
+      if (!playScareFlash(finish)) finish();
+    }
+
+    function pauseScareFlash() {
+      scareFlashWorld.hidden = true;
+      for (const animation of scareFlashAnimations) animation.pause();
+      const offset = scareSoundPlaying && scareAudio && !scareAudio.ended ? scareAudio.currentTime : scarePausedSoundTime;
+      const preparing = Boolean(scareAudioPreparing);
+      stopScareSound(); scarePausedSoundTime = offset;
+      if (preparing) scareAudioReady = false;
+    }
+
+    function resumeScareFlash() {
+      if (gameplayPaused || isPageInactive() || menuPage !== null || gameOver || roomCompleted) return;
+      if (scareFlashActive) scareFlashWorld.hidden = false;
+      for (const animation of scareFlashAnimations) if (animation.playState === "paused") animation.play();
+      if (scarePausedSoundTime !== null) playScareSound(scarePausedSoundTime);
+    }
+
     function snapCamera(targetIndex = null, point = null) {
-      if (hasShutterPress() || shutterBlackoutActive || shutterRevealing) return;
+      if (hasShutterPress() || shutterBlackoutActive || shutterRevealing || scareFlashActive) return;
       if ((isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) && point === null && batterySlotsRemaining === 0) return;
       if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
       // Check the real deadline before accepting a photo, even if a browser
@@ -5876,8 +6122,8 @@
       else if (isCurrentLetterInFrame(index)) {
         const tile = tiles[index];
         selectLetter(tile.dataset.letter, index, tile, { directTap: point !== null });
-      } else drainBatterySlot();
-      if (!gameOver) playShutterEffect();
+      } else handleMissedCameraShot(point !== null);
+      if (!gameOver && !scareFlashActive) playShutterEffect();
     }
 
     function updateBatteryUI() {
@@ -6000,6 +6246,7 @@
     }
 
     function beginShutterPress() {
+      if (scareFlashActive) return;
       shutterPressStartedAt = performance.now();
       shutterHoldUsed = false;
       snapButton.classList.add("held");
@@ -6287,7 +6534,7 @@
       const hints = captures.filter(actor => !actor.frozen);
       const capturesLetter = isCurrentLetterInFrame(letter);
       if (!capturesLetter && !captures.length) {
-        drainBatterySlot();
+        handleMissedCameraShot(directTap);
         return;
       }
       wakeFrozenButterflies(frozen);
@@ -6679,6 +6926,7 @@
       else if (isButterflyArea()) startEndlessButterflies();
       resumeSpiderEncounter();
       resumeCrowEncounter();
+      resumeScareFlash();
       scheduleAnomalyCheck();
       if (spiderTimer === null && !spiderActive) scheduleSpiderCheck();
       if (handTimer === null && !handVisible) scheduleNextHandCheck();
@@ -6700,6 +6948,8 @@
       pauseSpiderEncounter();
       if (roomCompleted) stopCrowEncounter();
       else pauseCrowEncounter();
+      if (roomCompleted) stopScareFlash();
+      else pauseScareFlash();
       finishPanGesture();
       finishShutterGesture();
       if (roomCompleted) recordRoomCompletion();
@@ -7744,6 +7994,39 @@
       stopSpiderSound();
     }
 
+    const roomAnomalyPlans = new Map();
+
+    function planRoomAnomalies() {
+      const variant = unlockedAnomalyVariants().find(item => !item.foreground);
+      if (!variant) return;
+      for (const room of levelRooms) {
+        const number = room.scene.number;
+        if (roomAnomalyPlans.has(number) || variant.rules.allowedRooms !== "all" && !variant.rules.allowedRooms.includes(number)) continue;
+        const selected = Math.random() < variant.rules.spawnChance;
+        roomAnomalyPlans.set(number, { selected, used: false, nextTryAt: 0,
+          fraction: variant.rules.roomMinFraction + Math.random() * (variant.rules.roomMaxFraction - variant.rules.roomMinFraction) });
+      }
+    }
+
+    async function maybeSpawnRoomAnomaly() {
+      if (!gameplayStarted || cameraStartedAt === null || gameplayPaused || isPageInactive() || menuPage !== null ||
+          endlessIntermission || gameOver || roomCompleted || anomalyActive || anomalyChecking) return;
+      planRoomAnomalies();
+      const room = levelRooms[activeRoomIndex], plan = roomAnomalyPlans.get(room?.scene.number);
+      if (!plan?.selected || plan.used) return;
+      const elapsed = Math.max(0, performance.now() - cameraStartedAt);
+      if (elapsed < (ROOM_TIME_LIMIT_MS + cameraBonusMs) * plan.fraction || elapsed < plan.nextTryAt) return;
+      const variant = unlockedAnomalyVariants().find(item => !item.foreground);
+      if (!variant) return;
+      plan.nextTryAt = elapsed + CONFIG.anomaly.placementRetryMs;
+      const generation = levelGeneration;
+      anomalyChecking = true;
+      try {
+        if (await spawnAnomalyOffscreen([variant], activeRoomIndex)) plan.used = true;
+      } catch (error) { console.warn("Could not place the room anomaly.", error); }
+      finally { if (generation === levelGeneration) anomalyChecking = false; }
+    }
+
     function unlockedAnomalyVariants() {
       if (completedWordCount < anomalyWordThreshold()) return [];
       return [
@@ -7755,18 +8038,18 @@
 
     function scheduleAnomalyCheck(delay = CONFIG.anomaly.checkMs) {
       if (anomalyTimer !== null || anomalyChecking || !gameplayStarted || anomalyActive || gameOver || roomCompleted ||
-          !unlockedAnomalyVariants().length) return;
+          !unlockedAnomalyVariants().some(variant => variant.foreground)) return;
       const generation = levelGeneration;
       anomalyTimer = levelTimeout(async () => {
         anomalyTimer = null;
         if (anomalyActive || gameOver || roomCompleted) return;
-        const unlocked = unlockedAnomalyVariants();
+        const unlocked = unlockedAnomalyVariants().filter(variant => variant.foreground);
         const otherRooms = isEndlessButterflies() ? Array.from({ length: levelRooms.length - 1 }, (_, step) =>
           (activeRoomIndex + step + 1) % levelRooms.length) : [];
         const targets = [...otherRooms, activeRoomIndex].map(index => ({ index, variants: unlocked.filter(({ rules }) =>
           rules.allowedRooms === "all" || rules.allowedRooms.includes(levelRooms[index].scene.number)) })).filter(target => target.variants.length);
-        // One roll shared by the two original variants.
-        if (!targets.length || Math.random() >= CONFIG.anomaly.spawnChance) {
+        // Anomaly 1 has its own single room roll; only anomaly 2 uses these checks.
+        if (!targets.length || Math.random() >= CONFIG.anomaly2.spawnChance) {
           scheduleAnomalyCheck();
           return;
         }
@@ -7923,6 +8206,7 @@
     function beginGameOver(reason) {
       if (gameOver || roomCompleted) return false;
       gameOver = true;
+      stopScareFlash();
       stopCrowEncounter();
       stopSurveillanceScan();
       if (usesButterflyMotion()) clearEndlessButterflies();
@@ -8036,6 +8320,7 @@
     }
 
     function showResultsScreen() {
+      stopScareFlash();
       stopCrowEncounter();
       viewport.classList.add("scene-blackout");
       gameOverScreen.classList.add("show");
@@ -8319,6 +8604,7 @@
       if (usesButterflyMotion()) pauseEndlessButterflyMotion();
       pauseSpiderEncounter();
       pauseCrowEncounter();
+      pauseScareFlash();
       dollRetreatAnimation?.pause();
       if (cancelPreparation) cancelMenuPrimer?.();
       for (const room of roomMediaPool) {
@@ -8343,6 +8629,7 @@
         showCurrentLetter({ animate: false });
         if (!endlessIntermission) resumeSpiderEncounter();
         if (!endlessIntermission) resumeCrowEncounter();
+        if (!endlessIntermission) resumeScareFlash();
       }
       if (dollRetreatAnimation?.playState === "paused") dollRetreatAnimation.play();
       pendingScareCentre?.();
@@ -8428,6 +8715,7 @@
           if (gesture) {
             unmuteParkedScares();
             unlockCrowSound({ refreshAudio });
+            unlockScareSound({ refreshAudio });
             if (pausedSpiderSoundOffset !== null) {
               if (!endlessIntermission) resumePausedSpiderSound({ fromResumeTap: true });
             }
@@ -9070,6 +9358,8 @@
       // Cover the viewport before removing anything from the outgoing scene.
       loadingScreen.classList.remove("hidden");
       levelGeneration++;
+      stopScareFlash();
+      if (!rotateEndlessRooms) roomAnomalyPlans.clear();
       resetCrowEncounter();
       spiderAppearedThisLevel = false;
       areaFrozenUsed = false;
@@ -10703,7 +10993,7 @@
       }
       if (!captures.length) {
         butterflyTapAt = null; butterflyBatteryCombo = null;
-        drainBatterySlot(); return;
+        handleMissedCameraShot(directTap); return;
       }
       const frozen = captures.filter(target => target.frozen);
       const caught = captures.filter(target => !target.frozen);
@@ -10767,7 +11057,7 @@
       const frame = viewport.getBoundingClientRect();
       if (!endlessButterflyInFrame(actor, frame)) {
         butterflyTapAt = null;
-        drainBatterySlot();
+        handleMissedCameraShot(directTap);
         return;
       }
       const now = performance.now();
