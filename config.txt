@@ -353,8 +353,8 @@ arabicFilePattern = "room_{number}_ar.txt"
 tapRadiusPx = 28
 
 # Optional crow flyby: one 10% roll per eligible area attempt; at most one flyby.
-# imageScale multiplies the image's NATIVE size. 0.5 = 50%; the supplied
-# 313x313 GIF is displayed at 156.5x156.5 CSS pixels, flying left to right.
+# imageScale multiplies the image's NATIVE size. 0.75 = 75%; the supplied
+# 313x313 GIF is displayed at 234.75x234.75 CSS pixels, flying left to right.
 # Timing uses a fraction of the clock including earned time, usually after halfway.
 # Sound begins on entry. The scene blurs; UI and crow stay sharp.
 # The crow is above all scene/UI layers, with only the hand above it.
@@ -362,7 +362,7 @@ tapRadiusPx = 28
 enabled = true
 startLevel = 5
 spawnChance = 0.10
-imageScale = 0.5
+imageScale = 0.75
 flightMs = 325
 # 85% of selected flybys use the late window; the rest use the earlier window.
 afterHalfChance = 0.85
