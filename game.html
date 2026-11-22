@@ -909,13 +909,12 @@
 
     #scareFlashWorld { position: absolute; inset: 0; z-index: 350; overflow: hidden; pointer-events: none; }
     #scareFlashWorld[hidden] { display: none; }
-    #scareFlashBlack, #scareFlashWhite { position: absolute; inset: 0; opacity: 0; }
+    #scareFlashBlack { position: absolute; inset: 0; }
     #scareFlashBlack { background: #000; }
-    #scareFlashWhite { background: #fff; }
     #scareFlashImage {
       position: absolute; left: 50%; top: 50%; height: 100%; width: auto;
       max-width: none; max-height: none; transform: translate(-50%, -50%);
-      opacity: 0; pointer-events: none;
+      pointer-events: none;
     }
 
     .jumpscare-video {
@@ -1460,7 +1459,7 @@
 
       <div id="blackFlash" aria-hidden="true"></div>
       <div id="scareFlashWorld" aria-hidden="true" hidden>
-        <div id="scareFlashBlack"></div><div id="scareFlashWhite"></div>
+        <div id="scareFlashBlack"></div>
         <img id="scareFlashImage" alt="" draggable="false" />
       </div>
       <video id="jumpscareVideo" class="jumpscare-video" preload="auto" muted playsinline></video>
@@ -1862,11 +1861,7 @@
     "enabled": true,
     "startLevel": 7,
     "spawnChance": 0.1,
-    "blackInMs": 24,
-    "flashHoldMs": 26,
-    "flashFadeMs": 84,
-    "blackBlinkMs": 24,
-    "recoverMs": 44,
+    "fadeMs": 1000,
     "volume": 1
   },
   "frozenButterfly": {
@@ -2518,8 +2513,7 @@
       "crow.startLevel": [1, 1000000001, true], "crow.imageScale": [0.05, 2], "crow.flightMs": [200, 5000, true],
       "crow.blurPx": [0, 20], "crow.blurFadeMs": [1, 2000, true], "crow.blurRecoverMs": [1, 2000, true],
       "scare.startLevel": [1, 1000000001, true],
-      "scare.blackInMs": [1, 250, true], "scare.flashHoldMs": [1, 250, true], "scare.flashFadeMs": [1, 500, true],
-      "scare.blackBlinkMs": [1, 250, true], "scare.recoverMs": [1, 500, true],
+      "scare.fadeMs": [100, 10000, true],
       "anomaly.roomMinFraction": [0.5, 0.98], "anomaly.roomMaxFraction": [0.5, 0.98],
       "anomaly.placementRetryMs": [100, 15000, true],
       "hiddenObjects.tapRadiusPx": [4, 80]
@@ -2678,6 +2672,8 @@
       if (!values.size) throw new Error("No config settings were found.");
       const resolved = JSON.parse(JSON.stringify(CONFIG_DEFAULTS)), warnings = [];
       for (const [path, value] of values) {
+        // Accept older config files while replacing their white-flash timings.
+        if (/^scare\.(blackInMs|flashHoldMs|flashFadeMs|blackBlinkMs|recoverMs)$/.test(path)) continue;
         const fallback = configLeaf(path);
         if (fallback === undefined) { warnings.push(`Unknown setting: ${path}`); continue; }
         if (!configValueIsValid(path, value, fallback)) { warnings.push(`Default used for invalid ${path}`); continue; }
@@ -5897,10 +5893,9 @@
 
     const scareFlashWorld = document.getElementById("scareFlashWorld");
     const scareFlashBlack = document.getElementById("scareFlashBlack");
-    const scareFlashWhite = document.getElementById("scareFlashWhite");
     const scareFlashImage = document.getElementById("scareFlashImage");
     let scareSprites = [], scareSpriteLoad = null, scareAssetsRun = 0;
-    let scareFlashActive = false, scareFlashAnimations = [], scareAfterFlash = null, scareSoundTimer = null;
+    let scareFlashActive = false, scareFlashAnimations = [], scareAfterFlash = null;
     let scareAudio = null, scareAudioSource = "", scareAudioReady = false, scareAudioPreparing = null;
     let scareSoundPlaying = false, scareSoundRun = 0, scarePausedSoundTime = null;
 
@@ -6014,7 +6009,6 @@
     function stopScareFlash({ keepSound = false } = {}) {
       scareFlashActive = false;
       scareAfterFlash = null;
-      clearLevelTimeout(scareSoundTimer); scareSoundTimer = null;
       for (const animation of scareFlashAnimations) animation.cancel();
       scareFlashAnimations = [];
       scareFlashWorld.hidden = true;
@@ -6025,39 +6019,21 @@
     function playScareFlash(after = null) {
       if (scareFlashActive || !scareSprites.length || gameOver || roomCompleted) return false;
       const sprite = chooseScene(scareSprites), generation = levelGeneration;
-      const { blackInMs, flashHoldMs, flashFadeMs, blackBlinkMs, recoverMs } = CONFIG.scare;
-      const burst = blackInMs, fadeEnd = burst + flashHoldMs + flashFadeMs;
-      const blinkEnd = fadeEnd + blackBlinkMs, duration = blinkEnd + recoverMs;
-      const at = milliseconds => milliseconds / duration;
-      const justBefore = milliseconds => at(Math.max(0, milliseconds - .01));
       scareFlashActive = true;
       scareAfterFlash = after;
       scareFlashImage.src = sprite.src;
       scareFlashWorld.hidden = false;
       stopShutterEffect();
-      // A single exposure: fast shutter close, a harsh pulse with a short
-      // decaying tail, then the dark blink and rapid return to ambient light.
-      const black = scareFlashBlack.animate([
-        { opacity: 0, offset: 0, easing: "cubic-bezier(.2,0,.8,1)" },
-        { opacity: 1, offset: at(burst * .45) },
-        { opacity: 1, offset: justBefore(burst) }, { opacity: 0, offset: at(burst) },
-        { opacity: 0, offset: justBefore(fadeEnd) }, { opacity: 1, offset: at(fadeEnd) },
-        { opacity: 1, offset: at(blinkEnd), easing: "cubic-bezier(.1,.8,.2,1)" }, { opacity: 0, offset: 1 }
-      ], { duration, fill: "both" });
-      const pulse = [
-        { opacity: 0, offset: 0 }, { opacity: 0, offset: justBefore(burst) },
-        { opacity: 1, offset: at(burst) }, { opacity: .92, offset: at(burst + flashHoldMs) },
-        { opacity: .26, offset: at(burst + flashHoldMs + flashFadeMs * .35) },
-        { opacity: 0, offset: at(fadeEnd) }, { opacity: 0, offset: 1 }
-      ];
-      const white = scareFlashWhite.animate(pulse, { duration, fill: "both" });
-      const portrait = scareFlashImage.animate(pulse, { duration, fill: "both" });
-      scareFlashAnimations = [black, white, portrait];
+      // Reveal a fully opaque portrait on black immediately, then fade the
+      // whole composition together so both layers reveal the room evenly.
+      const exposure = scareFlashWorld.animate([{ opacity: 1 }, { opacity: 0 }],
+        { duration: CONFIG.scare.fadeMs, easing: "linear", fill: "both" });
+      scareFlashAnimations = [exposure];
       const start = document.timeline.currentTime;
       if (start !== null) for (const animation of scareFlashAnimations) animation.startTime = start;
-      scareSoundTimer = levelTimeout(() => { scareSoundTimer = null; playScareSound(); }, burst);
+      playScareSound();
       updateCameraControls();
-      black.finished.then(() => {
+      exposure.finished.then(() => {
         if (!scareFlashActive || generation !== levelGeneration) return;
         const finish = scareAfterFlash;
         stopScareFlash({ keepSound: true });

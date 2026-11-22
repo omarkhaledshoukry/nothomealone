@@ -379,18 +379,15 @@ blurFadeMs = 100
 blurRecoverMs = 180
 volume = 1
 
-# Brief camera scare on a missed SHUTTER exposure that actually consumes battery.
-# One independent 10% roll per miss from Area 7; successful shots, scene taps and holds do not roll.
-# Times form one black close -> white portrait flash -> black blink -> recovery sequence.
+# Scare on a missed SHUTTER exposure that consumes battery and leaves a charge.
+# One independent 10% roll per eligible miss from Area 7; final-charge misses skip it.
+# The portrait appears immediately against black; both fade together back to the room.
 [scare]
 enabled = true
 startLevel = 7
 spawnChance = 0.10
-blackInMs = 24
-flashHoldMs = 26
-flashFadeMs = 84
-blackBlinkMs = 24
-recoverMs = 44
+# Duration in milliseconds: 1000 = one second.
+fadeMs = 1000
 volume = 1
 
 # Encounter timing applies only to surveillanceButterflyRush. Durations are milliseconds.
