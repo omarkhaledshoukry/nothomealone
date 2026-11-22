@@ -974,7 +974,7 @@ rightScreenDimOpacity = 1
 startButtonRaisePx = 40
 
 [menu.en]
-start = "START"
+start = "TAP"
 play = "PLAY"
 settings = "SETTINGS"
 story = "STORY"
