@@ -62,6 +62,8 @@ code = "en"
 
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
+# Optional room-numbered job sentences, beside game.html.
+jobsFile = "jobs.txt"
 # Arabic paper text and collected letters only; scene letters keep arabicFontFile.
 arabicPaperFontFile = "Arabic-Font.otf"
 arabicWordsFile = "words_ar.txt"
@@ -313,6 +315,8 @@ initialButterflies = 0
 
 # Only active type: item hunts, equally likely manual or surveillance camera.
 [levels.hiddenObjectHunt]
+# Two consecutive correct shutter captures within comboWindowMs award this bonus.
+shutterComboBonusSeconds = 5
 chance = 1
 startLevel = 1
 wordCount = 1
@@ -899,17 +903,17 @@ retryFontVh = 3
 
 # Plain text only. Placeholders: clueFormat {current}/{total}; roomFormat {number}; puzzleLevelFormat {title}/{number}.
 [text]
-hunt = "HINT"
+hunt = "TASK"
 exit = "EXIT"
 # Used for both languages; the title is selected below and Arabic uses Arabic digits.
 puzzleLevelFormat = "{title} #{number}"
-hint = "HINT"
-puzzleTitle = "Area"
+hint = "TASK"
+puzzleTitle = "Job"
 # Instruction on fly-catching area papers.
 catchFliesInstruction = "catch the flies"
 catchFliesInstructionAr = "التقط الفراشات"
 # Used on the paper only when language.code="ar".
-puzzleTitleAr = "المنطقة"
+puzzleTitleAr = "المهمة"
 previousRoom = "PREV"
 nextRoom = "NEXT"
 clueFormat = "{current}/{total}"
@@ -963,7 +967,9 @@ loadTimeoutMs = 6000
 
 # Home screen copy. A saved Settings language overrides [language].code.
 [menu]
-title = "Maid in Hell"
+# Quick fade between menu screens, including New Game and Continue.
+fadeMs = 120
+title = "Housemaid in Hell"
 # Multiplier for menu titles and buttons, before the selected-button highlight.
 textScale = 1.2
 # How long Start takes to pan home.png to the right edge; 0 skips the pan.
@@ -977,11 +983,11 @@ startButtonRaisePx = 0
 
 [menu.en]
 start = "TAP"
-play = "PLAY"
+play = "CONTINUE"
 settings = "SETTINGS"
 story = "STORY"
 how = "HOW TO PLAY"
-clear = "CLEAR DATA"
+clear = "NEW GAME"
 cleared = "DATA CLEARED"
 language = "LANGUAGE"
 back = "Back"
@@ -998,15 +1004,15 @@ storyText = "You came to clean the house. Something else is already here. Throug
 
 butterflyAreaHowText = "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 butterflyRushHowText = "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI."
-hiddenObjectHowText = "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
+hiddenObjectHowText = "Read the job and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two successful shutter captures within two seconds add five seconds. Two quick successful item taps add two seconds. Hold TASK to read your job again. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
 
 [menu.ar]
 start = "ابدأ"
-play = "ابدأ اللعب"
+play = "متابعة"
 settings = "الإعدادات"
 story = "القصة"
 how = "طريقة اللعب"
-clear = "مسح البيانات"
+clear = "لعبة جديدة"
 cleared = "تم مسح البيانات"
 language = "اللغة"
 back = "رجوع"
@@ -1023,5 +1029,5 @@ storyText = "جئت لتنظيف المنزل… لكنك لست وحدك. عب�
 
 butterflyAreaHowText = "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
 butterflyRushHowText = "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة."
-hiddenObjectHowText = "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
+hiddenObjectHowText = "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. تصوير شيئين صحيحين بزر التصوير خلال ثانيتين يضيف خمس ثوانٍ. لمس شيئين صحيحين بسرعة يضيف ثانيتين. اضغط مطولًا على TASK لقراءة المهمة مجددًا. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
 

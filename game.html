@@ -1166,7 +1166,7 @@
     html.menu-open, html.menu-open body, #menuShell { touch-action: pan-y; }
     #homeBackdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
     #homeBackdrop::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, #0005, #000a 33%, #000a 70%, #0005); opacity: 0; transition: opacity 220ms ease; }
-    #homePoster { position: absolute; top: 0; left: 0; height: 100%; width: auto; min-width: 100%; object-fit: cover; transform: translate3d(var(--home-pan-x, 0px), 0, 0); }
+    #homePoster { position: absolute; top: 0; left: 0; height: 100%; width: auto; min-width: 100%; object-fit: cover; transform: translate3d(var(--home-pan-x, 0px), 0, 0); transition: transform var(--home-pan-ms, 650ms) cubic-bezier(.16,.72,.22,1); }
     #menuShell[data-poster-position="left"] #homePoster { transform: translate3d(0, 0, 0); }
     #menuShell[data-poster-position="center"] #homePoster { transform: translate3d(calc(var(--home-pan-x, 0px) / 2), 0, 0); }
     #menuShell[data-poster-position="center"] #homeBackdrop::after { opacity: 1; }
@@ -1190,6 +1190,7 @@
     .menu-button[data-selected] > .menu-label, .menu-back[data-selected] > svg { transform: scale(1.08); }
     @media (prefers-reduced-motion: reduce) {
       .menu-button > .menu-label, .menu-back > svg { transition: none; }
+      #homePoster { transition: none; }
     }
     .home-actions > button, .language-choices > button, .paper-actions > button { animation-delay: calc(var(--jitter-phase, 0) * var(--menu-jitter-stagger, 75ms)); }
     .home-actions > :nth-child(2), .language-choices > :nth-child(2), .paper-actions > :nth-child(2) { --jitter-phase: -1; }
@@ -1197,6 +1198,8 @@
     .home-actions > :nth-child(4) { --jitter-phase: -3; }
     .home-actions > :nth-child(5) { --jitter-phase: -4; }
     .menu-button:disabled { opacity: .45; cursor: default; }
+    #homePlayButton:disabled { color: #888; -webkit-text-fill-color: #888; animation: none; }
+    #homePlayButton:disabled > .menu-label { transform: none; font-weight: 400; text-decoration: none; }
     .language-choices [aria-pressed="true"] > .menu-label,
     .home-actions [data-selected] > .menu-label { font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
     .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; animation-duration: .487s; animation-delay: -.055s; }
@@ -1476,16 +1479,16 @@
     <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro" data-poster-position="left">
       <div id="homeBackdrop" aria-hidden="true"><img id="homePoster" src="./home.png" alt="" draggable="false" fetchpriority="high" /></div>
       <div id="introPage" class="menu-page">
-        <button id="homeStartButton" class="menu-button" type="button"><span class="menu-label">START</span></button>
+        <button id="homeStartButton" class="menu-button" type="button"><span class="menu-label">TAP</span></button>
       </div>
       <div id="homePage" class="menu-page" hidden>
         <button id="homeBackButton" class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <nav class="home-actions" aria-label="Main menu">
-          <button id="homePlayButton" class="menu-button" type="button"><span class="menu-label">PLAY</span></button>
+          <button id="homeClearButton" class="menu-button" type="button"><span class="menu-label">NEW GAME</span></button>
+          <button id="homePlayButton" class="menu-button" type="button" disabled><span class="menu-label">CONTINUE</span></button>
           <button id="homeSettingsButton" class="menu-button" type="button"><span class="menu-label">SETTINGS</span></button>
           <button id="homeStoryButton" class="menu-button" type="button"><span class="menu-label">STORY</span></button>
           <button id="homeHowButton" class="menu-button" type="button"><span class="menu-label">HOW TO PLAY</span></button>
-          <button id="homeClearButton" class="menu-button" type="button"><span class="menu-label">CLEAR DATA</span></button>
         </nav>
         <p id="homeNotice" role="status" aria-live="polite"></p>
       </div>
@@ -1557,7 +1560,8 @@
     "arabicPuzzlesFile": "puzzles_ar.txt",
     "arabicPaperFontFile": "Arabic-Font.otf",
     "butterflyFile": "butterfly.gif",
-    "butterflyFiles": []
+    "butterflyFiles": [],
+    "jobsFile": "jobs.txt"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -1838,7 +1842,8 @@
       "surveillanceTargetMaxMultiplier": 0.5,
       "flyingLetters": false,
       "evadesCamera": false,
-      "decoyLetterChance": 0
+      "decoyLetterChance": 0,
+      "shutterComboBonusSeconds": 5
     }
   },
   "crow": {
@@ -2171,10 +2176,10 @@
     "playAgain": "TAP TO PLAY AGAIN",
     "previousRoom": "PREV",
     "nextRoom": "NEXT",
-    "hint": "HINT",
-    "puzzleTitle": "Area",
-    "puzzleTitleAr": "المنطقة",
-    "hunt": "CASE",
+    "hint": "TASK",
+    "puzzleTitle": "Job",
+    "puzzleTitleAr": "المهمة",
+    "hunt": "TASK",
     "exit": "EXIT",
     "puzzleLevelFormat": "{title} #{number}",
     "prepareMedia": "TAP",
@@ -2340,14 +2345,14 @@
     "panMs": 650,
     "jitterStaggerMs": 75,
     "rightScreenDimOpacity": 1,
-    "startButtonRaisePx": 24,
+    "startButtonRaisePx": 0,
     "en": {
-      "start": "START",
-      "play": "PLAY",
+      "start": "TAP",
+      "play": "CONTINUE",
       "settings": "SETTINGS",
       "story": "STORY",
       "how": "HOW TO PLAY",
-      "clear": "CLEAR DATA",
+      "clear": "NEW GAME",
       "cleared": "DATA CLEARED",
       "language": "LANGUAGE",
       "back": "Back",
@@ -2363,15 +2368,15 @@
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
-      "hiddenObjectHowText": "Read the paper and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two quick successful item taps add two seconds. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
+      "hiddenObjectHowText": "Read the job and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two successful shutter captures within two seconds add five seconds. Two quick successful item taps add two seconds. Hold TASK to read your job again. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
     },
     "ar": {
       "start": "ابدأ",
-      "play": "ابدأ اللعب",
+      "play": "متابعة",
       "settings": "الإعدادات",
       "story": "القصة",
       "how": "طريقة اللعب",
-      "clear": "مسح البيانات",
+      "clear": "لعبة جديدة",
       "cleared": "تم مسح البيانات",
       "language": "اللغة",
       "back": "رجوع",
@@ -2387,8 +2392,9 @@
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
-      "hiddenObjectHowText": "اقرأ الورقة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. لمس شيئين صحيحين بسرعة يضيف ثانيتين. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
-    }
+      "hiddenObjectHowText": "اقرأ المهمة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. تصوير شيئين صحيحين بزر التصوير خلال ثانيتين يضيف خمس ثوانٍ. لمس شيئين صحيحين بسرعة يضيف ثانيتين. اضغط مطولًا على TASK لقراءة المهمة مجددًا. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
+    },
+    "fadeMs": 120
   },
   "surveillance": {
     "enabled": true,
@@ -2513,6 +2519,7 @@
       "levels.hiddenObjectHunt.itemTargetMax": [1, 10000, true],
       "levels.hiddenObjectHunt.surveillanceTargetMaxMultiplier": [0.01, 1],
       "levels.hiddenObjectHunt.tapTimeBonusSeconds": [0, 600, true], "levels.hiddenObjectHunt.comboWindowMs": [100, 10000, true],
+      "levels.hiddenObjectHunt.shutterComboBonusSeconds": [0, 600, true],
       "crow.startLevel": [1, 1000000001, true], "crow.imageScale": [0.05, 2], "crow.flightMs": [200, 5000, true],
       "crow.blurPx": [0, 20], "crow.blurFadeMs": [1, 2000, true], "crow.blurRecoverMs": [1, 2000, true],
       "scare.startLevel": [1, 1000000001, true],
@@ -2544,6 +2551,8 @@
     let homeBootPromise = Promise.resolve();
     let homePlayPending = null;
     let menuActionPending = null;
+    let menuTransitionPending = null, menuTransitionRun = 0, menuFadeAnimation = null;
+    let menuMotionFrame = null, homeBootReady = false, menuContinueAvailable = false, continueProbeRun = 0;
     let pageParked = false;
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
@@ -2566,7 +2575,7 @@
 
     Object.assign(CONFIG_LIMITS, {
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
-      "menu.panMs": [0, 3000, true], "menu.jitterStaggerMs": [0, 99, true],
+      "menu.panMs": [0, 3000, true], "menu.fadeMs": [0, 1000, true], "menu.jitterStaggerMs": [0, 99, true],
       "menu.rightScreenDimOpacity": [0, 1], "menu.startButtonRaisePx": [-600, 600, true],
       "ui.textScale": [.75, 2.5], "puzzles.paperTextScale": [.75, 2.5], "menu.textScale": [.75, 2.5],
       "levels.puzzleEndless.timeBonusSeconds": [1, 600, true],
@@ -3189,7 +3198,8 @@
     const objectTarget = document.getElementById("objectTarget");
     const cameraClock = document.getElementById("cameraClock");
     let hiddenObjectGroups = new Map(), hiddenObjectSource = "";
-    let hiddenObjectScore = 0, hiddenObjectGoal = 0, hiddenObjectTapAt = null;
+    let hiddenObjectScore = 0, hiddenObjectGoal = 0, hiddenObjectTapAt = null, hiddenObjectShutterAt = null;
+    let jobsFilePromise = null;
     let areaFrozenUsed = false;
     let puzzleFilePromise = null;
     let endlessRunPuzzles = null;
@@ -4180,6 +4190,7 @@
       stopScareFlash();
       levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
       roomGroupsPromise = puzzleFilePromise = null;
+      jobsFilePromise = null;
       butterflySpriteLoad = null;
       listedSceneProbes.clear();
       dollFiles.clear();
@@ -4555,6 +4566,38 @@
       throw new Error(`No unlocked room has a usable object list. Add matching room_N media, jumpscare_N media and ${hiddenObjectFilename("N")} in ${CONFIG.assets.levelsDirectory}, or check the room unlock settings.`);
     }
 
+    function parseJobList(text) {
+      if (typeof text !== "string" || text.length > 2097152 || /<(?:!doctype|html|head|body)\b/i.test(text)) throw new Error("Invalid jobs.txt.");
+      const batches = new Map();
+      let room = null;
+      for (const raw of text.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+        const line = raw.trim();
+        if (!line) continue;
+        if (/^\d+$/.test(line)) {
+          room = Number(line);
+          if (!Number.isSafeInteger(room) || room < 1) throw new Error("Invalid job room number.");
+          if (!batches.has(room)) batches.set(room, []);
+        } else {
+          if (room === null || line.length > 2048) throw new Error("Invalid job sentence.");
+          if (!batches.get(room).includes(line)) batches.get(room).push(line);
+        }
+      }
+      return batches;
+    }
+
+    function loadJobBatches() {
+      if (jobsFilePromise) return jobsFilePromise;
+      jobsFilePromise = (async () => {
+        const text = localFolderImport ? localFolderImport.jobsText :
+          await fetchLevelResource(new URL(CONFIG.assets.jobsFile, document.baseURI), {}, response => {
+            if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error("No readable jobs.txt.");
+            return response.text();
+          });
+        return parseJobList(text);
+      })().catch(() => new Map());
+      return jobsFilePromise;
+    }
+
     async function planHiddenObjectHunt(catalog) {
       const saved = staticHuntEntry();
       let entry = saved?.mode === "hiddenObjectHunt" ? saved : null;
@@ -4591,9 +4634,14 @@
       }
       hiddenObjectGroups = data.groups;
       hiddenObjectSource = data.source;
+      if (!entry.jobPrompt) {
+        const batch = (await loadJobBatches()).get(scene.number);
+        if (batch?.length) entry.jobPrompt = chooseScene(batch);
+      }
       progressState.staticRiddleHunt = entry;
       saveProgress();
-      return { puzzle: { prompt: isArabic() ? CONFIG.text.findItemsInstructionAr : CONFIG.text.findItemsInstruction, answer: "" },
+      return { puzzle: { prompt: entry.jobPrompt || (isArabic() ? CONFIG.text.findItemsInstructionAr : CONFIG.text.findItemsInstruction), answer: "",
+          promptLanguage: entry.jobPrompt ? /[\u0600-\u06ff]/.test(entry.jobPrompt) ? "ar" : "en" : CONFIG.language.code },
         scenes: [scene], line: null, data: null };
     }
 
@@ -4694,7 +4742,7 @@
       }
       const correct = point ? hiddenObjectTapIsValid(point) : hiddenObjectIsInView();
       if (!correct) {
-        hiddenObjectTapAt = null;
+        hiddenObjectTapAt = hiddenObjectShutterAt = null;
         handleMissedCameraShot(Boolean(point));
         return;
       }
@@ -4702,9 +4750,12 @@
       hiddenObjectScore++;
       selectedCount = hiddenObjectScore;
       const now = performance.now();
-      const combo = point && hiddenObjectTapAt !== null && now - hiddenObjectTapAt <= levelType.comboWindowMs;
-      hiddenObjectTapAt = point && !combo ? now : null;
-      if (combo && levelType.tapTimeBonusSeconds) addCameraTimeBonus(levelType.tapTimeBonusSeconds);
+      const tapCombo = point && hiddenObjectTapAt !== null && now - hiddenObjectTapAt <= levelType.comboWindowMs;
+      const shutterCombo = !point && hiddenObjectShutterAt !== null && now - hiddenObjectShutterAt <= levelType.comboWindowMs;
+      hiddenObjectTapAt = point && !tapCombo ? now : null;
+      hiddenObjectShutterAt = !point && !shutterCombo ? now : null;
+      const bonus = shutterCombo ? levelType.shutterComboBonusSeconds : tapCombo ? levelType.tapTimeBonusSeconds : 0;
+      if (bonus) addCameraTimeBonus(bonus);
       if (hiddenObjectScore === hiddenObjectGoal) completeStaticHuntRiddle(0);
       else {
         updateCameraControls();
@@ -4840,7 +4891,7 @@
         letterWorld.replaceChildren(); wordDisplay.replaceChildren();
         if (isHiddenObjectHunt()) {
           hiddenObjectGoal = staticHuntEntry().target;
-          hiddenObjectScore = 0; hiddenObjectTapAt = null;
+          hiddenObjectScore = 0; hiddenObjectTapAt = hiddenObjectShutterAt = null;
         } else butterflyRoomGoal = staticHuntEntry().target;
         butterflyScore = selectedCount = 0;
         wordsReadyForClue = true;
@@ -5054,6 +5105,11 @@
         }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
         const scareFiles = [...entries.keys()].filter(path => !path.includes("/") && isScareSpritePath(path));
+        let jobsText = null;
+        try {
+          const jobsFile = find(selectedFolderPath(selectedConfig.assets.jobsFile));
+          if (jobsFile && jobsFile.size <= 2097152) { jobsText = await jobsFile.text(); parseJobList(jobsText); }
+        } catch { jobsText = null; }
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
         for (const language of ["en", "ar"]) {
           if (language === selectedConfig.language.code) continue;
@@ -5069,7 +5125,7 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText };
         rememberLocalFiles(data);
         await initializeGame(data);
       } catch (error) {
@@ -5227,7 +5283,15 @@
       clueList.hidden = isPuzzleLevel();
       puzzleText.hidden = !isPuzzleLevel();
       puzzleText.textContent = isPuzzleLevel() ? currentPuzzle.prompt : "";
-      puzzleText.lang = CONFIG.language.code;
+      const promptLanguage = currentPuzzle?.promptLanguage || CONFIG.language.code;
+      puzzleText.lang = promptLanguage;
+      puzzleText.dir = promptLanguage === "ar" ? "rtl" : "ltr";
+      const mixedLanguage = promptLanguage !== CONFIG.language.code;
+      puzzleText.style.direction = mixedLanguage ? promptLanguage === "ar" ? "rtl" : "ltr" : "";
+      puzzleText.style.textAlign = mixedLanguage ? promptLanguage === "ar" ? "right" : "left" : "";
+      puzzleText.style.fontFamily = mixedLanguage ? promptLanguage === "ar" ?
+        '"Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif' :
+        '"Dudu Calligraphy", "Segoe Print", "Bradley Hand", cursive' : "";
       const title = document.getElementById("clueTitle");
       title.textContent = isPuzzleLevel() ? puzzlePaperHeading() : CONFIG.text.clueTitle;
       title.lang = isPuzzleLevel() && isArabic() ? "ar" : "en";
@@ -8698,6 +8762,7 @@
     }
 
     function pauseLevelActivity({ cancelPreparation = false } = {}) {
+      hiddenObjectTapAt = hiddenObjectShutterAt = null;
       ++playbackRevision;
       levelResumePending = null;
       gameplayPaused = true;
@@ -9252,6 +9317,9 @@
         progress.staticRiddleHunt = { level: hunt.level, mode: hunt.mode, room: hunt.room, target: hunt.target,
           targetRule: typeof hunt.targetRule === "string" && /^\d+:\d+:\d+(?::\d+)?$/.test(hunt.targetRule) ? hunt.targetRule : null,
           order: [...hunt.order], surveillance: Boolean(hunt.surveillance), flying: false, frozen: false };
+        if (typeof hunt.jobPrompt === "string" && hunt.jobPrompt.trim() && hunt.jobPrompt.length <= 2048) {
+          progress.staticRiddleHunt.jobPrompt = hunt.jobPrompt;
+        }
       }
       const entry = value.butterflyRiddle;
       if (value.version === 7 && entry?.level === value.completedRooms + 1 &&
@@ -9275,18 +9343,64 @@
       return validateProgress(JSON.parse(text.replace(/^\uFEFF/, "")));
     }
 
-    function savedBrowserProgress() {
+    function savedBrowserProgress(language = CONFIG.language.code) {
       let newest = null;
+      const key = PROGRESS_STORAGE_BASE_KEY + (language === "ar" ? ":ar" : "");
       for (const store of ["localStorage", "sessionStorage"]) {
         try {
-          const raw = window[store].getItem(PROGRESS_STORAGE_KEY);
+          const raw = window[store].getItem(key);
           if (!raw) continue;
           const candidate = parseProgress(raw);
-          if (candidate.language !== CONFIG.language.code) continue;
+          if (candidate.language !== language) continue;
           if (!newest || candidate.completedRooms > newest.completedRooms) newest = candidate;
         } catch (error) { console.info("Could not read saved browser progress.", error.message); }
       }
       return newest;
+    }
+
+    function hasPlayableProgress(progress) {
+      return Boolean(progress && (progress.completedRooms > 0 || progress.staticRiddleHunt || progress.butterflyRiddle));
+    }
+
+    async function refreshContinueAvailability() {
+      const run = ++continueProbeRun, language = CONFIG.language.code;
+      let available = hasPlayableProgress(savedBrowserProgress(language));
+      menuContinueAvailable = available;
+      updateMenuControls();
+      const consider = text => {
+        try {
+          const saved = parseProgress(text);
+          if (saved.language === language && hasPlayableProgress(saved)) available = true;
+        } catch { /* Empty and invalid saves do not enable Continue. */ }
+      };
+      let ignoreExternal = false;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { if (window[store].getItem(PROGRESS_RESET_KEY) === "1") ignoreExternal = true; } catch {}
+      }
+      if (!ignoreExternal) {
+        if (localFolderImport) {
+          if (typeof localFolderImport.saveText === "string") consider(localFolderImport.saveText);
+        } else if (location.protocol !== "file:") {
+          try {
+            const controller = new AbortController();
+            const timer = setTimeout(() => controller.abort(), CONFIG.loading.saveTimeoutMs);
+            try {
+              const response = await fetch(new URL(CONFIG.assets.saveFile, document.baseURI), { cache: "no-store", signal: controller.signal });
+              if (response.ok) consider(await response.text());
+            } finally { clearTimeout(timer); }
+          } catch { /* The optional save.txt is absent on a first run. */ }
+        }
+        if ("showSaveFilePicker" in window) {
+          const handle = await saveHandleStore("get");
+          try {
+            if (handle?.kind === "file" && await handle.queryPermission({ mode: "readwrite" }) === "granted") consider(await (await handle.getFile()).text());
+          } catch { /* Permission checks never prompt from a menu refresh. */ }
+        }
+      }
+      if (run === continueProbeRun && language === CONFIG.language.code) {
+        menuContinueAvailable = available || hasPlayableProgress(savedBrowserProgress(language));
+        updateMenuControls();
+      }
     }
 
     function saveProgress() {
@@ -9297,6 +9411,7 @@
         catch (error) { console.info("Progress storage unavailable.", error.message); }
       }
       progressStorageAvailable = stored;
+      menuContinueAvailable = hasPlayableProgress(progressState);
       queueSaveFile(text);
       updateProgressStatus();
     }
@@ -9558,7 +9673,7 @@
       staticHuntPuzzles = [];
       staticHuntLetter = -1;
       hiddenObjectGroups.clear(); hiddenObjectSource = "";
-      hiddenObjectScore = hiddenObjectGoal = 0; hiddenObjectTapAt = null;
+      hiddenObjectScore = hiddenObjectGoal = 0; hiddenObjectTapAt = hiddenObjectShutterAt = null;
       captureEffects.querySelectorAll(".object-capture-marker").forEach(marker => marker.remove());
       objectTarget.hidden = true; objectTarget.textContent = "";
       endlessRunPuzzles = null;
@@ -9618,7 +9733,6 @@
       endlessRiddleHistory = { pool: "", seen: new Set(), lastAnswer: null, lastPrompt: null };
       if (localFolderImport) {
         localFolderImport.saveText = null;
-        delete localFolderImport.levelFiles;
         rememberLocalFiles(localFolderImport);
       }
       saveProgress();
@@ -9715,6 +9829,7 @@
         "--camera-color": CONFIG.ui.cameraColor, "--frame-aspect": CONFIG.ui.viewportAspectRatio,
         "--ui-text-scale": CONFIG.ui.textScale, "--paper-text-scale": CONFIG.puzzles.paperTextScale,
         "--menu-text-scale": CONFIG.menu.textScale,
+        "--home-pan-ms": `${CONFIG.menu.panMs}ms`,
         "--menu-right-screen-dim-opacity": CONFIG.menu.rightScreenDimOpacity,
         "--menu-start-button-raise": `${CONFIG.menu.startButtonRaisePx}px`,
         "--shutter-color": CONFIG.shutter.color, "--shutter-min": `${CONFIG.shutter.minSizePx}px`,
@@ -9772,7 +9887,7 @@
         const pending = [document.fonts.load('40px "Dudu Calligraphy"', "Riddle")];
         if (isArabic()) pending.push(document.fonts.load('40px "Game Arabic"', "العربية"), document.fonts.load('40px "Game Arabic Paper"', "العربية"));
         Promise.race([Promise.allSettled(pending), new Promise(resolve => { deadline = setTimeout(resolve, CONFIG.loading.resourceTimeoutMs); })])
-          .finally(() => { clearTimeout(deadline); if (generation !== fontLoadGeneration) return; languageFontReady = true; requestViewportLayout(); maybeShowClueIntro(); });
+          .finally(() => { clearTimeout(deadline); if (generation !== fontLoadGeneration) return; languageFontReady = true; requestViewportLayout(); restartMenuButtonMotion(); maybeShowClueIntro(); });
       }
       if (BATTERY_SLOT_COUNT !== batterySlots.length) {
         const svg = cameraBattery.querySelector("svg");
@@ -9811,6 +9926,20 @@
 
     function menuText() { return CONFIG.menu[CONFIG.language.code] || CONFIG.menu.en; }
 
+    function restartMenuButtonMotion() {
+      if (menuMotionFrame !== null) cancelAnimationFrame(menuMotionFrame);
+      menuMotionFrame = requestAnimationFrame(() => {
+        menuMotionFrame = null;
+        if (menuShell.hidden) return;
+        const buttons = [...menuShell.querySelectorAll("button:not(:disabled)")].filter(button => !button.closest("[hidden]"));
+        // Safari can retain a stopped animation after a font/language change.
+        // Rebuild only the visible enabled buttons' CSS jitter timelines.
+        for (const button of buttons) button.style.animation = "none";
+        void menuShell.offsetHeight;
+        for (const button of buttons) button.style.removeProperty("animation");
+      });
+    }
+
     function updateMenuCopy() {
       const text = menuText();
       const endless = CONFIG.levels.puzzleEndless;
@@ -9839,11 +9968,15 @@
       menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
       document.querySelectorAll(".home-back").forEach(button => button.setAttribute("aria-label", text.home));
       menuShell.querySelectorAll("[data-language]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.language === CONFIG.language.code)));
+      restartMenuButtonMotion();
     }
 
     function updateMenuControls() {
-      const busy = menuPage === "panning" || Boolean(homePlayPending || menuActionPending);
+      const busy = menuPage === "panning" || Boolean(homePlayPending || menuActionPending || menuTransitionPending);
       menuShell.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+      document.getElementById("homePlayButton").disabled = busy || !homeBootReady || !menuContinueAvailable;
+      document.getElementById("homeClearButton").disabled = busy || !homeBootReady;
+      restartMenuButtonMotion();
     }
 
     function selectMenuButton(button, { focus = false } = {}) {
@@ -9866,6 +9999,8 @@
 
     function showMenuPage(page = "home", focus = false) {
       if (page !== "panning" && !MENU_PAGES.includes(page)) page = "home";
+      const changed = menuPage !== page;
+      if (changed) { menuFadeAnimation?.cancel(); menuFadeAnimation = null; }
       menuSwipe = null;
       menuPage = page;
       document.documentElement.classList.add("menu-open");
@@ -9881,13 +10016,20 @@
       syncHomePoster();
       updateMenuCopy(); updateMenuControls();
       const screen = document.getElementById(`${page}Page`);
-      const action = page === "home" ? document.getElementById("homePlayButton")
+      const action = page === "home" ? document.getElementById(menuContinueAvailable ? "homePlayButton" : "homeClearButton")
         : page === "intro" ? document.getElementById("homeStartButton")
         : screen?.querySelector('[data-language][aria-pressed="true"]') || screen?.querySelector(".menu-back") || null;
       selectMenuButton(action);
       if (focus && action) requestAnimationFrame(() => {
         if (menuPage === page && selectedMenuButton === action) selectMenuButton(action, { focus: true });
       });
+      if (changed && screen && CONFIG.menu.fadeMs) {
+        const animation = menuFadeAnimation = screen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: CONFIG.menu.fadeMs, easing: "ease-out", fill: "both" });
+        return animation.finished.catch(() => {}).finally(() => {
+          if (menuFadeAnimation === animation) { animation.cancel(); menuFadeAnimation = null; }
+        });
+      }
+      return Promise.resolve();
     }
 
     function finishHomePan() {
@@ -9899,25 +10041,36 @@
       showMenuPage(target, true);
     }
 
+    function fadeCurrentMenuOut() {
+      const screen = document.getElementById(`${menuPage}Page`);
+      if (!screen || !CONFIG.menu.fadeMs) return Promise.resolve(null);
+      const animation = screen.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CONFIG.menu.fadeMs, easing: "ease-in", fill: "both" });
+      return animation.finished.catch(() => {}).then(() => animation);
+    }
+
     function panHomeTo(target) {
-      if (!MENU_ROUTES[menuPage]?.includes(target) || homePlayPending || menuActionPending) return;
-      const shift = syncHomePoster(), duration = CONFIG.menu.panMs;
-      if (!shift || !duration || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
-        showMenuPage(target, true);
-        return;
-      }
-      menuShell.dataset.panTarget = target;
-      menuShell.style.setProperty("--home-pan-ms", `${duration}ms`);
-      showMenuPage("panning");
-      // Some browsers suppress transitionend when the window is resized or hidden.
-      homePanTimer = window.setTimeout(finishHomePan, duration + 80);
+      if (!MENU_ROUTES[menuPage]?.includes(target) || homePlayPending || menuActionPending || menuTransitionPending) return menuTransitionPending;
+      const run = ++menuTransitionRun;
+      menuTransitionPending = fadeCurrentMenuOut().then(outgoing => {
+        if (run !== menuTransitionRun) { outgoing?.cancel(); return; }
+        const incoming = showMenuPage(target, true);
+        outgoing?.cancel();
+        return incoming;
+      }).finally(() => {
+        if (run !== menuTransitionRun) return;
+        menuTransitionPending = null;
+        updateMenuControls();
+        if (menuPage === target && selectedMenuButton && !selectedMenuButton.disabled) selectedMenuButton.focus();
+      });
+      updateMenuControls();
+      return menuTransitionPending;
     }
 
     function startMenuSwipe(event) {
       if (!event.isPrimary || event.button !== 0) return;
       suppressMenuClick = false;
       menuSwipe = null;
-      if (!MENU_ROUTES[menuPage] || homePlayPending || menuActionPending) return;
+      if (!MENU_ROUTES[menuPage] || homePlayPending || menuActionPending || menuTransitionPending) return;
       menuSwipe = { id: event.pointerId, page: menuPage, x: event.clientX, y: event.clientY };
     }
 
@@ -9965,6 +10118,8 @@
       refreshConfigBindings();
       configureGamePresentation();
       updateMenuCopy();
+      updateMenuControls();
+      void refreshContinueAvailability();
       document.getElementById("homeNotice").textContent = "";
     }
 
@@ -9990,6 +10145,9 @@
       // Start the optional download before Play waits on the first room.
       // Local file mode still waits for the selected folder's settings.
       if (/^https?:$/.test(location.protocol)) loadSpiderAssets();
+      homeBootReady = true;
+      updateMenuControls();
+      void refreshContinueAvailability();
     }
 
     function primeRetainedScares({ refreshAudio = false } = {}) {
@@ -10052,12 +10210,29 @@
       });
     }
 
-    function beginHomePlay() {
-      if (menuPage !== "home" || isPageInactive() || homePlayPending || menuActionPending) return homePlayPending;
+    function beginHomePlay({ fresh = false } = {}) {
+      if (menuPage !== "home" || isPageInactive() || !homeBootReady || homePlayPending || menuActionPending || menuTransitionPending ||
+          !fresh && !menuContinueAvailable) return homePlayPending;
+      if (fresh) {
+        ++continueProbeRun;
+        resetLevelState();
+        PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
+        resetBrowserProgress();
+        clearPreparedLevelCache();
+        menuContinueAvailable = false;
+        gameInitializationStarted = false;
+        progressInitializedLanguage = null;
+        currentLevelLoadPromise = Promise.resolve();
+      }
+      // Keep native media permission inside the New Game/Continue tap, before
+      // waiting on the outgoing menu fade or any asynchronous loading.
       const primed = primeMediaFromMenuGesture();
-      hideMenuForLoading();
+      const fading = fadeCurrentMenuOut().then(animation => {
+        hideMenuForLoading();
+        animation?.cancel();
+      });
       document.getElementById("homeNotice").textContent = "";
-      homePlayPending = Promise.all([homeBootPromise, primed]).then(() => initializeGame())
+      homePlayPending = Promise.all([homeBootPromise, primed, fading]).then(() => initializeGame())
         .catch(showLevelLoadError).finally(() => { homePlayPending = null; updateMenuControls(); });
       updateMenuControls();
       return homePlayPending;
@@ -10066,6 +10241,8 @@
     function returnToHome() {
       if (menuActionPending) return menuActionPending;
       if (progressInitializedLanguage === CONFIG.language.code) saveProgress();
+      ++continueProbeRun;
+      menuContinueAvailable = hasPlayableProgress(savedBrowserProgress());
       pauseLevelActivity({ cancelPreparation: true });
       stopSpiderSound();
       showMenuPage("home");
@@ -10082,24 +10259,7 @@
     }
 
     function clearDataFromHome() {
-      if (menuPage !== "home" || homePlayPending || menuActionPending) return menuActionPending;
-      menuActionPending = homeBootPromise.then(async () => {
-        await Promise.allSettled([currentLevelLoadPromise, mediaPreparationPending]);
-        resetLevelState();
-        PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
-        resetBrowserProgress();
-        clearPreparedLevelCache();
-        gameInitializationStarted = false;
-        progressInitializedLanguage = null;
-        currentLevelLoadPromise = Promise.resolve();
-        showMenuPage("home");
-        const noticeText = document.createElement("span");
-        noticeText.textContent = menuText().cleared;
-        noticeText.addEventListener("animationend", () => noticeText.remove(), { once: true });
-        document.getElementById("homeNotice").replaceChildren(noticeText);
-      }).finally(() => { menuActionPending = null; updateMenuControls(); });
-      updateMenuControls();
-      return menuActionPending;
+      return beginHomePlay({ fresh: true });
     }
 
     function openExitConfirmation() {
@@ -10195,7 +10355,7 @@
     }, true);
     document.getElementById("homeStartButton").addEventListener("click", () => panHomeTo("home"));
     document.getElementById("homeBackButton").addEventListener("click", () => panHomeTo("intro"));
-    document.getElementById("homePlayButton").addEventListener("click", beginHomePlay);
+    document.getElementById("homePlayButton").addEventListener("click", () => beginHomePlay());
     document.getElementById("homeSettingsButton").addEventListener("click", () => panHomeTo("settings"));
     document.getElementById("homeStoryButton").addEventListener("click", () => panHomeTo("story"));
     document.getElementById("homeHowButton").addEventListener("click", () => panHomeTo("how"));
@@ -11292,7 +11452,7 @@
     }
     syncVisibleViewport();
     showMenuPage("intro");
-    homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); updateMenuCopy(); });
+    homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); homeBootReady = true; updateMenuCopy(); updateMenuControls(); void refreshContinueAvailability(); });
   </script>
 </body>
 </html>
