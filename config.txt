@@ -973,7 +973,7 @@ jitterStaggerMs = 75
 # Dim layer on the rightmost menu screen. 0 leaves it bright, 1 matches Settings.
 rightScreenDimOpacity = 1
 # Vertical START adjustment in pixels. Positive raises it, negative lowers it.
-startButtonRaisePx = 20
+startButtonRaisePx = 0
 
 [menu.en]
 start = "TAP"
