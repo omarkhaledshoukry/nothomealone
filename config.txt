@@ -381,13 +381,15 @@ volume = 1
 
 # Scare on a missed SHUTTER exposure that consumes battery and leaves a charge.
 # One independent 10% roll per eligible miss from Area 7; final-charge misses skip it.
-# The portrait appears immediately against black; both fade together back to the room.
+# Sound starts first, then the portrait appears on black; both fade back to the room.
 [scare]
 enabled = true
 startLevel = 7
 spawnChance = 0.10
 # Duration in milliseconds: 1000 = one second.
 fadeMs = 1000
+# Start the portrait this many milliseconds after native sound playback starts.
+soundLeadMs = 60
 volume = 1
 
 # Encounter timing applies only to surveillanceButterflyRush. Durations are milliseconds.
@@ -961,7 +963,7 @@ loadTimeoutMs = 6000
 
 # Home screen copy. A saved Settings language overrides [language].code.
 [menu]
-title = "Housemaid in Hell"
+title = "Maid in Hell"
 # Multiplier for menu titles and buttons, before the selected-button highlight.
 textScale = 1.2
 # How long Start takes to pan home.png to the right edge; 0 skips the pan.
@@ -971,7 +973,7 @@ jitterStaggerMs = 75
 # Dim layer on the rightmost menu screen. 0 leaves it bright, 1 matches Settings.
 rightScreenDimOpacity = 1
 # Vertical START adjustment in pixels. Positive raises it, negative lowers it.
-startButtonRaisePx = 40
+startButtonRaisePx = 20
 
 [menu.en]
 start = "TAP"

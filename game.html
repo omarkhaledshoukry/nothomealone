@@ -1845,7 +1845,7 @@
     "enabled": true,
     "startLevel": 5,
     "spawnChance": 0.1,
-    "imageScale": 0.5,
+    "imageScale": 0.75,
     "flightMs": 325,
     "afterHalfChance": 0.85,
     "lateMinFraction": 0.52,
@@ -1864,6 +1864,7 @@
     "startLevel": 7,
     "spawnChance": 0.1,
     "fadeMs": 1000,
+    "soundLeadMs": 60,
     "volume": 1
   },
   "frozenButterfly": {
@@ -2515,7 +2516,7 @@
       "crow.startLevel": [1, 1000000001, true], "crow.imageScale": [0.05, 2], "crow.flightMs": [200, 5000, true],
       "crow.blurPx": [0, 20], "crow.blurFadeMs": [1, 2000, true], "crow.blurRecoverMs": [1, 2000, true],
       "scare.startLevel": [1, 1000000001, true],
-      "scare.fadeMs": [100, 10000, true],
+      "scare.fadeMs": [100, 10000, true], "scare.soundLeadMs": [0, 1000, true],
       "anomaly.roomMinFraction": [0.5, 0.98], "anomaly.roomMaxFraction": [0.5, 0.98],
       "anomaly.placementRetryMs": [100, 15000, true],
       "hiddenObjects.tapRadiusPx": [4, 80]
@@ -2527,7 +2528,6 @@
     let configLoadInfo = { status: "pending", warnings: [] };
     const LOCAL_FILES_CACHE_KEY = `room-word-hunt/local-files/v1:${location.href.split(/[?#]/)[0]}`;
     let localFolderImport = null;
-    let localScareSoundFile = null;
     let folderImportBusy = false;
     let gameInitializationStarted = false;
     const MENU_PREFERENCE_KEY = `room-word-hunt/settings/v1:${new URL(".", document.baseURI).href}`;
@@ -5024,8 +5024,6 @@
         }
         const preferredLanguage = readLanguagePreference();
         if (preferredLanguage) selectedConfig.language.code = preferredLanguage;
-        try { localScareSoundFile = find(selectedFolderPath(selectedConfig.assets.scareSound)) || null; }
-        catch { localScareSoundFile = null; }
         const wordsPath = selectedFolderPath(wordsFileFor(selectedConfig));
         const wordsFile = find(wordsPath);
         const needsWords = Object.entries(selectedConfig.levels).some(([name, level]) => !isPuzzleType(name) && level.chance > 0);
@@ -5901,11 +5899,9 @@
     const scareFlashGhost = document.getElementById("scareFlashGhost");
     const scareFlashImage = document.getElementById("scareFlashImage");
     let scareSprites = [], scareSpriteLoad = null, scareAssetsRun = 0;
-    let scareFlashActive = false, scareFlashAnimations = [], scareAfterFlash = null;
+    let scareFlashActive = false, scareFlashAnimations = [], scareAfterFlash = null, scareFlashRequest = null;
     let scareAudio = null, scareAudioSource = "", scareAudioReady = false, scareAudioPreparing = null;
     let scareSoundPlaying = false, scareSoundRun = 0, scarePausedSoundTime = null;
-    let scareAudioContext = null, scareAudioBuffer = null, scareAudioBufferLoad = null;
-    let scareAudioNode = null, scareAudioGain = null, scareAudioStartedAt = 0, scareAudioStartedOffset = 0;
 
     function isScareSpritePath(path) {
       return typeof path === "string" && /^scare[^/]*\.png$/i.test(path.split("/").pop());
@@ -5925,8 +5921,8 @@
 
     async function prepareScareAssets() {
       if (!CONFIG.scare.enabled || !levelIsUnlocked(CONFIG.scare.startLevel) || CONFIG.scare.spawnChance === 0) return;
-      const soundPreparation = preloadScareSound();
-      if (scareSpriteLoad) { await Promise.all([scareSpriteLoad, soundPreparation]); return; }
+      prepareScareAudio();
+      if (scareSpriteLoad) return scareSpriteLoad;
       const run = scareAssetsRun;
       scareSpriteLoad = (async () => {
         const directory = new URL(".", document.baseURI);
@@ -5955,151 +5951,107 @@
         }
         if (run === scareAssetsRun) scareSprites = [...new Map(sprites.map(sprite => [sprite.src, sprite])).values()];
       })().catch(() => { if (run === scareAssetsRun) scareSprites = []; });
-      await Promise.all([scareSpriteLoad, soundPreparation]);
+      return scareSpriteLoad;
     }
 
     function prepareScareAudio() {
       const source = new URL(CONFIG.assets.scareSound, document.baseURI).href;
-      if (scareAudio && source === scareAudioSource) return scareAudio;
+      if (scareAudio && source === scareAudioSource && !scareAudio.error) return scareAudio;
       stopScareSound();
       scareAudioSource = source;
-      scareAudioBuffer = scareAudioBufferLoad = null;
       const audio = scareAudio = new Audio();
       scareAudioReady = false;
       audio.preload = "auto"; audio.muted = true; audio.src = source;
       audio.addEventListener("ended", () => {
-        if (audio === scareAudio && !scareAudioNode) { scareSoundPlaying = false; scarePausedSoundTime = null; }
+        if (audio === scareAudio) { scareSoundPlaying = false; scarePausedSoundTime = null; }
       });
       audio.addEventListener("error", () => {
-        if (audio === scareAudio) {
-          if (!scareAudioNode) stopScareSound();
-          scareAudioReady = false;
-        }
+        if (audio === scareAudio) { scareAudioReady = false; scareSoundPlaying = false; }
       });
       audio.load();
       return audio;
     }
 
-    function getScareAudioContext() {
-      if (scareAudioContext?.state === "closed") scareAudioContext = null;
-      if (!scareAudioContext) {
-        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-        try { if (AudioContextClass) scareAudioContext = new AudioContextClass({ latencyHint: "interactive" }); }
-        catch { /* The prepared native player remains available. */ }
-      }
-      return scareAudioContext;
-    }
-
-    function preloadScareSound() {
-      const audio = prepareScareAudio();
-      if (scareAudioBufferLoad) return scareAudioBufferLoad;
-      const source = scareAudioSource, context = getScareAudioContext();
-      // Decode once during loading, never on the missed shutter. Retain the
-      // complete track, including all silence, and start each scare at offset 0.
-      scareAudioBufferLoad = (async () => {
-        if (context && (localScareSoundFile || new URL(source).protocol !== "file:")) {
-          try {
-            const bytes = localScareSoundFile ? await localScareSoundFile.arrayBuffer() :
-              await fetchLevelResource(source, { cache: "default" }, response => {
-                if (!response.ok) throw new Error(`Scare sound HTTP ${response.status}`);
-                return response.arrayBuffer();
-              });
-            const buffer = await boundedMediaAction(context.decodeAudioData(bytes));
-            if (source === scareAudioSource) scareAudioBuffer = buffer;
-          } catch { /* Missing or unsupported audio never blocks an area. */ }
-        }
-        // file:// and browsers without Web Audio use a fully preloaded native
-        // player. A fresh folder selection also supplies File bytes for decoding.
-        if (audio === scareAudio && !audio.error && audio.readyState < HTMLMediaElement.HAVE_ENOUGH_DATA) {
-          try { await waitForMedia(audio, "canplaythrough", CONFIG.loading.resourceTimeoutMs); }
-          catch { /* Sound is optional; keep the original gameplay available. */ }
-        }
-      })();
-      return scareAudioBufferLoad;
-    }
-
     function unlockScareSound({ refreshAudio = false } = {}) {
       if (!CONFIG.scare.enabled || CONFIG.scare.spawnChance === 0 || !levelIsUnlocked(CONFIG.scare.startLevel) || isPageInactive()) return;
+      const offset = scarePausedSoundTime;
       const audio = prepareScareAudio();
-      const context = getScareAudioContext();
-      let contextReady = Promise.resolve();
-      try {
-        if (context && context.state !== "running") contextReady = boundedMediaAction(context.resume()).catch(() => {});
-      } catch { /* Native playback can still be unlocked by this gesture. */ }
-      if (scarePausedSoundTime !== null) {
-        if (!scareAudioBuffer) playScareSound(scarePausedSoundTime);
-        return contextReady;
-      }
-      if (scareSoundPlaying || scareAudioPreparing || scareAudioReady && !refreshAudio) {
-        return Promise.all([contextReady, scareAudioPreparing]);
-      }
-      const run = ++scareSoundRun;
+      // An interrupted scare must restart audibly inside the actual Resume tap.
+      if (offset !== null) return playScareSound(offset).catch(error => {
+        if (audio.error) { dismissScareWithoutPortrait(); return false; }
+        throw error;
+      });
+      if (!refreshAudio && scareAudioPreparing) return scareAudioPreparing;
+      if (!refreshAudio && (scareSoundPlaying || scareAudioReady)) return Promise.resolve(true);
+      stopScareSound();
+      const run = scareSoundRun;
       scareAudioReady = false;
       try {
         audio.muted = true;
         scareAudioPreparing = boundedMediaAction(Promise.resolve(audio.play())).then(() => {
-          if (audio !== scareAudio || run !== scareSoundRun) return;
+          if (audio !== scareAudio || run !== scareSoundRun) return false;
           audio.pause(); audio.currentTime = 0; scareAudioReady = true;
-        }).catch(() => {
-          if (audio === scareAudio && run === scareSoundRun) audio.pause();
+          return true;
+        }).catch(error => {
+          if (audio !== scareAudio || run !== scareSoundRun) return false;
+          audio.pause(); scareAudioReady = false;
+          if (refreshAudio && !audio.error) throw error;
+          return false;
         }).finally(() => {
           if (audio === scareAudio && run === scareSoundRun) scareAudioPreparing = null;
         });
-      } catch { audio.pause(); }
-      return Promise.all([contextReady, scareAudioPreparing]);
+      } catch (error) {
+        audio.pause();
+        if (refreshAudio && !audio.error) return Promise.reject(error);
+      }
+      return scareAudioPreparing;
     }
 
     function stopScareSound() {
       ++scareSoundRun;
       scareAudioPreparing = null; scareSoundPlaying = false; scarePausedSoundTime = null;
-      if (scareAudioNode) {
-        scareAudioNode.onended = null;
-        try { scareAudioNode.stop(); } catch {}
-        scareAudioNode.disconnect(); scareAudioGain?.disconnect();
-        scareAudioNode = scareAudioGain = null;
-      }
       scareAudio?.pause();
     }
 
     function playScareSound(offset = 0) {
-      const audio = scareAudio;
-      const buffered = scareAudioBuffer && scareAudioContext?.state === "running";
-      if ((!buffered && (!audio || !scareAudioReady)) || isPageInactive() || menuPage !== null) return;
+      if (isPageInactive() || menuPage !== null) return Promise.resolve(false);
+      const audio = prepareScareAudio();
       stopScareSound();
       const run = scareSoundRun;
-      if (buffered) {
-        try {
-          const context = scareAudioContext, node = context.createBufferSource(), gain = context.createGain();
-          scareAudioNode = node; scareAudioGain = gain;
-          node.buffer = scareAudioBuffer;
-          gain.gain.value = CONFIG.scare.volume;
-          node.connect(gain); gain.connect(context.destination);
-          scareAudioStartedOffset = Math.max(0, Math.min(offset, scareAudioBuffer.duration));
-          scareAudioStartedAt = context.currentTime;
-          node.onended = () => {
-            node.disconnect(); gain.disconnect();
-            if (node === scareAudioNode && run === scareSoundRun) {
-              scareAudioNode = scareAudioGain = null;
-              scareSoundPlaying = false; scarePausedSoundTime = null;
-            }
-          };
-          node.start(0, scareAudioStartedOffset);
-          scareSoundPlaying = true;
-          return;
-        } catch { stopScareSound(); }
-      }
-      if (!audio || !scareAudioReady) return;
-      const nativeRun = scareSoundRun;
       try {
-        audio.currentTime = offset; audio.volume = CONFIG.scare.volume; audio.muted = CONFIG.scare.volume === 0;
-        scareSoundPlaying = true;
-        audio.play()?.catch(() => { if (audio === scareAudio && nativeRun === scareSoundRun) scareSoundPlaying = false; });
-      } catch { scareSoundPlaying = false; }
+        // Keep the entire track, including its silence. Start audible playback
+        // directly from the shutter/Resume gesture, without a muted warm-up race.
+        // Keep an interrupted retained player at its existing position. An
+        // unnecessary seek can restart a stream that cannot seek after sleep.
+        if (offset === 0 || Math.abs(audio.currentTime - offset) > .01) audio.currentTime = offset;
+        audio.volume = CONFIG.scare.volume; audio.muted = CONFIG.scare.volume === 0;
+        return boundedMediaAction(Promise.resolve(audio.play())).then(() => {
+          if (audio !== scareAudio || run !== scareSoundRun) return false;
+          if (audio.paused || audio.ended) throw new Error("Scare sound did not start.");
+          scareAudioReady = true; scareSoundPlaying = true;
+          return true;
+        }).catch(error => {
+          if (audio !== scareAudio || run !== scareSoundRun) return false;
+          scareAudioReady = false; scareSoundPlaying = false;
+          throw error;
+        });
+      } catch (error) { return Promise.reject(error); }
+    }
+
+    function dismissScareWithoutPortrait() {
+      const finish = scareAfterFlash;
+      stopScareFlash();
+      if (!gameOver && !roomCompleted) finish?.();
     }
 
     function stopScareFlash({ keepSound = false } = {}) {
       scareFlashActive = false;
       scareAfterFlash = null;
+      if (scareFlashRequest) {
+        ++scareFlashRequest.run;
+        clearLevelTimeout(scareFlashRequest.revealTimer);
+      }
+      scareFlashRequest = null;
       for (const animation of scareFlashAnimations) animation.cancel();
       scareFlashAnimations = [];
       scareFlashWorld.hidden = true;
@@ -6109,9 +6061,59 @@
 
     function playScareFlash(after = null) {
       if (scareFlashActive || !scareSprites.length || gameOver || roomCompleted) return false;
-      const sprite = chooseScene(scareSprites), generation = levelGeneration;
+      stopScareSound();
+      const request = scareFlashRequest = { sprite: chooseScene(scareSprites), generation: levelGeneration,
+        run: 0, phase: "audio", soundStarted: false, revealTimer: null };
       scareFlashActive = true;
       scareAfterFlash = after;
+      scareFlashWorld.hidden = true;
+      stopShutterEffect();
+      updateCameraControls();
+      continueScareFlash(request);
+      return true;
+    }
+
+    function continueScareFlash(request) {
+      if (request !== scareFlashRequest || !scareFlashActive || gameplayPaused || isPageInactive() || menuPage !== null) return;
+      const run = ++request.run;
+      const current = () => request === scareFlashRequest && scareFlashActive && run === request.run &&
+        request.generation === levelGeneration && !gameOver && !roomCompleted;
+      const reveal = () => {
+        if (!current() || gameplayPaused || isPageInactive() || menuPage !== null) return;
+        request.soundStarted = true;
+        if (request.phase === "visual") {
+          scareFlashWorld.hidden = false;
+          for (const animation of scareFlashAnimations) if (animation.playState === "paused") animation.play();
+          return;
+        }
+        request.phase = "lead";
+        clearLevelTimeout(request.revealTimer);
+        // Confirm native playback first, then give it a short head start.
+        request.revealTimer = levelTimeout(() => {
+          request.revealTimer = null;
+          if (current() && !gameplayPaused && !isPageInactive() && menuPage === null) showScarePortrait(request);
+        }, CONFIG.scare.soundLeadMs);
+      };
+      if (scareSoundPlaying && scareAudio && !scareAudio.paused && !scareAudio.ended ||
+          request.phase === "visual" && request.soundStarted && scarePausedSoundTime === null) {
+        reveal(); return;
+      }
+      const offset = scarePausedSoundTime ?? 0;
+      playScareSound(offset).then(started => {
+        if (!current()) return;
+        if (started) reveal();
+        else if (!gameplayPaused && !isPageInactive()) dismissScareWithoutPortrait();
+      }).catch(error => {
+        if (!current()) return;
+        if (scareAudio?.error || error.name === "NotSupportedError") dismissScareWithoutPortrait();
+        else showPlaybackResumePrompt();
+      });
+    }
+
+    function showScarePortrait(request) {
+      if (request !== scareFlashRequest || !scareFlashActive || request.generation !== levelGeneration) return;
+      const { sprite, generation } = request;
+      request.phase = "visual";
       scareFlashImage.src = sprite.src;
       scareFlashGhost.src = sprite.src;
       scareFlashWorld.hidden = false;
@@ -6155,10 +6157,9 @@
       scareFlashAnimations = [exposure, portraitMotion, flicker, ghostMotion, ghostOpacity];
       const start = document.timeline.currentTime;
       if (start !== null) for (const animation of scareFlashAnimations) animation.startTime = start;
-      playScareSound();
       updateCameraControls();
       exposure.finished.then(() => {
-        if (!scareFlashActive || generation !== levelGeneration) return;
+        if (!scareFlashActive || generation !== levelGeneration || request !== scareFlashRequest) return;
         const finish = scareAfterFlash;
         stopScareFlash({ keepSound: true });
         if (!gameOver && !roomCompleted) finish?.();
@@ -6172,18 +6173,21 @@
       const selected = !directTap && lost > 0 && batterySlotsRemaining > lost && CONFIG.scare.enabled && levelIsUnlocked(CONFIG.scare.startLevel) &&
         scareSprites.length > 0 && !scareFlashActive && Math.random() < CONFIG.scare.spawnChance;
       if (!selected) { drainBatterySlot(); return; }
-      unlockScareSound();
       drainBatterySlot(CONFIG.battery.missCost, { deferFailure: true });
       const finish = () => { if (batterySlotsRemaining === 0) endGame("battery"); };
       if (!playScareFlash(finish)) finish();
     }
 
     function pauseScareFlash() {
+      if (scareFlashRequest) {
+        ++scareFlashRequest.run;
+        clearLevelTimeout(scareFlashRequest.revealTimer);
+        scareFlashRequest.revealTimer = null;
+      }
       scareFlashWorld.hidden = true;
       for (const animation of scareFlashAnimations) animation.pause();
-      const offset = scareSoundPlaying && scareAudioNode ? Math.min(scareAudioBuffer.duration,
-        scareAudioStartedOffset + Math.max(0, scareAudioContext.currentTime - scareAudioStartedAt)) :
-        scareSoundPlaying && scareAudio && !scareAudio.ended ? scareAudio.currentTime : scarePausedSoundTime;
+      const offset = scareSoundPlaying && scareAudio && !scareAudio.ended ? scareAudio.currentTime :
+        scarePausedSoundTime ?? (scareFlashActive && scareFlashRequest?.phase !== "visual" ? 0 : null);
       const preparing = Boolean(scareAudioPreparing);
       stopScareSound(); scarePausedSoundTime = offset;
       if (preparing) scareAudioReady = false;
@@ -6191,9 +6195,10 @@
 
     function resumeScareFlash() {
       if (gameplayPaused || isPageInactive() || menuPage !== null || gameOver || roomCompleted) return;
-      if (scareFlashActive) scareFlashWorld.hidden = false;
-      for (const animation of scareFlashAnimations) if (animation.playState === "paused") animation.play();
-      if (scarePausedSoundTime !== null) playScareSound(scarePausedSoundTime);
+      if (scareFlashActive && scareFlashRequest) continueScareFlash(scareFlashRequest);
+      else if (scarePausedSoundTime !== null) playScareSound(scarePausedSoundTime).catch(error => {
+        if (!scareAudio?.error && error.name !== "NotSupportedError") showPlaybackResumePrompt();
+      });
     }
 
     function snapCamera(targetIndex = null, point = null) {
@@ -8851,7 +8856,11 @@
     }
 
     function holdAppleForegroundAudio() {
-      if (!IS_APPLE_MOBILE || menuPage !== null) return;
+      if (!IS_APPLE_MOBILE) return;
+      // A sleeping iPhone can retain the player but lose its audio-session state.
+      scareAudioReady = false;
+      if (scareAudio) scareAudio.muted = true;
+      if (menuPage !== null) return;
       const scareRoom = activeScareRoom();
       if (!scareRoom && !gameplayStarted && !gameOverScreen.classList.contains("show")) return;
       appleForegroundAudioPending = true;
