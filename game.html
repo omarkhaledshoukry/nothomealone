@@ -1349,6 +1349,52 @@
     @keyframes butterflyDangerPulse { 50% { opacity: .36; } }
     #portraitViewport.level-paused .butterfly-danger-light { animation-play-state: paused; }
     @media (prefers-reduced-motion: reduce) { .butterfly-danger-light { animation: none; } }
+    :root { --career-label-font: "Dudu Calligraphy", "Segoe Print", cursive; --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
+    :root[data-game-language="ar"] { --career-label-font: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #storyCopy, #howCopy { text-align: center; text-wrap: pretty; }
+    .career-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; text-align: center; }
+    .career-stats > div { min-width: 0; }
+    .career-stats dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 16px/1.3 var(--career-label-font); }
+    .career-stats dd, #menuShell .career-stats dd[lang] { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 var(--career-value-font); overflow-wrap: anywhere; }
+    #homeCareer dt { font-family: var(--career-label-font); }
+    #homeCareer dd { font-family: var(--career-value-font); }
+    #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.75 + var(--home-menu-gap, 26px)); }
+    .home-actions > :nth-child(6) { --jitter-phase: -5; }
+    .setting-heading { margin: 24px 0 8px; font-size: 22px; font-weight: 400; }
+    #horrorChoices { display: flex; justify-content: center; gap: 22px; }
+    #horrorChoices [aria-pressed="true"] > .menu-label { text-decoration: underline; text-underline-offset: .2em; font-weight: 700; }
+    #unlockablesPage { width: min(88%, 510px); }
+    #unlockableCounts { display: grid; gap: 26px; margin: 30px auto 0; width: min(100%, 320px); }
+    #unlockableCounts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid #e8d9b438; }
+    #unlockableCounts dt { font: 26px/1.3 var(--career-label-font); }
+    #unlockableCounts dd { margin: 0; color: #fff; -webkit-text-fill-color: #fff; font: 24px/1.2 var(--career-value-font); }
+    #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: max(30px, env(safe-area-inset-top)) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: radial-gradient(ellipse at 50% 38%, #1e2326 0%, #090b0d 62%, #030405 100%); text-align: center; overflow: auto; font-family: var(--career-value-font); }
+    #progressReport[hidden] { display: none; }
+    #progressReport .home-back { position: absolute; }
+    #reportHeader { margin: 20px 0 0; }
+    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--career-label-font); }
+    #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: 13px; letter-spacing: .12em; }
+    #reportCentre { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 26px 0; min-height: 270px; }
+    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--career-label-font); }
+    #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
+    #reportRankBlock { width: min(100%, 300px); margin: 32px auto 0; }
+    #reportRankTrack { height: 5px; border: 1px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 1px; }
+    #reportRankFill { height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; background: var(--letter-beige); box-shadow: 0 0 9px #e8d9b438; }
+    #progressReport[dir="rtl"] #reportRankFill { transform-origin: right center; }
+    #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
+    #reportUnlocks { min-height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 7px; margin-top: 24px; }
+    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--career-label-font); }
+    #reportUnlocks [hidden] { display: none; }
+    #reportNewJob { opacity: 0; transition: opacity 180ms ease; }
+    #reportNewJob.revealed { opacity: 1; }
+    #reportUnlocks #locationUnlock { position: static; width: auto; margin: 0; animation: none; font: inherit; }
+    #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
+    @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--career-label-font); font-size: 25px; }
+    #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+    @media (max-height: 640px) { #reportHeader { margin-top: 12px; } #reportCentre { min-height: 220px; padding: 16px 0; } #reportRankBlock { margin-top: 20px; } #reportUnlocks { margin-top: 14px; min-height: 62px; } #reportContinueButton { margin-bottom: 18px; } }
+
   </style>
 </head>
 <body>
@@ -1487,9 +1533,25 @@
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
         <p id="levelLoadDetails" hidden></p>
-        <p id="locationUnlock" hidden></p>
+
       </div>
     </div>
+    <section id="progressReport" role="dialog" aria-modal="true" aria-labelledby="reportTitle" hidden>
+      <button class="home-back" id="reportHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+      <header id="reportHeader"><h2 id="reportTitle">Progress Report</h2><p id="reportJobLabel"></p></header>
+      <div id="reportCentre">
+        <p id="reportEarningsLabel">JOB EARNINGS</p><output id="reportEarned" dir="ltr">+£0</output>
+        <div id="reportRankBlock"><div id="reportRankTrack" role="progressbar" aria-label="Rank progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="reportRankFill"></div></div><p id="reportNextRank"></p></div>
+        <div id="reportUnlocks"><p id="reportNewJob">NEW JOB UNLOCKED</p><p id="reportNewRank" hidden>NEW RANK UNLOCKED</p><p id="locationUnlock" hidden>NEW LOCATION UNLOCKED</p></div>
+      </div>
+      <button id="reportContinueButton" class="menu-button" type="button">NEXT JOB</button>
+      <dl id="reportCareer" class="career-stats">
+        <div><dt id="reportJobsLabel">JOBS</dt><dd id="reportJobs">1</dd></div>
+        <div><dt id="reportCashLabel">CASH</dt><dd id="reportCash" dir="ltr">£0</dd></div>
+        <div><dt id="reportRankLabel">RANK</dt><dd id="reportRank">Trainee</dd></div>
+      </dl>
+      <p id="reportSummary" class="sr-only" role="status" aria-live="polite"></p>
+    </section>
     <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro" data-poster-position="left">
       <div id="homeBackdrop" aria-hidden="true"><img id="homePoster" src="./home.png" alt="" draggable="false" fetchpriority="high" /></div>
       <div id="introPage" class="menu-page">
@@ -1501,11 +1563,12 @@
           <button id="homeClearButton" class="menu-button" type="button"><span class="menu-label">NEW GAME</span></button>
           <button id="homePlayButton" class="menu-button" type="button" disabled><span class="menu-label">CONTINUE</span></button>
           <button id="homeSettingsButton" class="menu-button" type="button"><span class="menu-label">SETTINGS</span></button>
+          <button id="homeUnlockablesButton" class="menu-button" type="button"><span class="menu-label">UNLOCKABLES</span></button>
           <button id="homeStoryButton" class="menu-button" type="button"><span class="menu-label">STORY</span></button>
           <button id="homeHowButton" class="menu-button" type="button"><span class="menu-label">HOW TO PLAY</span></button>
         </nav>
         <p id="homeNotice" role="status" aria-live="polite"></p>
-        <dl id="homeCareer" aria-label="Career">
+        <dl id="homeCareer" class="career-stats" aria-label="Career">
           <div><dt id="careerJobsLabel">JOBS</dt><dd id="careerJobs">1</dd></div>
           <div><dt id="careerCashLabel">CASH</dt><dd id="careerCash" dir="ltr">£0</dd></div>
           <div><dt id="careerRankLabel">RANK</dt><dd id="careerRank">Trainee</dd></div>
@@ -1527,6 +1590,16 @@
           <button class="menu-button" type="button" data-language="en" lang="en" aria-pressed="true"><span class="menu-label">English</span></button>
           <button class="menu-button" type="button" data-language="ar" lang="ar" aria-pressed="false"><span class="menu-label">العربية</span></button>
         </div>
+        <h3 class="setting-heading" id="horrorTitle">HORROR</h3>
+        <div id="horrorChoices" role="group" aria-labelledby="horrorTitle">
+          <button id="horrorOnButton" class="menu-button" type="button" data-horror="on" aria-pressed="true"><span class="menu-label">ON</span></button>
+          <button id="horrorOffButton" class="menu-button" type="button" data-horror="off" aria-pressed="false"><span class="menu-label">OFF</span></button>
+        </div>
+      </div>
+      <div id="unlockablesPage" class="menu-page" hidden>
+        <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+        <h2 id="unlockablesTitle">UNLOCKABLES</h2>
+        <dl id="unlockableCounts"><div><dt id="unlockJobsLabel">JOBS</dt><dd id="unlockJobs" dir="ltr">—</dd></div><div><dt id="unlockRanksLabel">RANKS</dt><dd id="unlockRanks" dir="ltr">—</dd></div><div><dt id="unlockLocationsLabel">LOCATIONS</dt><dd id="unlockLocations" dir="ltr">—</dd></div></dl>
       </div>
       <div id="storyPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
@@ -2194,13 +2267,15 @@
     "retryMinFontPx": 20,
     "retryMaxFontPx": 30,
     "retryFontVh": 3,
-    "wordTopGapPx": 8
+    "wordTopGapPx": 8,
+    "valuePunchMs": 240,
+    "valuePunchScale": 1.14
   },
   "text": {
     "clueFormat": "{current}/{total}",
     "roomFormat": "ROOM {number}",
     "clueTitle": "CLUES",
-    "ready": "READY",
+    "ready": "GO",
     "found": "FOUND",
     "roomComplete": "JOB COMPLETE",
     "nextLevel": "TAP TO CONTINUE",
@@ -2393,14 +2468,14 @@
       "exitText": "Return to the home screen?",
       "stay": "STAY",
       "leave": "LEAVE",
-      "howText": "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
-      "storyText": "Welcome to After Hours Housekeeping. Leave every property spotless. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Please don’t make them repeat themselves.",
+      "howText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "storyText": "Welcome to After Hours Housekeeping. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Be careful: don’t photograph the wrong items, and make sure you get out in one piece.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
-      "hiddenObjectHowText": "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "hiddenObjectHowText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
       "jobs": "JOBS",
       "cash": "CASH",
       "rank": "RANK",
@@ -2411,7 +2486,23 @@
       "locationUnlocked": "NEW LOCATION UNLOCKED",
       "idleMove": "Move the camera left and right.",
       "idleShutter": "Find the named item, then tap the shutter.",
-      "idleHand": "Swipe down to lower the hand."
+      "idleHand": "Swipe down to lower the hand.",
+      "progressReport": "Progress Report",
+      "jobEarnings": "JOB EARNINGS",
+      "reportJob": "JOB #{number}",
+      "newJobUnlocked": "NEW JOB UNLOCKED",
+      "newRankUnlocked": "NEW RANK UNLOCKED",
+      "nextRank": "NEXT RANK: {rank}",
+      "maxRank": "HIGHEST RANK",
+      "nextJob": "NEXT JOB",
+      "skipCount": "TAP TO SKIP",
+      "reportSummary": "Earned {cash}. Job {job} unlocked.",
+      "unlockables": "UNLOCKABLES",
+      "locations": "LOCATIONS",
+      "ranks": "RANKS",
+      "horror": "HORROR",
+      "on": "ON",
+      "off": "OFF"
     },
     "ar": {
       "start": "ابدأ",
@@ -2428,14 +2519,14 @@
       "exitText": "العودة إلى الصفحة الرئيسية؟",
       "stay": "البقاء",
       "leave": "الخروج",
-      "howText": "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
-      "storyText": "مرحبًا بك في خدمة التنظيف الليلية. اترك كل عقار نظيفًا. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. رجاءً، لا تجعلهم يكررون كلامهم.",
+      "howText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "storyText": "مرحبًا بك في خدمة التنظيف الليلية. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. توخّ الحذر: لا تصوّر الأشياء الخطأ، واحرص على أن تخرج سالمًا.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
-      "hiddenObjectHowText": "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "hiddenObjectHowText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
       "jobs": "المهام",
       "cash": "الرصيد",
       "rank": "الرتبة",
@@ -2446,7 +2537,23 @@
       "locationUnlocked": "تم فتح موقع جديد",
       "idleMove": "حرّك الكاميرا يمينًا ويسارًا.",
       "idleShutter": "اعثر على الشيء المطلوب، ثم اضغط زر التصوير.",
-      "idleHand": "اسحب إلى الأسفل لإبعاد اليد."
+      "idleHand": "اسحب إلى الأسفل لإبعاد اليد.",
+      "progressReport": "تقرير التقدم",
+      "jobEarnings": "أجر المهمة",
+      "reportJob": "المهمة #{number}",
+      "newJobUnlocked": "تم فتح مهمة جديدة",
+      "newRankUnlocked": "تم فتح رتبة جديدة",
+      "nextRank": "الرتبة التالية: {rank}",
+      "maxRank": "أعلى رتبة",
+      "nextJob": "المهمة التالية",
+      "skipCount": "اضغط للتخطي",
+      "reportSummary": "ربحت {cash}. تم فتح المهمة {job}.",
+      "unlockables": "العناصر المفتوحة",
+      "locations": "المواقع",
+      "ranks": "الرتب",
+      "horror": "الرعب",
+      "on": "تشغيل",
+      "off": "إيقاف"
     },
     "fadeMs": 120
   },
@@ -2489,13 +2596,17 @@
   },
   "career": {
     "basePay": 100,
-    "perRemainingSecond": 1
+    "perRemainingSecond": 1,
+    "reportCountMs": 1500
   },
   "idleHints": {
     "enabled": true,
     "delayMs": 5000,
     "handDelayMs": 3000,
     "fadeMs": 100
+  },
+  "horror": {
+    "enabled": true
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2605,7 +2716,7 @@
     const portraitFrame = document.getElementById("portraitFrame");
     const menuShell = document.getElementById("menuShell");
     const homePoster = document.getElementById("homePoster");
-    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "story", "how", "newGame"], newGame: ["home"], settings: ["home"], story: ["home"], how: ["home"] };
+    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "unlockables", "story", "how", "newGame"], unlockables: ["home"], newGame: ["home"], settings: ["home"], story: ["home"], how: ["home"] };
     const MENU_PAGES = Object.keys(MENU_ROUTES);
     let menuPage = "intro";
     let selectedMenuButton = null;
@@ -2623,6 +2734,10 @@
     let cameraAudio = null, cameraAudioSource = "", cameraAudioRun = 0, cameraAudioPriming = null;
     const idleHint = document.getElementById("idleHint");
     let idleHintKind = "", idleLastActionAt = 0, idleMoved = false, idleShutterUsed = false, idleHandShownAt = 0;
+    const reportScreen = document.getElementById("progressReport"), valuePunches = new WeakMap();
+    let reportVisible = false, reportCounting = false, reportFrame = 0, reportRun = 0, reportNextPending = false;
+    let jobReportData = null, reportRankPunched = false, reportLastPaid = -1, reportLastPunch = 0;
+    let unlockablesRun = 0;
     let pageParked = false;
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
@@ -2644,6 +2759,7 @@
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
+      "career.reportCountMs": [200, 10000, true], "ui.valuePunchMs": [80, 1000, true], "ui.valuePunchScale": [1, 1.5],
       "career.basePay": [0, 1000000, true], "career.perRemainingSecond": [0, 1000000, true],
       "idleHints.delayMs": [100, 60000, true], "idleHints.handDelayMs": [100, 60000, true], "idleHints.fadeMs": [0, 1000, true],
       "levels.hiddenObjectHunt.surveillanceStartLevel": [1, 1000000001, true], "camera.shutterVolume": [0, 1],
@@ -4280,6 +4396,7 @@
     }
 
     async function prepareRoomJumpscare(room) {
+      if (!horrorEnabled()) return;
       room.mediaLoading = true;
       let failure;
       try {
@@ -4525,9 +4642,9 @@
       return isAreaHunt() && entry?.level === progressionLevel() ? entry : null;
     }
 
-    function staticHuntRoomLimit(job = progressionLevel()) {
+    function staticHuntRoomLimit(job = progressionLevel(), rules = levelType) {
       if (!CONFIG.milestones.enabled) return Infinity;
-      const { roomsInitiallyUnlocked, roomUnlockStartLevel, roomUnlockEveryLevels } = levelType;
+      const { roomsInitiallyUnlocked, roomUnlockStartLevel, roomUnlockEveryLevels } = rules;
       const additional = job < roomUnlockStartLevel ? 0 :
         1 + Math.floor((job - roomUnlockStartLevel) / roomUnlockEveryLevels);
       return roomsInitiallyUnlocked + additional;
@@ -4720,6 +4837,203 @@
         scenes: [scene], line: null, data: null };
     }
 
+    function punchValue(element) {
+      if (!element) return;
+      valuePunches.get(element)?.cancel();
+      const animation = element.animate([
+        { scale: "1" }, { scale: String(CONFIG.ui.valuePunchScale), offset: .28 }, { scale: "1" }
+      ], { duration: CONFIG.ui.valuePunchMs, easing: "cubic-bezier(.2,.8,.2,1)" });
+      valuePunches.set(element, animation);
+      animation.finished.catch(() => {}).finally(() => {
+        if (valuePunches.get(element) === animation) valuePunches.delete(element);
+      });
+    }
+
+    function rankProgress(job) {
+      const index = Math.min(rankTitles.length - 1, Math.floor(job / 10));
+      const atMax = index === rankTitles.length - 1;
+      const first = index === 0 ? 1 : index * 10, next = (index + 1) * 10;
+      return { index, title: rankTitles[index], fraction: atMax ? 1 : clamp((job - first) / (next - first), 0, 1),
+        nextTitle: atMax ? null : rankTitles[index + 1], remaining: atMax ? 0 : next - job };
+    }
+
+    function renderReportFrame(fraction) {
+      if (!jobReportData) return;
+      const data = jobReportData, copy = menuText(), paid = Math.round(data.earned * fraction);
+      document.getElementById("reportEarned").textContent = `+£${paid.toLocaleString("en-GB")}`;
+      document.getElementById("reportCash").textContent = `£${(data.cashBefore + paid).toLocaleString("en-GB")}`;
+      const before = rankProgress(data.job), after = rankProgress(data.job + 1), rankedUp = after.index > before.index;
+      const crossed = rankedUp && fraction >= .72;
+      const rank = crossed || fraction === 1 ? after : before;
+      const fill = rankedUp ? (crossed ? after.fraction * (fraction - .72) / .28 : before.fraction + (1 - before.fraction) * fraction / .72)
+        : before.fraction + (after.fraction - before.fraction) * fraction;
+      const track = document.getElementById("reportRankTrack");
+      document.getElementById("reportRankFill").style.transform = `scaleX(${clamp(fill, 0, 1)})`;
+      track.setAttribute("aria-valuenow", String(Math.round(fill * 100)));
+      track.setAttribute("aria-valuetext", rank.nextTitle ? `${rank.title}: ${Math.round(fill * 100)}%` : copy.maxRank);
+      document.getElementById("reportRank").textContent = rank.title;
+      document.getElementById("reportNextRank").textContent = rank.nextTitle ? gameText(copy.nextRank, { rank: rank.nextTitle }) : copy.maxRank;
+      document.getElementById("reportJobs").textContent = (data.job + (fraction === 1 ? 1 : 0)).toLocaleString(isArabic() ? "ar-u-nu-arab" : "en-GB");
+      document.getElementById("reportNewRank").hidden = !crossed;
+      document.getElementById("reportNewJob").classList.toggle("revealed", fraction === 1);
+      if (crossed && !reportRankPunched) {
+        reportRankPunched = true;
+        punchValue(document.getElementById("reportRank"));
+      }
+      const now = performance.now();
+      if (paid !== reportLastPaid && (now - reportLastPunch >= 130 || fraction === 1)) {
+        punchValue(document.getElementById("reportCash"));
+        reportLastPunch = now;
+      }
+      reportLastPaid = paid;
+      if (fraction === 1) {
+        punchValue(document.getElementById("reportJobs"));
+        document.getElementById("reportContinueButton").textContent = copy.nextJob;
+        document.getElementById("reportSummary").textContent = gameText(copy.reportSummary, { cash: `£${data.earned}`, job: data.job + 1 });
+      }
+      updateLocationUnlockNotice();
+    }
+
+    function finishReportCount() {
+      if (reportFrame) cancelAnimationFrame(reportFrame);
+      reportFrame = 0;
+      reportCounting = false;
+      renderReportFrame(1);
+    }
+
+    function startReportCount() {
+      reportCounting = true;
+      let previous = null, elapsed = 0;
+      const run = reportRun;
+      const step = time => {
+        reportFrame = 0;
+        if (!reportVisible || run !== reportRun) return;
+        if (previous !== null && !isPageInactive()) elapsed += clamp(time - previous, 0, 80);
+        previous = time;
+        const fraction = Math.min(1, elapsed / CONFIG.career.reportCountMs);
+        renderReportFrame(1 - Math.pow(1 - fraction, 2));
+        if (fraction < 1) reportFrame = requestAnimationFrame(step);
+        else { reportCounting = false; reportFrame = 0; }
+      };
+      reportFrame = requestAnimationFrame(step);
+    }
+
+    function stopProgressReport() {
+      ++reportRun;
+      if (reportFrame) cancelAnimationFrame(reportFrame);
+      reportFrame = 0; reportCounting = false; reportVisible = false; reportNextPending = false;
+      reportScreen.hidden = true;
+      viewport.inert = menuPage !== null;
+      if (menuPage === null) viewport.removeAttribute("aria-hidden");
+    }
+
+    function showProgressReport() {
+      if (!roomCompleted || gameOver || reportVisible || isPageInactive()) return;
+      const earned = jobReportData?.earned || 0, total = progressState.cash || 0;
+      jobReportData ||= { job: currentRoomNumber, earned, cashBefore: total - earned, cashAfter: total };
+      reportVisible = true; reportNextPending = false;
+      const run = ++reportRun;
+      pauseLevelActivity();
+      gameOverScreen.classList.remove("show");
+      reportScreen.hidden = false;
+      reportScreen.lang = CONFIG.language.code;
+      reportScreen.dir = isArabic() ? "rtl" : "ltr";
+      viewport.inert = true;
+      viewport.setAttribute("aria-hidden", "true");
+      const copy = menuText();
+      const labels = { reportTitle: copy.progressReport, reportJobLabel: gameText(copy.reportJob, { number: jobReportData.job }),
+        reportEarningsLabel: copy.jobEarnings, reportJobsLabel: copy.jobs, reportCashLabel: copy.cash, reportRankLabel: copy.rank,
+        reportNewJob: copy.newJobUnlocked, reportNewRank: copy.newRankUnlocked, reportContinueButton: copy.skipCount };
+      for (const [id, text] of Object.entries(labels)) document.getElementById(id).textContent = text;
+      document.getElementById("reportSummary").textContent = "";
+      reportRankPunched = false; reportLastPaid = -1; reportLastPunch = -Infinity;
+      renderReportFrame(0);
+      reportScreen.animate([{ opacity: 0 }, { opacity: 1 }], { duration: CONFIG.menu.fadeMs, easing: "ease-out" });
+      document.getElementById("reportContinueButton").focus();
+      void loadRankTitles().then(() => {
+        if (reportVisible && run === reportRun) { renderReportFrame(0); startReportCount(); }
+      });
+    }
+
+    function advanceProgressReport() {
+      if (!reportVisible || reportNextPending || isPageInactive()) return;
+      if (reportCounting) { finishReportCount(); return; }
+      reportNextPending = true;
+      // Retained native players are unlocked on this actual tap, before the fade.
+      const primed = primeRetainedScares({ refreshAudio: appleForegroundAudioPending });
+      const animation = reportScreen.animate([{ opacity: 1 }, { opacity: 0 }], { duration: CONFIG.menu.fadeMs, easing: "ease-in", fill: "both" });
+      const run = reportRun;
+      return animation.finished.catch(() => {}).then(() => {
+        if (run !== reportRun || !reportVisible) return;
+        stopProgressReport();
+        animation.cancel();
+        return transitionToLevel({ mediaPrimed: primed });
+      });
+    }
+
+    function unlockablesSummary(jobsTotal, locations, progress = menuProgressSnapshot) {
+      const job = (progress?.completedRooms || 0) + 1;
+      const maximum = staticHuntRoomLimit(job, CONFIG.levels.hiddenObjectHunt);
+      return { jobs: Math.min(job, jobsTotal), jobsTotal,
+        ranks: careerSummary(progress).rank, ranksTotal: rankTitles.length,
+        locations: locations.filter(number => number <= maximum).length, locationsTotal: locations.length };
+    }
+
+    async function refreshUnlockables() {
+      const run = ++unlockablesRun, language = CONFIG.language.code;
+      for (const id of ["unlockJobs", "unlockRanks", "unlockLocations"]) document.getElementById(id).textContent = "—";
+      levelBaseURL = new URL(CONFIG.assets.levelsDirectory.replace(/\/?$/, "/"), document.baseURI);
+      const [batches, , catalog] = await Promise.all([loadJobBatches(), loadRankTitles(), discoverScenes().catch(() => [])]);
+      const usable = await Promise.all(catalog.filter(scene => hiddenObjectRoomAllowed(scene.number)).map(async scene => {
+        try { return (await loadHiddenObjects(scene)).groups.size ? scene.number : null; } catch { return null; }
+      }));
+      if (run !== unlockablesRun || language !== CONFIG.language.code) return;
+      const summary = unlockablesSummary([...batches.values()].reduce((sum, rows) => sum + rows.length, 0), usable.filter(number => number !== null));
+      document.getElementById("unlockJobs").textContent = `${summary.jobs}/${summary.jobsTotal}`;
+      document.getElementById("unlockRanks").textContent = `${summary.ranks}/${summary.ranksTotal}`;
+      document.getElementById("unlockLocations").textContent = `${summary.locations}/${summary.locationsTotal}`;
+    }
+
+    function horrorEnabled() { return CONFIG.horror.enabled; }
+
+    function readMenuPreference() {
+      let selected = null;
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try {
+          const value = JSON.parse(window[store].getItem(MENU_PREFERENCE_KEY) || "null");
+          if (!value || !["en", "ar"].includes(value.language) || !Number.isFinite(value.updatedAt) || value.updatedAt > Date.now() + 60000) continue;
+          if (!selected || value.updatedAt >= selected.updatedAt) selected = value;
+        } catch {}
+      }
+      return selected;
+    }
+
+    function saveMenuPreference() {
+      const preference = JSON.stringify({ language: CONFIG.language.code, horror: horrorEnabled(), updatedAt: Date.now() });
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try { window[store].setItem(MENU_PREFERENCE_KEY, preference); } catch {}
+      }
+    }
+
+    function updateHorrorChoices() {
+      document.querySelectorAll("[data-horror]").forEach(button => button.setAttribute("aria-pressed", String((button.dataset.horror === "on") === horrorEnabled())));
+    }
+
+    function selectMenuHorror(enabled) {
+      if (menuPage !== "settings" || homePlayPending || menuActionPending || menuTransitionPending || typeof enabled !== "boolean") return;
+      CONFIG.horror.enabled = enabled;
+      saveMenuPreference();
+      if (!enabled) {
+        stopScareFlash(); stopSpiderEncounter(); stopSpiderSound();
+        for (const room of roomMediaPool) {
+          room.cancelScarePreparation?.();
+          room.scare.pause(); room.scare.muted = true;
+          room.scare.classList.remove("playing", "priming");
+        }
+      }
+      updateHorrorChoices(); restartMenuButtonMotion();
+    }
+
     function parseRankTitles(text) {
       if (typeof text !== "string" || text.length > 65536 || /<(?:!doctype|html|body)\b/i.test(text)) throw new Error("Invalid ranks.txt.");
       const lines = text.replace(/^\uFEFF/, "").split(/\r\n?|\n/).map(line => line.trim());
@@ -4842,7 +5156,7 @@
     function updateLocationUnlockNotice() {
       const notice = document.getElementById("locationUnlock");
       notice.textContent = menuText().locationUnlocked;
-      notice.hidden = !roomCompleted || gameOver || !locationJustUnlocked;
+      notice.hidden = !reportVisible || !roomCompleted || gameOver || !locationJustUnlocked;
     }
 
     async function checkNewLocationUnlock(completedJob) {
@@ -4960,6 +5274,7 @@
         handleMissedCameraShot(Boolean(point));
         return;
       }
+      punchValue(status);
       showObjectCaptureBonus(hiddenObjectCapturePoint(point));
       hiddenObjectScore++;
       selectedCount = hiddenObjectScore;
@@ -6205,7 +6520,7 @@
     }
 
     async function prepareScareAssets() {
-      if (!CONFIG.scare.enabled || !levelIsUnlocked(CONFIG.scare.startLevel) || CONFIG.scare.spawnChance === 0) return;
+      if (!horrorEnabled() || !CONFIG.scare.enabled || !levelIsUnlocked(CONFIG.scare.startLevel) || CONFIG.scare.spawnChance === 0) return;
       prepareScareAudio();
       if (scareSpriteLoad) return scareSpriteLoad;
       const run = scareAssetsRun;
@@ -6258,7 +6573,7 @@
     }
 
     function unlockScareSound({ refreshAudio = false } = {}) {
-      if (!CONFIG.scare.enabled || CONFIG.scare.spawnChance === 0 || !levelIsUnlocked(CONFIG.scare.startLevel) || isPageInactive()) return;
+      if (!horrorEnabled() || !CONFIG.scare.enabled || CONFIG.scare.spawnChance === 0 || !levelIsUnlocked(CONFIG.scare.startLevel) || isPageInactive()) return;
       const offset = scarePausedSoundTime;
       const audio = prepareScareAudio();
       // An interrupted scare must restart audibly inside the actual Resume tap.
@@ -6345,6 +6660,7 @@
     }
 
     function playScareFlash(after = null) {
+      if (!horrorEnabled()) return false;
       if (scareFlashActive || !scareSprites.length || gameOver || roomCompleted) return false;
       stopScareSound();
       const request = scareFlashRequest = { sprite: chooseScene(scareSprites), generation: levelGeneration,
@@ -6359,6 +6675,7 @@
     }
 
     function continueScareFlash(request) {
+      if (!horrorEnabled()) return;
       if (request !== scareFlashRequest || !scareFlashActive || gameplayPaused || isPageInactive() || menuPage !== null) return;
       const run = ++request.run;
       const current = () => request === scareFlashRequest && scareFlashActive && run === request.run &&
@@ -6396,6 +6713,7 @@
     }
 
     function showScarePortrait(request) {
+      if (!horrorEnabled()) return;
       if (request !== scareFlashRequest || !scareFlashActive || request.generation !== levelGeneration) return;
       const { sprite, generation } = request;
       request.phase = "visual";
@@ -6455,7 +6773,7 @@
     function handleMissedCameraShot(directTap = false) {
       const lost = Math.min(batterySlotsRemaining, CONFIG.battery.missCost);
       // A final-charge miss goes straight to the existing battery failure.
-      const selected = !directTap && lost > 0 && batterySlotsRemaining > lost && CONFIG.scare.enabled && levelIsUnlocked(CONFIG.scare.startLevel) &&
+      const selected = horrorEnabled() && !directTap && lost > 0 && batterySlotsRemaining > lost && CONFIG.scare.enabled && levelIsUnlocked(CONFIG.scare.startLevel) &&
         scareSprites.length > 0 && !scareFlashActive && Math.random() < CONFIG.scare.spawnChance;
       if (!selected) { drainBatterySlot(); return; }
       drainBatterySlot(CONFIG.battery.missCost, { deferFailure: true });
@@ -8131,7 +8449,7 @@
     }
 
     async function loadSpiderAssets() {
-      if (!CONFIG.spider.enabled) return;
+      if (!horrorEnabled() || !CONFIG.spider.enabled) return;
       if (spiderSoundURL !== SPIDER_SOUND_FILE) {
         stopSpiderSound();
         if (spiderNativeAudio) {
@@ -8166,7 +8484,7 @@
     }
 
     function unlockSpiderSound({ refreshAudio = false } = {}) {
-      if (!CONFIG.spider.enabled || isPageInactive()) return;
+      if (!horrorEnabled() || !CONFIG.spider.enabled || isPageInactive()) return;
       preloadSpiderSound();
       const audio = spiderNativeAudio;
       if (!audio || spiderSoundPlaying || pausedSpiderSoundOffset !== null ||
@@ -8218,6 +8536,7 @@
     }
 
     function playSpiderSound(offset = null) {
+      if (!horrorEnabled()) return;
       const audio = spiderNativeAudio;
       if (!audio || !spiderSoundReady && offset === null) return;
       stopSpiderSound();
@@ -8274,17 +8593,17 @@
     function scheduleSpiderCheck(delay = SPIDER_CHECK_MS) {
       clearLevelTimeout(spiderTimer);
       spiderTimer = null;
-      if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel) return;
+      if (!horrorEnabled() || !CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel) return;
       spiderTimer = levelTimeout(() => {
         spiderTimer = null;
-        if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel) return;
+        if (!horrorEnabled() || !CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || completedWordCount < CONFIG.spider.afterWords || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel) return;
         if (Math.random() < SPIDER_SPAWN_CHANCE && spawnSpiderOffscreen()) return;
         scheduleSpiderCheck();
       }, delay);
     }
 
     function spawnSpiderOffscreen() {
-      if (!CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel || !spiderAssetsReady || !spiderSoundReady) return false;
+      if (!horrorEnabled() || !CONFIG.spider.enabled || !levelIsUnlocked(CONFIG.spider.startLevel) || !gameplayStarted || gameOver || roomCompleted || spiderActive || spiderAppearedThisLevel || !spiderAssetsReady || !spiderSoundReady) return false;
       const width = spiderMeta.width * SPIDER_SCALE;
       const visible = currentVisibleWorldRange();
       const ranges = [];
@@ -8580,6 +8899,7 @@
 
     function endGame(reason = "other") {
       if (gameOver || roomCompleted) return;
+      if (!horrorEnabled()) { if (beginGameOver(reason)) showGameOver(); return; }
       const chance = (CONFIG.failures[reason] || CONFIG.failures.other).jumpscareChance || 0;
       if (chance >= 1 || chance > 0 && Math.random() < chance) triggerJumpscare(reason);
       else if (beginGameOver(reason)) showGameOver();
@@ -8620,6 +8940,7 @@
     }
 
     function triggerJumpscare(reason = "other") {
+      if (!horrorEnabled()) { if (beginGameOver(reason)) showGameOver(); return; }
       if (!beginGameOver(reason)) return;
 
       // jumpscare.mp4 is 1280x720, the same authored canvas as room.mp4.
@@ -8691,6 +9012,7 @@
     }
 
     function playActiveScare(room, { refreshAudio = false } = {}) {
+      if (!horrorEnabled()) return;
       if (isPageInactive() || menuPage !== null || activeScareRoom() !== room) return;
       const clip = room.scare;
       if (refreshAudio) clip.pause();
@@ -9081,7 +9403,7 @@
     }
 
     function resumeLevelActivity({ gesture = false } = {}) {
-      if (isPageInactive() || menuPage !== null || exitConfirmationActive || levelResumePending) return levelResumePending;
+      if (isPageInactive() || reportVisible || menuPage !== null || exitConfirmationActive || levelResumePending) return levelResumePending;
       const scareRoom = activeScareRoom();
       const active = gameplayStarted && !gameOver && !roomCompleted;
       if (!active && !scareRoom) {
@@ -9160,6 +9482,7 @@
     }
 
     function unmuteParkedScares() {
+      if (!horrorEnabled()) return;
       // READY/Resume can restore sound permission on the same paused players
       // without starting them or moving their cached first frames.
       for (const room of levelRooms) {
@@ -9177,7 +9500,7 @@
         if (menuPage === null && !gameplayStarted && !gameOver) loadingPlaybackInterrupted = true;
         pauseLevelActivity({ cancelPreparation: true });
         holdAppleForegroundAudio();
-      } else if (menuPage === null && !exitConfirmationActive) resumeLevelActivity();
+      } else if (menuPage === null && !exitConfirmationActive && !reportVisible) resumeLevelActivity();
     }
     document.addEventListener("visibilitychange", syncPageActivity);
     window.addEventListener("pagehide", () => {
@@ -9203,11 +9526,10 @@
 
     function levelMediaIsPrepared() {
       return !isPageInactive() && roomsReady && levelRooms.length > 0 && levelRooms.every(room =>
-        room.backdropReady && room.metadataReady && room.scareReady && room.audioUnlocked &&
+        room.backdropReady && (!horrorEnabled() || room.metadataReady && room.scareReady && room.audioUnlocked &&
         !room.preparing && !room.scare.error && room.scare.paused && !room.scare.seeking && room.scare.currentTime <= 0.05 &&
-        room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA);
+        room.scare.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA));
     }
-
     function revealWhenMediaReady() {
       if (menuPage !== null || isPageInactive() || gameOver || gameplayStarted) return;
       videosReadyForClue = levelMediaIsPrepared();
@@ -9314,6 +9636,7 @@
     }
 
     async function warmJumpscareBeforeDeadline(room = levelRooms[activeRoomIndex]) {
+      if (!horrorEnabled()) return;
       if (!room || room.deadlineWarmStarted) return;
       room.deadlineWarmStarted = true;
       const clip = room.scare;
@@ -9338,6 +9661,7 @@
     }
 
     function prepareJumpscarePlayback({ unlockAudio = false, refreshAudio = false } = {}, room = levelRooms[activeRoomIndex]) {
+      if (!horrorEnabled()) return Promise.resolve();
       const jumpscareVideo = room.scare;
       if (isPageInactive()) return Promise.reject(mediaPreparationInterrupted());
       if (!refreshAudio && room.scareReady && (!unlockAudio || room.audioUnlocked) && jumpscareVideo.paused &&
@@ -9657,7 +9981,9 @@
       completionRecorded = true;
       const seconds = jobPayoutSeconds ?? Math.max(0, Math.floor(cameraRemainingSeconds));
       const earned = CONFIG.career.basePay + seconds * CONFIG.career.perRemainingSecond;
-      progressState.cash = Math.min(Number.MAX_SAFE_INTEGER, (progressState.cash || 0) + earned);
+      const cashBefore = progressState.cash || 0;
+      progressState.cash = Math.min(Number.MAX_SAFE_INTEGER, cashBefore + earned);
+      jobReportData = { job: currentRoomNumber, earned: progressState.cash - cashBefore, cashBefore, cashAfter: progressState.cash };
       void checkNewLocationUnlock(currentRoomNumber).catch(() => {});
       progressState.completedRooms = currentRoomNumber;
       if (isButterflyRiddle() && !isButterflyArea()) progressState.lastButterflyRiddleRoom = currentScene.number;
@@ -9819,6 +10145,8 @@
     }
 
     function resetLevelState({ rotateEndlessRooms = false } = {}) {
+      stopProgressReport();
+      jobReportData = null;
       stopCameraSound();
       resetIdleHints();
       jobPayoutSeconds = null;
@@ -9984,12 +10312,12 @@
       saveProgress();
     }
 
-    function transitionToLevel({ fresh = false, continueButterflies = false } = {}) {
+    function transitionToLevel({ fresh = false, continueButterflies = false, mediaPrimed = null } = {}) {
       if (levelTransitionPending || isPageInactive()) return levelTransitionPending;
       const refreshMedia = fresh || Boolean(levelLoadFailure);
       // Refresh permission on the retained element inside Next/Retry, before
       // the asynchronously loaded scene can ask for playback.
-      const primed = primeRetainedScares({ refreshAudio: appleForegroundAudioPending });
+      const primed = mediaPrimed || primeRetainedScares({ refreshAudio: appleForegroundAudioPending });
       loadingWord.hidden = false;
       loadingScreen.classList.remove("hidden");
       gameOverScreen.classList.remove("show");
@@ -10023,6 +10351,7 @@
       if (event?.target.closest?.("button, input, .progress-actions")) return;
       if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
       saveProgress();
+      if (roomCompleted) { showProgressReport(); return; }
       return transitionToLevel({ continueButterflies: roomCompleted && isEndlessButterflies() });
     }
 
@@ -10153,23 +10482,12 @@
       document.fonts?.ready.then(requestViewportLayout);
     }
 
-    function readLanguagePreference() {
-      let selected = null;
-      for (const store of ["localStorage", "sessionStorage"]) {
-        try {
-          const value = JSON.parse(window[store].getItem(MENU_PREFERENCE_KEY) || "null");
-          if (!value || !["en", "ar"].includes(value.language) || !Number.isFinite(value.updatedAt) || value.updatedAt > Date.now() + 60000) continue;
-          if (!selected || value.updatedAt >= selected.updatedAt) selected = value;
-        } catch {}
-      }
-      return selected?.language || null;
-    }
-
+    function readLanguagePreference() { return readMenuPreference()?.language || null; }
     function applyLanguagePreference() {
-      const selected = readLanguagePreference();
-      if (selected) CONFIG.language.code = selected;
+      const selected = readMenuPreference();
+      if (selected) CONFIG.language.code = selected.language;
+      if (typeof selected?.horror === "boolean") CONFIG.horror.enabled = selected.horror;
     }
-
     function menuText() { return CONFIG.menu[CONFIG.language.code] || CONFIG.menu.en; }
 
     function restartMenuButtonMotion() {
@@ -10203,6 +10521,9 @@
       menuShell.lang = CONFIG.language.code;
       menuShell.setAttribute("aria-label", CONFIG.menu.title);
       const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
+        homeUnlockablesButton: text.unlockables, unlockablesTitle: text.unlockables,
+        unlockJobsLabel: text.jobs, unlockRanksLabel: text.ranks, unlockLocationsLabel: text.locations,
+        horrorTitle: text.horror, horrorOnButton: text.on, horrorOffButton: text.off,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy,
         careerJobsLabel: text.jobs, careerCashLabel: text.cash, careerRankLabel: text.rank,
@@ -10213,6 +10534,7 @@
         (element.querySelector(".menu-label") || element).textContent = label;
       }
       updateCareerUI();
+      updateHorrorChoices();
       document.getElementById("languageChoices").setAttribute("aria-label", text.language);
       menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
       document.querySelectorAll(".home-back").forEach(button => button.setAttribute("aria-label", text.home));
@@ -10264,6 +10586,7 @@
       menuShell.scrollTop = 0;
       syncHomePoster();
       updateMenuCopy(); updateMenuControls();
+      if (page === "unlockables") void refreshUnlockables().catch(() => {});
       const screen = document.getElementById(`${page}Page`);
       const action = page === "home" ? document.getElementById(menuContinueAvailable ? "homePlayButton" : "homeClearButton")
         : page === "intro" ? document.getElementById("homeStartButton")
@@ -10358,11 +10681,8 @@
 
     function selectMenuLanguage(language) {
       if (!["en", "ar"].includes(language) || homePlayPending || menuActionPending) return;
-      const preference = JSON.stringify({ language, updatedAt: Date.now() });
-      for (const store of ["localStorage", "sessionStorage"]) {
-        try { window[store].setItem(MENU_PREFERENCE_KEY, preference); } catch {}
-      }
       CONFIG.language.code = language;
+      saveMenuPreference();
       puzzleTextOverride = puzzleFilePromise = null;
       gameInitializationStarted = false;
       refreshConfigBindings();
@@ -10403,6 +10723,7 @@
     }
 
     function primeRetainedScares({ refreshAudio = false } = {}) {
+      if (!horrorEnabled()) return Promise.resolve([]);
       unlockSpiderSound({ refreshAudio });
       const rooms = roomMediaPool.filter(room => room.metadataReady && !room.scare.error &&
         !room.scare.classList.contains("playing"));
@@ -10415,6 +10736,7 @@
 
     function primeMediaFromMenuGesture() {
       unlockCameraSound();
+      if (!horrorEnabled()) return Promise.resolve(true);
       unlockSpiderSound({ refreshAudio: true });
       let room = roomMediaPool[0];
       if (!room) {
@@ -10494,6 +10816,7 @@
     }
 
     function returnToHome() {
+      stopProgressReport();
       if (menuActionPending) return menuActionPending;
       if (progressInitializedLanguage === CONFIG.language.code) saveProgress();
       ++continueProbeRun;
@@ -10559,7 +10882,7 @@
       const code = keyboardEventCode(event);
       if (code === "Escape") {
         if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
-        else if (["settings", "story", "how", "newGame"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
+        else if (["settings", "unlockables", "story", "how", "newGame"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
         else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
         return;
       }
@@ -10612,6 +10935,11 @@
     document.getElementById("homeBackButton").addEventListener("click", () => panHomeTo("intro"));
     document.getElementById("homePlayButton").addEventListener("click", () => beginHomePlay());
     document.getElementById("homeSettingsButton").addEventListener("click", () => panHomeTo("settings"));
+    document.getElementById("homeUnlockablesButton").addEventListener("click", () => panHomeTo("unlockables"));
+    document.getElementById("horrorOnButton").addEventListener("click", () => selectMenuHorror(true));
+    document.getElementById("horrorOffButton").addEventListener("click", () => selectMenuHorror(false));
+    document.getElementById("reportContinueButton").addEventListener("click", advanceProgressReport);
+    document.getElementById("reportHomeButton").addEventListener("click", returnToHome);
     document.getElementById("homeStoryButton").addEventListener("click", () => panHomeTo("story"));
     document.getElementById("homeHowButton").addEventListener("click", () => panHomeTo("how"));
     document.getElementById("homeClearButton").addEventListener("click", clearDataFromHome);

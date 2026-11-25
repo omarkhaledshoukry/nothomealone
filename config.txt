@@ -909,6 +909,8 @@ retryMaxFontPx = 30
 retryFontVh = 3
 
 # Plain text only. Placeholders: clueFormat {current}/{total}; roomFormat {number}; puzzleLevelFormat {title}/{number}.
+valuePunchMs = 240
+valuePunchScale = 1.14
 [text]
 hunt = "TASK"
 exit = "EXIT"
@@ -926,7 +928,7 @@ nextRoom = "NEXT"
 clueFormat = "{current}/{total}"
 roomFormat = "ROOM {number}"
 clueTitle = "CLUES"
-ready = "READY"
+ready = "GO"
 found = "FOUND"
 roomComplete = "JOB COMPLETE"
 nextLevel = "TAP TO CONTINUE"
@@ -1006,12 +1008,12 @@ exitTitle = "Are you sure?"
 exitText = "Return to the home screen?"
 stay = "STAY"
 leave = "LEAVE"
-howText = "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view."
-storyText = "Welcome to After Hours Housekeeping. Leave every property spotless. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Please don’t make them repeat themselves."
+howText = "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view."
+storyText = "Welcome to After Hours Housekeeping. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Be careful: don’t photograph the wrong items, and make sure you get out in one piece."
 
 butterflyAreaHowText = "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold."
 butterflyRushHowText = "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI."
-hiddenObjectHowText = "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view."
+hiddenObjectHowText = "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view."
 
 jobs = "JOBS"
 cash = "CASH"
@@ -1024,6 +1026,22 @@ locationUnlocked = "NEW LOCATION UNLOCKED"
 idleMove = "Move the camera left and right."
 idleShutter = "Find the named item, then tap the shutter."
 idleHand = "Swipe down to lower the hand."
+progressReport = "Progress Report"
+jobEarnings = "JOB EARNINGS"
+reportJob = "JOB #{number}"
+newJobUnlocked = "NEW JOB UNLOCKED"
+newRankUnlocked = "NEW RANK UNLOCKED"
+nextRank = "NEXT RANK: {rank}"
+maxRank = "HIGHEST RANK"
+nextJob = "NEXT JOB"
+skipCount = "TAP TO SKIP"
+reportSummary = "Earned {cash}. Job {job} unlocked."
+unlockables = "UNLOCKABLES"
+locations = "LOCATIONS"
+ranks = "RANKS"
+horror = "HORROR"
+on = "ON"
+off = "OFF"
 [menu.ar]
 start = "ابدأ"
 play = "متابعة"
@@ -1042,12 +1060,12 @@ exitTitle = "هل أنت متأكد؟"
 exitText = "العودة إلى الصفحة الرئيسية؟"
 stay = "البقاء"
 leave = "الخروج"
-howText = "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية."
-storyText = "مرحبًا بك في خدمة التنظيف الليلية. اترك كل عقار نظيفًا. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. رجاءً، لا تجعلهم يكررون كلامهم."
+howText = "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية."
+storyText = "مرحبًا بك في خدمة التنظيف الليلية. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. توخّ الحذر: لا تصوّر الأشياء الخطأ، واحرص على أن تخرج سالمًا."
 
 butterflyAreaHowText = "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول."
 butterflyRushHowText = "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة."
-hiddenObjectHowText = "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية."
+hiddenObjectHowText = "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية."
 
 jobs = "المهام"
 cash = "الرصيد"
@@ -1061,13 +1079,34 @@ idleMove = "حرّك الكاميرا يمينًا ويسارًا."
 idleShutter = "اعثر على الشيء المطلوب، ثم اضغط زر التصوير."
 idleHand = "اسحب إلى الأسفل لإبعاد اليد."
 
+progressReport = "تقرير التقدم"
+jobEarnings = "أجر المهمة"
+reportJob = "المهمة #{number}"
+newJobUnlocked = "تم فتح مهمة جديدة"
+newRankUnlocked = "تم فتح رتبة جديدة"
+nextRank = "الرتبة التالية: {rank}"
+maxRank = "أعلى رتبة"
+nextJob = "المهمة التالية"
+skipCount = "اضغط للتخطي"
+reportSummary = "ربحت {cash}. تم فتح المهمة {job}."
+unlockables = "العناصر المفتوحة"
+locations = "المواقع"
+ranks = "الرتب"
+horror = "الرعب"
+on = "تشغيل"
+off = "إيقاف"
 [career]
 # Pounds earned once per successful job, using the seconds left at the winning capture.
 basePay = 100
 perRemainingSecond = 1
 
+reportCountMs = 1500
 [idleHints]
 enabled = true
 delayMs = 5000
 handDelayMs = 3000
 fadeMs = 100
+
+[horror]
+# Settings > Horror overrides this default and is remembered with language.
+enabled = true
