@@ -1205,6 +1205,18 @@
     .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; animation-duration: .487s; animation-delay: -.055s; }
     .menu-back svg, .home-back svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
     .menu-body { margin: 0; font-size: clamp(20px, calc(var(--view-unit) * 3.2), 28px); line-height: 1.38; text-align: start; }
+    #homeCareer { position: absolute; left: 6%; right: 6%; bottom: max(20px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; pointer-events: none; }
+    #homeCareer > div { min-width: 0; }
+    #homeCareer dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: 16px; line-height: 1.3; }
+    #homeCareer dd { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace; overflow-wrap: anywhere; }
+    #homePage { padding-bottom: 112px; }
+    @media (max-height: 720px) { #homeCareer { position: static; margin-top: 26px; } #homePage { padding-bottom: 30px; } }
+    #newGameText { text-align: center; margin-bottom: 24px; }
+    #idleHint { position: absolute; left: 7%; width: 86%; text-align: center; pointer-events: none; opacity: 0; transition: opacity var(--idle-hint-fade-ms, 100ms) ease-out; font: 15px/1.35 var(--camera-font, monospace); color: #fff; -webkit-text-fill-color: #fff; text-shadow: 0 1px 4px #000; }
+    #idleHint.show { opacity: 1; }
+    :root[data-game-language="ar"] #idleHint { font-family: "Game Arabic", Tahoma, serif; direction: rtl; }
+    #locationUnlock { position: absolute; left: 5%; bottom: max(32px, env(safe-area-inset-bottom)); width: 90%; margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 18px/1.3 var(--camera-font, monospace); text-align: center; animation: surveillanceBlink 900ms steps(1, end) infinite; }
+    #locationUnlock[hidden] { display: none; }
     #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: 18px; }
     #homeNotice > span { animation: clearNoticeFade 1800ms ease both; }
     @keyframes clearNoticeFade {
@@ -1426,6 +1438,7 @@
           <span id="batteryPercent">100%</span>
           <span id="batteryLow" hidden>BATTERY LOW</span>
         </div>
+        <div id="idleHint" role="status" aria-live="polite"></div>
         <div id="hud">
           <div id="wordDisplay" aria-live="polite"></div>
           <div id="objectTarget" aria-live="polite" lang="en" dir="ltr" hidden></div>
@@ -1474,6 +1487,7 @@
         <div id="gameOverTitle">GAME OVER</div>
         <div id="retryText">TAP TO RETRY</div>
         <p id="levelLoadDetails" hidden></p>
+        <p id="locationUnlock" hidden></p>
       </div>
     </div>
     <section id="menuShell" aria-label="Housemaid in Hell" data-language="en" data-page="intro" data-poster-position="left">
@@ -1491,6 +1505,20 @@
           <button id="homeHowButton" class="menu-button" type="button"><span class="menu-label">HOW TO PLAY</span></button>
         </nav>
         <p id="homeNotice" role="status" aria-live="polite"></p>
+        <dl id="homeCareer" aria-label="Career">
+          <div><dt id="careerJobsLabel">JOBS</dt><dd id="careerJobs">1</dd></div>
+          <div><dt id="careerCashLabel">CASH</dt><dd id="careerCash" dir="ltr">£0</dd></div>
+          <div><dt id="careerRankLabel">RANK</dt><dd id="careerRank">Trainee</dd></div>
+        </dl>
+      </div>
+      <div id="newGamePage" class="menu-page" hidden>
+        <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
+        <h2 id="newGameTitle">Are you sure?</h2>
+        <p id="newGameText" class="menu-body">Erase all saved progress and earnings?</p>
+        <div class="home-actions">
+          <button id="newGameYesButton" class="menu-button" type="button"><span class="menu-label">YES</span></button>
+          <button id="newGameNoButton" class="menu-button" type="button"><span class="menu-label">NO</span></button>
+        </div>
       </div>
       <div id="settingsPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
@@ -1561,7 +1589,9 @@
     "arabicPaperFontFile": "Arabic-Font.otf",
     "butterflyFile": "butterfly.gif",
     "butterflyFiles": [],
-    "jobsFile": "jobs.txt"
+    "jobsFile": "jobs.txt",
+    "cameraSound": "camera.mp3",
+    "ranksFile": "ranks.txt"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -1834,7 +1864,7 @@
       "roomsInitiallyUnlocked": 3,
       "roomUnlockStartLevel": 5,
       "roomUnlockEveryLevels": 5,
-      "surveillanceChance": 0.5,
+      "surveillanceChance": 0.25,
       "itemTarget": 4,
       "itemTargetPerLevel": 4,
       "itemTargetMaxArea": 10,
@@ -1843,7 +1873,8 @@
       "flyingLetters": false,
       "evadesCamera": false,
       "decoyLetterChance": 0,
-      "shutterComboBonusSeconds": 5
+      "shutterComboBonusSeconds": 5,
+      "surveillanceStartLevel": 6
     }
   },
   "crow": {
@@ -1851,7 +1882,7 @@
     "startLevel": 5,
     "spawnChance": 0.1,
     "imageScale": 0.75,
-    "flightMs": 325,
+    "flightMs": 464,
     "afterHalfChance": 0.85,
     "lateMinFraction": 0.52,
     "lateMaxFraction": 0.82,
@@ -1938,7 +1969,8 @@
     "momentumDurationMultiplier": 3,
     "momentumEasePower": 3,
     "centreFlightMs": 420,
-    "timerRefreshMs": 250
+    "timerRefreshMs": 250,
+    "shutterVolume": 1
   },
   "letters": {
     "minScale": 0.7,
@@ -1970,7 +2002,7 @@
       "none"
     ],
     "decoyStartLevel": 1,
-    "tapEnabled": true,
+    "tapEnabled": false,
     "tapSlopPx": 8,
     "tapMaxMs": 400,
     "tapHitPaddingPx": 8,
@@ -2170,7 +2202,7 @@
     "clueTitle": "CLUES",
     "ready": "READY",
     "found": "FOUND",
-    "roomComplete": "LEVEL COMPLETE",
+    "roomComplete": "JOB COMPLETE",
     "nextLevel": "TAP TO CONTINUE",
     "retry": "TAP TO RETRY",
     "playAgain": "TAP TO PLAY AGAIN",
@@ -2361,14 +2393,25 @@
       "exitText": "Return to the home screen?",
       "stay": "STAY",
       "leave": "LEAVE",
-      "howText": "Drag left or right to look around. Solve the riddle by collecting its letters in order: tap a letter or snap it with the camera while it is in view. Finish before time runs out. If a letter looks wrong, look away, then back to make it change. Don’t freak out. Don’t piss them off—or they’ll come for you.",
-      "storyText": "You came to clean the house. Something else is already here. Through your camera, they leave riddles and scattered letters. Solve their games before time runs out. Keep them entertained. Don’t anger them—or they’ll come for you.",
+      "howText": "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "storyText": "Welcome to After Hours Housekeeping. Leave every property spotless. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Please don’t make them repeat themselves.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
-      "hiddenObjectHowText": "Read the job and press Ready. Find the item named below the upper counter. The shutter captures it when any of its listed locations is horizontally in the camera view. You can also tap one of its actual locations. Numbered copies share one target name and any matching copy is valid. Correct captures keep the battery intact. Misses use one battery slot. Two successful shutter captures within two seconds add five seconds. Two quick successful item taps add two seconds. Hold TASK to read your job again. Each correct capture shows +1 at the item and reveals the next item. Reach the area target before time runs out. Some areas scan automatically: swipe against the scan to reverse it. In other areas, drag freely to look around. Scene anomalies unlock at Areas 12 and 24. Find them and look away to clear them before photographing. Only a shutter photo with an anomaly in view triggers its jumpscare; direct item taps do not. Hold the shutter to black out the room and clear look-away anomalies. Swipe the hand down when it covers the screen."
+      "hiddenObjectHowText": "Drag left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "jobs": "JOBS",
+      "cash": "CASH",
+      "rank": "RANK",
+      "newGameTitle": "Are you sure?",
+      "newGameText": "Erase all saved progress and earnings?",
+      "yes": "YES",
+      "no": "NO",
+      "locationUnlocked": "NEW LOCATION UNLOCKED",
+      "idleMove": "Move the camera left and right.",
+      "idleShutter": "Find the named item, then tap the shutter.",
+      "idleHand": "Swipe down to lower the hand."
     },
     "ar": {
       "start": "ابدأ",
@@ -2385,14 +2428,25 @@
       "exitText": "العودة إلى الصفحة الرئيسية؟",
       "stay": "البقاء",
       "leave": "الخروج",
-      "howText": "اسحب يمينًا ويسارًا لتنظر حولك. حلّ اللغز بجمع حروف الإجابة بالترتيب: المس الحرف، أو التقط صورة عندما يظهر داخل الإطار. أكمل قبل نفاد الوقت. إذا بدا الحرف خاطئًا، انظر بعيدًا ثم عُد إليه ليتغيّر. لا تفزع، ولا تُغضبهم… وإلا سيأتون إليك.",
-      "storyText": "جئت لتنظيف المنزل… لكنك لست وحدك. عبر كاميرتك يتركون ألغازًا وحروفًا مبعثرة. حلّ ألعابهم قبل نفاد الوقت، وأبقهم مستمتعين. لا تُغضبهم… وإلا سيأتون إليك.",
+      "howText": "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "storyText": "مرحبًا بك في خدمة التنظيف الليلية. اترك كل عقار نظيفًا. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. رجاءً، لا تجعلهم يكررون كلامهم.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
-      "hiddenObjectHowText": "اقرأ المهمة ثم اضغط استعداد. ابحث عن الشيء المكتوب أسفل العداد العلوي. يلتقطه زر التصوير عندما يكون أي موقع مسجل له داخل المشهد أفقيًا. يمكنك أيضًا لمس أحد مواقعه الفعلية. النسخ المرقمة تشترك في اسم واحد وأي نسخة مطابقة صحيحة. الالتقاط الصحيح لا يستهلك البطارية، والخاطئ يستهلك شحنة. تصوير شيئين صحيحين بزر التصوير خلال ثانيتين يضيف خمس ثوانٍ. لمس شيئين صحيحين بسرعة يضيف ثانيتين. اضغط مطولًا على TASK لقراءة المهمة مجددًا. بعد كل التقاط صحيح تظهر +1 عند الشيء ويظهر الشيء التالي. أكمل الهدف قبل نفاد الوقت. تمسح بعض المناطق الغرفة تلقائيًا؛ اسحب عكس المسح لعكس الاتجاه. في المناطق الأخرى اسحب بحرية للنظر حولك. تبدأ ظاهرتا الغرفة عند المنطقتين 12 و24. اعثر عليهما وانظر بعيدًا لإزالتهما قبل الالتقاط؛ لقطة زر التصوير فقط أثناء ظهور الظاهرة في المشهد تفعّل اللقطة المخيفة؛ لمس الأشياء مباشرة لا يفعّلها. اضغط مطولًا على التصوير لتعتيم الغرفة وإزالة الظواهر التي تزول بالنظر بعيدًا. اسحب اليد إلى الأسفل عندما تغطي الشاشة."
+      "hiddenObjectHowText": "اسحب يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "jobs": "المهام",
+      "cash": "الرصيد",
+      "rank": "الرتبة",
+      "newGameTitle": "هل أنت متأكد؟",
+      "newGameText": "هل تريد مسح كل التقدم والرصيد المحفوظ؟",
+      "yes": "نعم",
+      "no": "لا",
+      "locationUnlocked": "تم فتح موقع جديد",
+      "idleMove": "حرّك الكاميرا يمينًا ويسارًا.",
+      "idleShutter": "اعثر على الشيء المطلوب، ثم اضغط زر التصوير.",
+      "idleHand": "اسحب إلى الأسفل لإبعاد اليد."
     },
     "fadeMs": 120
   },
@@ -2432,6 +2486,16 @@
     "filePattern": "room_{number}.txt",
     "arabicFilePattern": "room_{number}_ar.txt",
     "tapRadiusPx": 28
+  },
+  "career": {
+    "basePay": 100,
+    "perRemainingSecond": 1
+  },
+  "idleHints": {
+    "enabled": true,
+    "delayMs": 5000,
+    "handDelayMs": 3000,
+    "fadeMs": 100
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2541,7 +2605,7 @@
     const portraitFrame = document.getElementById("portraitFrame");
     const menuShell = document.getElementById("menuShell");
     const homePoster = document.getElementById("homePoster");
-    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "story", "how"], settings: ["home"], story: ["home"], how: ["home"] };
+    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "story", "how", "newGame"], newGame: ["home"], settings: ["home"], story: ["home"], how: ["home"] };
     const MENU_PAGES = Object.keys(MENU_ROUTES);
     let menuPage = "intro";
     let selectedMenuButton = null;
@@ -2553,6 +2617,12 @@
     let menuActionPending = null;
     let menuTransitionPending = null, menuTransitionRun = 0, menuFadeAnimation = null;
     let menuMotionFrame = null, homeBootReady = false, menuContinueAvailable = false, continueProbeRun = 0;
+    let continueProbeBusy = false, menuProgressSnapshot = null;
+    let rankTitles = ["Trainee"], ranksFilePromise = null;
+    let jobPayoutSeconds = null, locationUnlockRun = 0, locationJustUnlocked = false;
+    let cameraAudio = null, cameraAudioSource = "", cameraAudioRun = 0, cameraAudioPriming = null;
+    const idleHint = document.getElementById("idleHint");
+    let idleHintKind = "", idleLastActionAt = 0, idleMoved = false, idleShutterUsed = false, idleHandShownAt = 0;
     let pageParked = false;
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
@@ -2574,6 +2644,9 @@
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
+      "career.basePay": [0, 1000000, true], "career.perRemainingSecond": [0, 1000000, true],
+      "idleHints.delayMs": [100, 60000, true], "idleHints.handDelayMs": [100, 60000, true], "idleHints.fadeMs": [0, 1000, true],
+      "levels.hiddenObjectHunt.surveillanceStartLevel": [1, 1000000001, true], "camera.shutterVolume": [0, 1],
       "letters.tapSlopPx": [0, 40], "letters.tapMaxMs": [50, 2000, true], "letters.tapHitPaddingPx": [0, 40],
       "menu.panMs": [0, 3000, true], "menu.fadeMs": [0, 1000, true], "menu.jitterStaggerMs": [0, 99, true],
       "menu.rightScreenDimOpacity": [0, 1], "menu.startButtonRaisePx": [-600, 600, true],
@@ -4191,6 +4264,7 @@
       levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
       roomGroupsPromise = puzzleFilePromise = null;
       jobsFilePromise = null;
+      ranksFilePromise = null;
       butterflySpriteLoad = null;
       listedSceneProbes.clear();
       dollFiles.clear();
@@ -4451,14 +4525,13 @@
       return isAreaHunt() && entry?.level === progressionLevel() ? entry : null;
     }
 
-    function staticHuntRoomLimit() {
+    function staticHuntRoomLimit(job = progressionLevel()) {
       if (!CONFIG.milestones.enabled) return Infinity;
       const { roomsInitiallyUnlocked, roomUnlockStartLevel, roomUnlockEveryLevels } = levelType;
-      const additional = progressionLevel() < roomUnlockStartLevel ? 0 :
-        1 + Math.floor((progressionLevel() - roomUnlockStartLevel) / roomUnlockEveryLevels);
+      const additional = job < roomUnlockStartLevel ? 0 :
+        1 + Math.floor((job - roomUnlockStartLevel) / roomUnlockEveryLevels);
       return roomsInitiallyUnlocked + additional;
     }
-
     function staticHuntRiddleCount() {
       const starts = levelType.riddleCountStartLevels;
       return progressionLevel() > starts[2] ? 1 + Math.floor(Math.random() * 3) : milestoneStage(starts) + 1;
@@ -4613,7 +4686,9 @@
       } else ({ scene, data } = await chooseHiddenObjectRoom(eligible));
       wordLoadInfo.url = data.source;
       const previousRule = `${levelType.itemTarget}:${levelType.itemTargetPerLevel}:${levelType.itemTargetMaxArea}`;
-      const surveillance = entry ? Boolean(entry.surveillance) : CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance;
+      const surveillance = progressionLevel() >= levelType.surveillanceStartLevel &&
+        (entry ? Boolean(entry.surveillance) : CONFIG.surveillance.enabled && Math.random() < levelType.surveillanceChance);
+      if (entry) entry.surveillance = surveillance;
       const maximum = surveillance ? Math.max(1, Math.floor(levelType.itemTargetMax * levelType.surveillanceTargetMaxMultiplier)) : levelType.itemTargetMax;
       const rule = `${previousRule}:${maximum}`;
       // A cap change shortens an unfinished area's existing list without
@@ -4643,6 +4718,144 @@
       return { puzzle: { prompt: entry.jobPrompt || (isArabic() ? CONFIG.text.findItemsInstructionAr : CONFIG.text.findItemsInstruction), answer: "",
           promptLanguage: entry.jobPrompt ? /[\u0600-\u06ff]/.test(entry.jobPrompt) ? "ar" : "en" : CONFIG.language.code },
         scenes: [scene], line: null, data: null };
+    }
+
+    function parseRankTitles(text) {
+      if (typeof text !== "string" || text.length > 65536 || /<(?:!doctype|html|body)\b/i.test(text)) throw new Error("Invalid ranks.txt.");
+      const lines = text.replace(/^\uFEFF/, "").split(/\r\n?|\n/).map(line => line.trim());
+      while (lines.length && !lines[lines.length - 1]) lines.pop();
+      if (!lines.length || lines.length > 256 || lines.some(line => line.length > 128)) throw new Error("Invalid rank titles.");
+      return lines.map((line, i) => line || lines.slice(0, i).reverse().find(Boolean) || "Trainee");
+    }
+
+    function loadRankTitles() {
+      if (!ranksFilePromise) ranksFilePromise = (async () => {
+        const text = localFolderImport ? localFolderImport.ranksText : await fetchLevelResource(
+          new URL(CONFIG.assets.ranksFile, document.baseURI), {}, response => {
+            if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error("No ranks.txt.");
+            return response.text();
+          });
+        rankTitles = parseRankTitles(text);
+      })().catch(() => { rankTitles = ["Trainee"]; }).finally(updateCareerUI);
+      return ranksFilePromise;
+    }
+
+    function careerSummary(progress = menuProgressSnapshot) {
+      const job = (progress?.completedRooms || 0) + 1;
+      const index = Math.min(rankTitles.length - 1, Math.floor(job / 10));
+      return { job, cash: progress?.cash || 0, rank: index + 1, title: rankTitles[index] };
+    }
+
+    function updateCareerUI() {
+      const summary = careerSummary();
+      document.getElementById("careerJobs").textContent = summary.job.toLocaleString(isArabic() ? "ar-u-nu-arab" : "en-GB");
+      document.getElementById("careerCash").textContent = `£${summary.cash.toLocaleString("en-GB")}`;
+      const rank = document.getElementById("careerRank");
+      rank.textContent = summary.title;
+      rank.dir = /[\u0600-\u06ff]/.test(summary.title) ? "rtl" : "ltr";
+      rank.lang = rank.dir === "rtl" ? "ar" : "en";
+    }
+
+    function prepareCameraAudio() {
+      const source = new URL(CONFIG.assets.cameraSound, document.baseURI).href;
+      if (cameraAudio && cameraAudioSource === source) return cameraAudio;
+      stopCameraSound();
+      cameraAudioSource = source;
+      cameraAudio = new Audio();
+      cameraAudio.preload = "auto";
+      cameraAudio.src = source;
+      cameraAudio.load();
+      return cameraAudio;
+    }
+
+    function stopCameraSound() {
+      ++cameraAudioRun;
+      cameraAudioPriming = null;
+      cameraAudio?.pause();
+    }
+
+    function unlockCameraSound() {
+      if (isPageInactive()) return;
+      const audio = prepareCameraAudio(), run = ++cameraAudioRun;
+      try {
+        audio.muted = true;
+        cameraAudioPriming = Promise.resolve(audio.play()).then(() => {
+          if (audio !== cameraAudio || run !== cameraAudioRun) return;
+          audio.pause(); audio.currentTime = 0;
+        }).catch(() => {}).finally(() => {
+          if (run === cameraAudioRun) cameraAudioPriming = null;
+        });
+      } catch { cameraAudioPriming = null; }
+    }
+
+    function playCameraSound() {
+      const audio = prepareCameraAudio();
+      stopCameraSound(); // Invalidates any pending silent unlock before this shot.
+      try {
+        audio.currentTime = 0;
+        audio.volume = CONFIG.camera.shutterVolume;
+        audio.muted = CONFIG.camera.shutterVolume === 0;
+        audio.play()?.catch(() => {});
+      } catch { /* An optional SFX never prevents a photograph. */ }
+    }
+
+    function hideIdleHint() {
+      idleHintKind = "";
+      idleHint.classList.remove("show");
+    }
+
+    function resetIdleHints() {
+      hideIdleHint();
+      idleMoved = idleShutterUsed = false;
+      idleLastActionAt = performance.now();
+      idleHandShownAt = handVisible ? idleLastActionAt : 0;
+    }
+
+    function noteGameplayInteraction(kind) {
+      if (kind === "move") idleMoved = true;
+      if (kind === "shutter") idleShutterUsed = true;
+      idleLastActionAt = performance.now();
+      if (idleHintKind === kind) hideIdleHint();
+    }
+
+    function updateIdleHint() {
+      if (!CONFIG.idleHints.enabled || !isHiddenObjectHunt() || menuPage !== null || !gameplayStarted ||
+          gameplayPaused || isPageInactive() || hintActive || endlessIntermission || gameOver || roomCompleted ||
+          scareFlashActive || shutterBlackoutActive || shutterRevealing || exitConfirmationActive) { hideIdleHint(); return; }
+      const now = performance.now();
+      let kind = "";
+      if (handVisible && !handDismissing && now - idleHandShownAt >= CONFIG.idleHints.handDelayMs) kind = "hand";
+      else if (!handVisible && now - idleLastActionAt >= CONFIG.idleHints.delayMs) {
+        kind = !surveillanceActive && !idleMoved && !idleShutterUsed ? "move" : "shutter";
+      }
+      if (!kind) { hideIdleHint(); return; }
+      idleHintKind = kind;
+      const copy = menuText();
+      const message = copy[kind === "hand" ? "idleHand" : kind === "move" ? "idleMove" : "idleShutter"];
+      if (idleHint.textContent !== message) idleHint.textContent = message;
+      const anchor = (objectTarget.hidden ? status : objectTarget).getBoundingClientRect();
+      idleHint.style.top = `${Math.max(0, anchor.bottom - cameraOverlay.getBoundingClientRect().top + 12)}px`;
+      idleHint.style.setProperty("--idle-hint-fade-ms", `${CONFIG.idleHints.fadeMs}ms`);
+      idleHint.classList.add("show");
+    }
+
+    function updateLocationUnlockNotice() {
+      const notice = document.getElementById("locationUnlock");
+      notice.textContent = menuText().locationUnlocked;
+      notice.hidden = !roomCompleted || gameOver || !locationJustUnlocked;
+    }
+
+    async function checkNewLocationUnlock(completedJob) {
+      const run = ++locationUnlockRun, generation = levelGeneration, language = CONFIG.language.code;
+      const current = staticHuntRoomLimit(completedJob), next = staticHuntRoomLimit(completedJob + 1);
+      if (!isHiddenObjectHunt() || next <= current) return;
+      const scenes = (await discoverScenes()).filter(scene => scene.number > current && scene.number <= next && hiddenObjectRoomAllowed(scene.number));
+      const usable = await Promise.all(scenes.map(async scene => {
+        try { return (await loadHiddenObjects(scene)).groups.size > 0; } catch { return false; }
+      }));
+      if (run !== locationUnlockRun || generation !== levelGeneration || language !== CONFIG.language.code || !roomCompleted || gameOver) return;
+      locationJustUnlocked = usable.some(Boolean);
+      updateLocationUnlockNotice();
     }
 
     function currentHiddenObject() {
@@ -4736,6 +4949,7 @@
     }
 
     function captureHiddenObjectShot(point) {
+      if (point !== null) return; // Only the shutter can expose a photograph.
       if (!point && hiddenObjectAnomalyInView()) {
         triggerJumpscare("anomaly");
         return;
@@ -5105,6 +5319,8 @@
         }
         const butterflyFiles = [...entries.keys()].filter(isButterflySpritePath);
         const scareFiles = [...entries.keys()].filter(path => !path.includes("/") && isScareSpritePath(path));
+        let ranksText = null;
+        try { const rankFile = find(selectedConfig.assets.ranksFile); if (rankFile && rankFile.size <= 65536) ranksText = await rankFile.text(); } catch {}
         let jobsText = null;
         try {
           const jobsFile = find(selectedFolderPath(selectedConfig.assets.jobsFile));
@@ -5125,8 +5341,9 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText, ranksText };
         rememberLocalFiles(data);
+        localFolderImport = data;
         await initializeGame(data);
       } catch (error) {
         showLocalFolderPrompt(error.message);
@@ -5342,6 +5559,8 @@
       unlockSpiderSound();
       unlockCrowSound();
       unlockScareSound();
+      unlockCameraSound();
+      resetIdleHints();
       if (gameOver) return;
       gameplayStarting = false;
       gameplayStarted = true;
@@ -5424,6 +5643,7 @@
       hintHideTimer = clueDismissTimer = null;
       finishPanGesture(); finishShutterGesture(); stopShutterEffect();
       hintActive = true;
+      hideIdleHint();
       clueIntro.classList.remove("dismiss");
       clueIntro.classList.add("hint-mode", "show");
       clueIntro.setAttribute("aria-hidden", "false");
@@ -5773,6 +5993,7 @@
       }
       maybeStartCrowEncounter();
       maybeSpawnRoomAnomaly();
+      updateIdleHint();
     }
 
     function startCameraTimer() {
@@ -6266,6 +6487,7 @@
     }
 
     function snapCamera(targetIndex = null, point = null) {
+      if (targetIndex !== null || point !== null) return; // Scene taps never take a photo.
       if (hasShutterPress() || shutterBlackoutActive || shutterRevealing || scareFlashActive) return;
       if ((isButterflyRiddle() || isStaticHunt() || isHiddenObjectHunt()) && point === null && batterySlotsRemaining === 0) return;
       if (gameplayPaused || menuPage !== null || !gameplayStarted || hintActive || handVisible || gameOver || roomCompleted || wordTransitionPending || captureInProgress) return;
@@ -6275,8 +6497,9 @@
       if (gameOver || roomCompleted) return;
       finishPanGesture();
       stopShutterEffect();
-      // A scene tap is targeted (including -1 for a miss); a shutter press
-      // chooses the current letter, or the closest X in the spread mode.
+      noteGameplayInteraction("shutter");
+      playCameraSound();
+      // The shutter chooses the current target, or the closest X in spread mode.
       const butterflies = usesButterflyActors();
       const index = !butterflies && targetIndex === null ? shutterLetterIndex() : targetIndex;
       snapButton.classList.remove("snapping");
@@ -6418,6 +6641,7 @@
 
     function beginShutterPress() {
       if (scareFlashActive) return;
+      noteGameplayInteraction("shutter");
       shutterPressStartedAt = performance.now();
       shutterHoldUsed = false;
       snapButton.classList.add("held");
@@ -7111,6 +7335,9 @@
       roomCompleted = isTargetArea() || completedWordCount === staticHuntPuzzles.length;
       hidePuzzleHint({ immediate: true });
       viewport.classList.add("riddle-intermission");
+      // The victory pause bonus is not remaining playing time for earnings.
+      if (roomCompleted) jobPayoutSeconds = Math.max(0, Math.floor(cameraRemainingSeconds));
+      hideIdleHint();
       const seconds = levelType.clearTimeBonusSeconds + tapBonus;
       if (seconds) addCameraTimeBonus(seconds, { pause: true });
       else pauseCameraTimer({ keepStandby: true });
@@ -7229,6 +7456,7 @@
     }
 
     function startKeyboardPan() {
+      noteGameplayInteraction("move");
       if (surveillanceActive) { reverseSurveillanceScan(-keyboardPanDirection()); return; }
       if (keyboardPanFrame || !keyboardPanDirection()) return;
       keyboardPanTime = performance.now();
@@ -7535,13 +7763,6 @@
       dragStartClientY = event.clientY;
       dragStartOffsetX = offsetX;
       lastPanClientX = event.clientX;
-      if (CONFIG.letters.tapEnabled && !captureInProgress && !wordTransitionPending &&
-          isSceneTapPoint(event.clientX, event.clientY)) {
-        pendingSceneTap = { x: event.clientX, y: event.clientY, started: event.timeStamp,
-          index: isStaticHunt() ? staticHuntTargetAtPoint(event.clientX, event.clientY) :
-            usesButterflyActors() ? findEndlessButterfly({ x: event.clientX, y: event.clientY }) : letterAtPoint(event.clientX, event.clientY),
-          roomIndex: activeRoomIndex, wordIndex, selectedCount };
-      }
       // Input timestamps keep touch velocity independent of render delays.
       panMotionSamples = [{ x: event.clientX, time: event.timeStamp }];
       body.classList.add("grabbing");
@@ -7569,6 +7790,7 @@
 
       // Consume each movement even at the room's edge. Reversing direction
       // then moves immediately instead of having to undo an overshoot first.
+      noteGameplayInteraction("move");
       const deltaX = event.clientX - lastPanClientX;
       lastPanClientX = event.clientX;
       if (surveillanceActive) {
@@ -7585,16 +7807,6 @@
     function pointerUp(event) {
       if (!isDragging || event.pointerId !== panPointerId) return;
 
-      const tap = pendingSceneTap;
-      const point = { x: event.clientX, y: event.clientY };
-      const isTap = tap && !movedDuringDrag && tap.roomIndex === activeRoomIndex && tap.wordIndex === wordIndex && tap.selectedCount === selectedCount &&
-        event.timeStamp - tap.started <= CONFIG.letters.tapMaxMs &&
-        Math.hypot(event.clientX - tap.x, event.clientY - tap.y) <= CONFIG.letters.tapSlopPx &&
-        isSceneTapPoint(point.x, point.y);
-      // Lock a moving glyph on press so a fast letter cannot escape a clean
-      // tap during the short down/up interval. No per-letter pointer handlers.
-      const targetIndex = !isTap ? -1 : isStaticHunt() ? tap.index : usesButterflyActors() ? (tap.index || findEndlessButterfly(point)) :
-        (tap.index >= 0 ? tap.index : letterAtPoint(event.clientX, event.clientY));
       const released = event.timeStamp;
       recordPanMotion(event.clientX, released);
       const velocity = movedDuringDrag ? getPanReleaseVelocity(released) : 0;
@@ -7608,8 +7820,7 @@
       // Release pointer ownership before starting the independent glide, so
       // the next press can immediately stop it and start a fresh drag.
       finishPanGesture();
-      if (isTap) snapCamera(targetIndex, point);
-      else startCameraMomentum(horizontalSwipe ? velocity : 0, travel, swipeOrigin);
+      startCameraMomentum(horizontalSwipe ? velocity : 0, travel, swipeOrigin);
     }
 
     function pointerCancel(event) {
@@ -8501,6 +8712,8 @@
     }
 
     function showLevelCompleteScreen(action = CONFIG.text.playAgain) {
+      updateLocationUnlockNotice();
+      hideIdleHint();
       document.getElementById("gameOverTitle").textContent = CONFIG.text.roomComplete;
       document.getElementById("retryText").textContent = action;
       gameOverScreen.setAttribute("aria-label", `${CONFIG.text.roomComplete}. ${action}.`);
@@ -8508,6 +8721,8 @@
     }
 
     function showGameOver() {
+      hideIdleHint();
+      if (!roomCompleted) document.getElementById("locationUnlock").hidden = true;
       ++playbackRevision;
       levelResumePending = null;
       resumePlaybackButton.disabled = false;
@@ -8567,6 +8782,8 @@
       // The hand holds automatic camera movement until fully lowered.
       // Encounter jobs, animation frames, room media and the clock keep running.
       handVisible = true;
+      idleHandShownAt = performance.now();
+      hideIdleHint();
       handDismissing = false;
       updateCameraControls();
       finishPanGesture();
@@ -8588,6 +8805,7 @@
     function hideHand({ continueFromDrag = false } = {}) {
       if (!handVisible || handDismissing) return;
       handDismissing = true;
+      noteGameplayInteraction("hand");
       viewport.classList.remove("hand-active");
       const generation = levelGeneration;
       const pointerId = handPointerId;
@@ -8762,6 +8980,8 @@
     }
 
     function pauseLevelActivity({ cancelPreparation = false } = {}) {
+      stopCameraSound();
+      hideIdleHint();
       hiddenObjectTapAt = hiddenObjectShutterAt = null;
       ++playbackRevision;
       levelResumePending = null;
@@ -8790,6 +9010,8 @@
     }
 
     function resumeLevelSimulation({ audioRestored = false } = {}) {
+      idleLastActionAt = performance.now();
+      if (handVisible) idleHandShownAt = idleLastActionAt;
       if (audioRestored) appleForegroundAudioPending = false;
       gameplayPaused = false;
       resumePlayback.hidden = true;
@@ -9266,7 +9488,7 @@
     let progressMessage = "";
 
     function emptyProgress() {
-      return { version: 7, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0 };
+      return { version: 7, game: "room-word-hunt", language: CONFIG.language.code, completedRooms: 0, cash: 0 };
     }
 
     function validateProgress(value) {
@@ -9275,7 +9497,7 @@
       const language = value.version >= 3 ? value.language : "en";
       if (!["en", "ar"].includes(language)) throw new Error("Invalid save language.");
       // Older saves can supply a level count without a previous room.
-      const progress = { version: 7, game: "room-word-hunt", language, completedRooms: value.completedRooms };
+      const progress = { version: 7, game: "room-word-hunt", language, completedRooms: value.completedRooms, cash: Number.isSafeInteger(value.cash) && value.cash >= 0 ? value.cash : 0 };
       if (value.version === 7 && value.completedRooms > 0 &&
           Number.isSafeInteger(value.lastButterflyRiddleRoom) && value.lastButterflyRiddleRoom > 0) {
         progress.lastButterflyRiddleRoom = value.lastButterflyRiddleRoom;
@@ -9364,13 +9586,20 @@
 
     async function refreshContinueAvailability() {
       const run = ++continueProbeRun, language = CONFIG.language.code;
-      let available = hasPlayableProgress(savedBrowserProgress(language));
+      let snapshot = savedBrowserProgress(language);
+      let available = hasPlayableProgress(snapshot);
+      continueProbeBusy = true;
+      menuProgressSnapshot = snapshot;
+      updateCareerUI();
       menuContinueAvailable = available;
       updateMenuControls();
       const consider = text => {
         try {
           const saved = parseProgress(text);
-          if (saved.language === language && hasPlayableProgress(saved)) available = true;
+          if (saved.language === language && hasPlayableProgress(saved)) {
+            available = true;
+            if (!snapshot || saved.completedRooms > snapshot.completedRooms) snapshot = saved;
+          }
         } catch { /* Empty and invalid saves do not enable Continue. */ }
       };
       let ignoreExternal = false;
@@ -9398,7 +9627,12 @@
         }
       }
       if (run === continueProbeRun && language === CONFIG.language.code) {
-        menuContinueAvailable = available || hasPlayableProgress(savedBrowserProgress(language));
+        const browser = savedBrowserProgress(language);
+        if (browser && (!snapshot || browser.completedRooms >= snapshot.completedRooms)) snapshot = browser;
+        menuProgressSnapshot = snapshot;
+        menuContinueAvailable = available || hasPlayableProgress(browser);
+        continueProbeBusy = false;
+        updateCareerUI();
         updateMenuControls();
       }
     }
@@ -9412,6 +9646,8 @@
       }
       progressStorageAvailable = stored;
       menuContinueAvailable = hasPlayableProgress(progressState);
+      menuProgressSnapshot = progressState;
+      updateCareerUI();
       queueSaveFile(text);
       updateProgressStatus();
     }
@@ -9419,6 +9655,10 @@
     function recordRoomCompletion() {
       if (completionRecorded) return;
       completionRecorded = true;
+      const seconds = jobPayoutSeconds ?? Math.max(0, Math.floor(cameraRemainingSeconds));
+      const earned = CONFIG.career.basePay + seconds * CONFIG.career.perRemainingSecond;
+      progressState.cash = Math.min(Number.MAX_SAFE_INTEGER, (progressState.cash || 0) + earned);
+      void checkNewLocationUnlock(currentRoomNumber).catch(() => {});
       progressState.completedRooms = currentRoomNumber;
       if (isButterflyRiddle() && !isButterflyArea()) progressState.lastButterflyRiddleRoom = currentScene.number;
       else {
@@ -9579,6 +9819,12 @@
     }
 
     function resetLevelState({ rotateEndlessRooms = false } = {}) {
+      stopCameraSound();
+      resetIdleHints();
+      jobPayoutSeconds = null;
+      ++locationUnlockRun;
+      locationJustUnlocked = false;
+      document.getElementById("locationUnlock").hidden = true;
       const elapsed = pausedCameraElapsedMs;
       endlessRoomRotationDelays = rotateEndlessRooms ? {
         anomaly: levelTimeoutJobs.get(anomalyTimer)?.remaining,
@@ -9959,11 +10205,14 @@
       const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy,
+        careerJobsLabel: text.jobs, careerCashLabel: text.cash, careerRankLabel: text.rank,
+        newGameTitle: text.newGameTitle, newGameText: text.newGameText, newGameYesButton: text.yes, newGameNoButton: text.no,
         exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
       for (const [id, label] of Object.entries(labels)) {
         const element = document.getElementById(id);
         (element.querySelector(".menu-label") || element).textContent = label;
       }
+      updateCareerUI();
       document.getElementById("languageChoices").setAttribute("aria-label", text.language);
       menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
       document.querySelectorAll(".home-back").forEach(button => button.setAttribute("aria-label", text.home));
@@ -9975,7 +10224,7 @@
       const busy = menuPage === "panning" || Boolean(homePlayPending || menuActionPending || menuTransitionPending);
       menuShell.querySelectorAll("button").forEach(button => { button.disabled = busy; });
       document.getElementById("homePlayButton").disabled = busy || !homeBootReady || !menuContinueAvailable;
-      document.getElementById("homeClearButton").disabled = busy || !homeBootReady;
+      document.getElementById("homeClearButton").disabled = busy || !homeBootReady || continueProbeBusy;
       restartMenuButtonMotion();
     }
 
@@ -10018,6 +10267,7 @@
       const screen = document.getElementById(`${page}Page`);
       const action = page === "home" ? document.getElementById(menuContinueAvailable ? "homePlayButton" : "homeClearButton")
         : page === "intro" ? document.getElementById("homeStartButton")
+        : page === "newGame" ? document.getElementById("newGameNoButton")
         : screen?.querySelector('[data-language][aria-pressed="true"]') || screen?.querySelector(".menu-back") || null;
       selectMenuButton(action);
       if (focus && action) requestAnimationFrame(() => {
@@ -10145,6 +10395,8 @@
       // Start the optional download before Play waits on the first room.
       // Local file mode still waits for the selected folder's settings.
       if (/^https?:$/.test(location.protocol)) loadSpiderAssets();
+      prepareCameraAudio();
+      void loadRankTitles();
       homeBootReady = true;
       updateMenuControls();
       void refreshContinueAvailability();
@@ -10162,6 +10414,7 @@
     }
 
     function primeMediaFromMenuGesture() {
+      unlockCameraSound();
       unlockSpiderSound({ refreshAudio: true });
       let room = roomMediaPool[0];
       if (!room) {
@@ -10210,11 +10463,13 @@
       });
     }
 
-    function beginHomePlay({ fresh = false } = {}) {
-      if (menuPage !== "home" || isPageInactive() || !homeBootReady || homePlayPending || menuActionPending || menuTransitionPending ||
+    function beginHomePlay({ fresh = false, confirmed = false } = {}) {
+      if (menuPage !== "home" && !(menuPage === "newGame" && fresh && confirmed) || isPageInactive() || !homeBootReady || continueProbeBusy || homePlayPending || menuActionPending || menuTransitionPending ||
           !fresh && !menuContinueAvailable) return homePlayPending;
+      if (fresh && menuContinueAvailable && !confirmed) return panHomeTo("newGame");
       if (fresh) {
         ++continueProbeRun;
+        continueProbeBusy = false;
         resetLevelState();
         PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
         resetBrowserProgress();
@@ -10259,9 +10514,9 @@
     }
 
     function clearDataFromHome() {
-      return beginHomePlay({ fresh: true });
+      if (continueProbeBusy) return;
+      return menuContinueAvailable ? panHomeTo("newGame") : beginHomePlay({ fresh: true });
     }
-
     function openExitConfirmation() {
       if (menuPage !== null || gameplayPaused || endlessIntermission || isPageInactive() || exitConfirmationActive || !gameplayStarted || handVisible || gameOver || roomCompleted) return;
       updateCameraTimer();
@@ -10304,7 +10559,7 @@
       const code = keyboardEventCode(event);
       if (code === "Escape") {
         if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
-        else if (["settings", "story", "how"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
+        else if (["settings", "story", "how", "newGame"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
         else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
         return;
       }
@@ -10360,6 +10615,8 @@
     document.getElementById("homeStoryButton").addEventListener("click", () => panHomeTo("story"));
     document.getElementById("homeHowButton").addEventListener("click", () => panHomeTo("how"));
     document.getElementById("homeClearButton").addEventListener("click", clearDataFromHome);
+    document.getElementById("newGameYesButton").addEventListener("click", () => beginHomePlay({ fresh: true, confirmed: true }));
+    document.getElementById("newGameNoButton").addEventListener("click", () => panHomeTo("home"));
     menuShell.querySelectorAll(".menu-back:not(#homeBackButton)").forEach(button => button.addEventListener("click", () => panHomeTo("home")));
     menuShell.querySelectorAll("[data-language]").forEach(button => button.addEventListener("click", () => selectMenuLanguage(button.dataset.language)));
     document.getElementById("exitStayButton").addEventListener("click", stayInLevel);
@@ -10392,6 +10649,8 @@
       }
       gameInitializationStarted = true;
       if (importedFiles) clearPreparedLevelCache();
+      void loadRankTitles();
+      prepareCameraAudio();
       // Keep independent progression counts for English and Arabic.
       PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
       progressSaveHandle = null;
