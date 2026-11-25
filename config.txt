@@ -64,6 +64,8 @@ code = "en"
 [assets]
 # Optional room-numbered job sentences, beside game.html.
 jobsFile = "jobs.txt"
+# Arabic job sentences use the matching numbered room batch in this file.
+arabicJobsFile = "jobs_ar.txt"
 # Arabic paper text and collected letters only; scene letters keep arabicFontFile.
 arabicPaperFontFile = "Arabic-Font.otf"
 arabicWordsFile = "words_ar.txt"

@@ -1360,6 +1360,10 @@
     #homeCareer dd { font-family: var(--career-value-font); }
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.75 + var(--home-menu-gap, 26px)); }
     .home-actions > :nth-child(6) { --jitter-phase: -5; }
+    #settingsPage #settingsTitle { margin-bottom: 26px; font-size: clamp(36px, calc(var(--view-unit) * 5.8), 48px); }
+    #settingsPage .setting-heading { margin: 24px 0 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.6), 26px); line-height: 1.2; }
+    #settingsPage #languageTitle { margin-top: 0; }
+    #settingsPage .language-choices .menu-button, #settingsPage #horrorChoices .menu-button { font-size: clamp(24px, calc(var(--view-unit) * 4.2), 30px); }
     .setting-heading { margin: 24px 0 8px; font-size: 22px; font-weight: 400; }
     #horrorChoices { display: flex; justify-content: center; gap: 22px; }
     #horrorChoices [aria-pressed="true"] > .menu-label { text-decoration: underline; text-underline-offset: .2em; font-weight: 700; }
@@ -1368,14 +1372,14 @@
     #unlockableCounts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid #e8d9b438; }
     #unlockableCounts dt { font: 26px/1.3 var(--career-label-font); }
     #unlockableCounts dd { margin: 0; color: #fff; -webkit-text-fill-color: #fff; font: 24px/1.2 var(--career-value-font); }
-    #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: max(30px, env(safe-area-inset-top)) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: radial-gradient(ellipse at 50% 38%, #1e2326 0%, #090b0d 62%, #030405 100%); text-align: center; overflow: auto; font-family: var(--career-value-font); }
+    #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: calc(max(14px, env(safe-area-inset-top)) + 62px) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: #000; text-align: center; overflow: auto; font-family: var(--loading-font); }
     #progressReport[hidden] { display: none; }
     #progressReport .home-back { position: absolute; }
-    #reportHeader { margin: 20px 0 0; }
-    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--career-label-font); }
+    #reportHeader { margin: 0; }
+    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--loading-font); }
     #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: 13px; letter-spacing: .12em; }
     #reportCentre { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 26px 0; min-height: 270px; }
-    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--career-label-font); }
+    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--loading-font); }
     #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
     #reportRankBlock { width: min(100%, 300px); margin: 32px auto 0; }
     #reportRankTrack { height: 5px; border: 1px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 1px; }
@@ -1383,17 +1387,17 @@
     #progressReport[dir="rtl"] #reportRankFill { transform-origin: right center; }
     #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
     #reportUnlocks { min-height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 7px; margin-top: 24px; }
-    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--career-label-font); }
+    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--loading-font); }
     #reportUnlocks [hidden] { display: none; }
     #reportNewJob { opacity: 0; transition: opacity 180ms ease; }
     #reportNewJob.revealed { opacity: 1; }
     #reportUnlocks #locationUnlock { position: static; width: auto; margin: 0; animation: none; font: inherit; }
     #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
     @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--career-label-font); font-size: 25px; }
+    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: 25px; }
     #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-    @media (max-height: 640px) { #reportHeader { margin-top: 12px; } #reportCentre { min-height: 220px; padding: 16px 0; } #reportRankBlock { margin-top: 20px; } #reportUnlocks { margin-top: 14px; min-height: 62px; } #reportContinueButton { margin-bottom: 18px; } }
+    @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { min-height: 220px; padding: 16px 0; } #reportRankBlock { margin-top: 20px; } #reportUnlocks { margin-top: 14px; min-height: 62px; } #reportContinueButton { margin-bottom: 18px; } }
 
   </style>
 </head>
@@ -1586,7 +1590,8 @@
       <div id="settingsPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <h2 id="settingsTitle">SETTINGS</h2>
-        <div id="languageChoices" class="language-choices" role="group" aria-label="Language">
+        <h3 class="setting-heading" id="languageTitle">LANGUAGE</h3>
+        <div id="languageChoices" class="language-choices" role="group" aria-label="Language" aria-labelledby="languageTitle">
           <button class="menu-button" type="button" data-language="en" lang="en" aria-pressed="true"><span class="menu-label">English</span></button>
           <button class="menu-button" type="button" data-language="ar" lang="ar" aria-pressed="false"><span class="menu-label">العربية</span></button>
         </div>
@@ -1664,7 +1669,8 @@
     "butterflyFiles": [],
     "jobsFile": "jobs.txt",
     "cameraSound": "camera.mp3",
-    "ranksFile": "ranks.txt"
+    "ranksFile": "ranks.txt",
+    "arabicJobsFile": "jobs_ar.txt"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -3388,7 +3394,7 @@
     const cameraClock = document.getElementById("cameraClock");
     let hiddenObjectGroups = new Map(), hiddenObjectSource = "";
     let hiddenObjectScore = 0, hiddenObjectGoal = 0, hiddenObjectTapAt = null, hiddenObjectShutterAt = null;
-    let jobsFilePromise = null;
+    let jobsFilePromise = null, jobsFileKey = "";
     let areaFrozenUsed = false;
     let puzzleFilePromise = null;
     let endlessRunPuzzles = null;
@@ -4379,7 +4385,7 @@
       stopScareFlash();
       levelFileNamesPromise = sceneCatalogPromise = dollDiscoveryPromise = null;
       roomGroupsPromise = puzzleFilePromise = null;
-      jobsFilePromise = null;
+      jobsFilePromise = null; jobsFileKey = "";
       ranksFilePromise = null;
       butterflySpriteLoad = null;
       listedSceneProbes.clear();
@@ -4775,19 +4781,26 @@
       return batches;
     }
 
+    function jobsFileFor(language = CONFIG.language.code, config = CONFIG) {
+      return language === "ar" ? config.assets.arabicJobsFile : config.assets.jobsFile;
+    }
+
     function loadJobBatches() {
-      if (jobsFilePromise) return jobsFilePromise;
-      jobsFilePromise = (async () => {
-        const text = localFolderImport ? localFolderImport.jobsText :
-          await fetchLevelResource(new URL(CONFIG.assets.jobsFile, document.baseURI), {}, response => {
-            if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error("No readable jobs.txt.");
+      const language = CONFIG.language.code, filename = jobsFileFor(language);
+      const key = `${language}:${filename}`;
+      if (jobsFilePromise && jobsFileKey === key) return jobsFilePromise;
+      jobsFileKey = key;
+      const promise = (async () => {
+        const text = localFolderImport ? (language === "ar" ? localFolderImport.arabicJobsText : localFolderImport.jobsText) :
+          await fetchLevelResource(new URL(filename, document.baseURI), {}, response => {
+            if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error(`No readable ${filename}.`);
             return response.text();
           });
         return parseJobList(text);
       })().catch(() => new Map());
-      return jobsFilePromise;
+      jobsFilePromise = promise;
+      return promise;
     }
-
     async function planHiddenObjectHunt(catalog) {
       const saved = staticHuntEntry();
       let entry = saved?.mode === "hiddenObjectHunt" ? saved : null;
@@ -4826,9 +4839,14 @@
       }
       hiddenObjectGroups = data.groups;
       hiddenObjectSource = data.source;
-      if (!entry.jobPrompt) {
+      const promptLanguage = entry.jobPromptLanguage || (/[\u0600-\u06ff]/.test(entry.jobPrompt || "") ? "ar" : "en");
+      if (!entry.jobPrompt || promptLanguage !== CONFIG.language.code) {
+        delete entry.jobPrompt; delete entry.jobPromptLanguage;
         const batch = (await loadJobBatches()).get(scene.number);
-        if (batch?.length) entry.jobPrompt = chooseScene(batch);
+        if (batch?.length) {
+          entry.jobPrompt = chooseScene(batch);
+          entry.jobPromptLanguage = CONFIG.language.code;
+        }
       }
       progressState.staticRiddleHunt = entry;
       saveProgress();
@@ -5641,6 +5659,11 @@
           const jobsFile = find(selectedFolderPath(selectedConfig.assets.jobsFile));
           if (jobsFile && jobsFile.size <= 2097152) { jobsText = await jobsFile.text(); parseJobList(jobsText); }
         } catch { jobsText = null; }
+        let arabicJobsText = null;
+        try {
+          const jobsFile = find(selectedFolderPath(jobsFileFor("ar", selectedConfig)));
+          if (jobsFile && jobsFile.size <= 2097152) { arabicJobsText = await jobsFile.text(); parseJobList(arabicJobsText); }
+        } catch { arabicJobsText = null; }
         const languageFiles = { [selectedConfig.language.code]: { wordsText, wordsSource: `${folderName}/${wordsPath}`, puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}` } };
         for (const language of ["en", "ar"]) {
           if (language === selectedConfig.language.code) continue;
@@ -5656,7 +5679,7 @@
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText, ranksText };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText, arabicJobsText, ranksText };
         rememberLocalFiles(data);
         localFolderImport = data;
         await initializeGame(data);
@@ -9865,6 +9888,7 @@
           order: [...hunt.order], surveillance: Boolean(hunt.surveillance), flying: false, frozen: false };
         if (typeof hunt.jobPrompt === "string" && hunt.jobPrompt.trim() && hunt.jobPrompt.length <= 2048) {
           progress.staticRiddleHunt.jobPrompt = hunt.jobPrompt;
+          if (["en", "ar"].includes(hunt.jobPromptLanguage)) progress.staticRiddleHunt.jobPromptLanguage = hunt.jobPromptLanguage;
         }
       }
       const entry = value.butterflyRiddle;
@@ -10523,7 +10547,7 @@
       const labels = { homeStartButton: text.start, homePlayButton: text.play, homeSettingsButton: text.settings, homeStoryButton: text.story,
         homeUnlockablesButton: text.unlockables, unlockablesTitle: text.unlockables,
         unlockJobsLabel: text.jobs, unlockRanksLabel: text.ranks, unlockLocationsLabel: text.locations,
-        horrorTitle: text.horror, horrorOnButton: text.on, horrorOffButton: text.off,
+        languageTitle: text.language, horrorTitle: text.horror, horrorOnButton: text.on, horrorOffButton: text.off,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy,
         careerJobsLabel: text.jobs, careerCashLabel: text.cash, careerRankLabel: text.rank,
