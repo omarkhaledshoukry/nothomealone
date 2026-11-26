@@ -62,6 +62,10 @@ code = "en"
 
 # Asset paths are relative to the HTML. Numbered room/jumpscare pairs still match inside levelsDirectory.
 [assets]
+completeSound = "complete.mp3"
+musicDirectory = "music/"
+musicIndexFile = "index.json"
+storyFile = "story.png"
 # Optional room-numbered job sentences, beside game.html.
 jobsFile = "jobs.txt"
 # Arabic job sentences use the matching numbered room batch in this file.
@@ -105,8 +109,10 @@ letterFontLocalNames = ["Dudu Calligraphy", "DuduCalligraphy", "Dudu_Calligraphy
 
 # Milliseconds unless the key ends in Seconds. Built-in config fetch deadline: 4 seconds.
 cameraSound = "camera.mp3"
+# The other extension (camera.wav / camera.mp3) is checked automatically.
 ranksFile = "ranks.txt"
 [loading]
+optionalAssetTimeoutMs = 2500
 saveTimeoutMs = 3000
 saveHandleTimeoutMs = 1000
 wordsTimeoutMs = 15000
@@ -1112,3 +1118,17 @@ fadeMs = 100
 [horror]
 # Settings > Horror overrides this default and is remembered with language.
 enabled = true
+
+[menuMusic]
+enabled = true
+volume = 0.6
+fadeOutMs = 180
+
+[completionAudio]
+volume = 1
+
+[roomMonochrome]
+enabled = true
+# After Job 30: first eligible job is 31.
+startLevel = 31
+spawnChance = 0.10

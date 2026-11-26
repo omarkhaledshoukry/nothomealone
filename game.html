@@ -114,13 +114,15 @@
       #portraitFrame { width: 100%; }
     }
 
+    #portraitViewport.room-monochrome { --room-monochrome: 1; }
+
     #sceneEffects {
       position: absolute;
       z-index: 1;
       inset: 0;
       pointer-events: none;
       transform-origin: 50% 50%;
-      filter: blur(var(--scene-hand-blur, 0px)) blur(var(--scene-hint-blur, 0px)) blur(var(--scene-crow-blur, 0px));
+      filter: blur(var(--scene-hand-blur, 0px)) blur(var(--scene-hint-blur, 0px)) blur(var(--scene-crow-blur, 0px)) grayscale(var(--room-monochrome, 0));
       transition: filter 420ms ease;
       will-change: transform, filter;
     }
@@ -1351,6 +1353,8 @@
     @media (prefers-reduced-motion: reduce) { .butterfly-danger-light { animation: none; } }
     :root { --career-label-font: "Dudu Calligraphy", "Segoe Print", cursive; --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
     :root[data-game-language="ar"] { --career-label-font: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #storyImage { display: block; width: calc(100% - 28px); height: auto; max-height: calc(var(--game-height) - 170px); object-fit: contain; margin: 0 auto; }
+    #storyImage[hidden] { display: none; }
     #storyCopy, #howCopy { text-align: center; text-wrap: pretty; }
     .career-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; text-align: center; }
     .career-stats > div { min-width: 0; }
@@ -1383,8 +1387,9 @@
     #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
     #reportRankBlock { width: min(100%, 300px); margin: 26px auto 0; }
     #reportRankTrack { height: 10px; border: 2px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 2px; }
-    #reportRankFill { height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; background: var(--letter-beige); box-shadow: 0 0 9px #e8d9b438; }
-    #progressReport[dir="rtl"] #reportRankFill { transform-origin: right center; }
+    #reportRankFill { height: 100%; width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
+    .rank-step { display: block; height: 100%; background: #555; }
+    .rank-step.completed { background: #fff; }
     #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
     #reportUnlocks { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; }
     #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--loading-font); }
@@ -1609,7 +1614,7 @@
       </div>
       <div id="storyPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
-        <h2 id="storyTitle">STORY</h2><p id="storyCopy" class="menu-body"></p>
+        <h2 id="storyTitle">STORY</h2><img id="storyImage" alt="Story" draggable="false" hidden /><p id="storyCopy" class="menu-body"></p>
       </div>
       <div id="howPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
@@ -1671,7 +1676,11 @@
     "jobsFile": "jobs.txt",
     "cameraSound": "camera.mp3",
     "ranksFile": "ranks.txt",
-    "arabicJobsFile": "jobs_ar.txt"
+    "arabicJobsFile": "jobs_ar.txt",
+    "completeSound": "complete.mp3",
+    "musicDirectory": "music/",
+    "musicIndexFile": "index.json",
+    "storyFile": "story.png"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -1686,7 +1695,8 @@
     "decodedFrameFallbackMs": 250,
     "decodedFramePollMs": 100,
     "saveTimeoutMs": 3000,
-    "saveHandleTimeoutMs": 1000
+    "saveHandleTimeoutMs": 1000,
+    "optionalAssetTimeoutMs": 2500
   },
   "levels": {
     "standard": {
@@ -2614,6 +2624,19 @@
   },
   "horror": {
     "enabled": true
+  },
+  "menuMusic": {
+    "enabled": true,
+    "volume": 0.6,
+    "fadeOutMs": 180
+  },
+  "completionAudio": {
+    "volume": 1
+  },
+  "roomMonochrome": {
+    "enabled": true,
+    "startLevel": 31,
+    "spawnChance": 0.1
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2746,6 +2769,17 @@
     let reportVisible = false, reportCounting = false, reportFrame = 0, reportRun = 0, reportNextPending = false;
     let jobReportData = null, reportRankPunched = false, reportLastPaid = -1, reportLastPunch = 0;
     let unlockablesRun = 0;
+    let roomMonochromeUsed = false, roomMonochromeActive = false;
+    let optionalAssetsRun = 0, cameraSoundFile = "", cameraSoundProbe = null;
+    const cameraSoundFailed = new Set();
+    let musicTracks = null, musicDiscoveryPromise = null, musicAudio = null;
+    let menuMusicWanted = false, musicSelected = false, musicPlaying = false, musicPlayPending = false, musicPlayRun = 0;
+    let musicFadeFrame = 0, musicFadeRun = 0;
+    const musicFailed = new Set();
+    let completionAudio = null, completionSource = "", completionRun = 0, completionPriming = false;
+    let completionQueue = 0, completionActive = false, completionPlayPending = false, completionPausedByPage = false, completionPlayedThisLevel = false;
+    const storyImage = document.getElementById("storyImage");
+    let storyImageSource = "", storyImageReady = false;
     let pageParked = false;
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
@@ -2767,6 +2801,8 @@
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
+      "menuMusic.fadeOutMs": [0, 3000, true], "loading.optionalAssetTimeoutMs": [250, 15000, true],
+      "roomMonochrome.startLevel": [1, 1000000001, true],
       "career.reportCountMs": [200, 10000, true], "ui.valuePunchMs": [80, 1000, true], "ui.valuePunchScale": [1, 1.5],
       "career.basePay": [0, 1000000, true], "career.perRemainingSecond": [0, 1000000, true],
       "idleHints.delayMs": [100, 60000, true], "idleHints.handDelayMs": [100, 60000, true], "idleHints.fadeMs": [0, 1000, true],
@@ -4888,7 +4924,7 @@
       const fill = rankedUp ? (crossed ? after.fraction * (fraction - .72) / .28 : before.fraction + (1 - before.fraction) * fraction / .72)
         : before.fraction + (after.fraction - before.fraction) * fraction;
       const track = document.getElementById("reportRankTrack");
-      document.getElementById("reportRankFill").style.transform = `scaleX(${clamp(fill, 0, 1)})`;
+      renderRankSegments(fill, rank.index);
       track.setAttribute("aria-valuenow", String(Math.round(fill * 100)));
       track.setAttribute("aria-valuetext", rank.nextTitle ? `${rank.title}: ${Math.round(fill * 100)}%` : copy.maxRank);
       document.getElementById("reportRank").textContent = rank.title;
@@ -5054,6 +5090,309 @@
       updateHorrorChoices(); restartMenuButtonMotion();
     }
 
+    function renderRankSegments(fraction, rankIndex) {
+      const fill = document.getElementById("reportRankFill"), count = rankIndex === 0 ? 9 : 10;
+      if (fill.children.length !== count) fill.replaceChildren(...Array.from({ length: count }, () => {
+        const step = document.createElement("span");
+        step.classList.add("rank-step"); step.setAttribute("aria-hidden", "true"); return step;
+      }));
+      const completed = Math.min(count, Math.round(clamp(fraction, 0, 1) * count));
+      [...fill.children].forEach((step, index) => step.classList.toggle("completed", index < completed));
+    }
+
+    function clearRoomMonochrome() {
+      if (roomMonochromeActive) stopShutterEffect();
+      roomMonochromeActive = false;
+      viewport.classList.remove("room-monochrome");
+    }
+
+    function maybeStartRoomMonochrome() {
+      if (!CONFIG.roomMonochrome.enabled || !isHiddenObjectHunt() || !levelIsUnlocked(CONFIG.roomMonochrome.startLevel) ||
+          roomMonochromeUsed || gameOver || roomCompleted || hiddenObjectScore >= hiddenObjectGoal) return false;
+      if (Math.random() >= CONFIG.roomMonochrome.spawnChance) return false;
+      roomMonochromeUsed = roomMonochromeActive = true;
+      viewport.classList.add("room-monochrome");
+      return true;
+    }
+
+    async function fetchOptionalAsset(url, options = {}, consume = response => response) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), CONFIG.loading.optionalAssetTimeoutMs);
+      try { return await consume(await fetch(url, { cache: "no-store", ...options, signal: controller.signal })); }
+      finally { clearTimeout(timer); }
+    }
+
+    function cameraSoundCandidates() {
+      const configured = CONFIG.assets.cameraSound;
+      const alternative = /\.mp3$/i.test(configured) ? configured.replace(/\.mp3$/i, ".wav") :
+        /\.wav$/i.test(configured) ? configured.replace(/\.wav$/i, ".mp3") : null;
+      return [...new Set([configured, alternative].filter(Boolean))];
+    }
+
+    async function optionalAudioExists(path) {
+      const url = new URL(path, document.baseURI);
+      if (Array.isArray(localFolderImport?.optionalAssetFiles) && url.protocol === "file:") {
+        return localFolderImport.optionalAssetFiles.includes(selectedFolderPath(path));
+      }
+      if (url.protocol === "file:") return new Promise(resolve => {
+        const probe = new Audio(); let settled = false, timer;
+        const finish = exists => {
+          if (settled) return; settled = true; clearTimeout(timer);
+          probe.onloadedmetadata = probe.onerror = null; probe.pause(); probe.removeAttribute("src"); probe.load(); resolve(exists);
+        };
+        probe.preload = "metadata"; probe.muted = true;
+        probe.onloadedmetadata = () => finish(true); probe.onerror = () => finish(false);
+        timer = setTimeout(() => finish(false), CONFIG.loading.optionalAssetTimeoutMs);
+        probe.src = url.href; probe.load();
+      });
+      try {
+        const head = await fetchOptionalAsset(url, { method: "HEAD" });
+        if (head.ok) return !/text\/html/i.test(head.headers.get("content-type") || "");
+        if (head.status !== 405 && head.status !== 501) return false;
+        return await fetchOptionalAsset(url, { headers: { Range: "bytes=0-31" } }, async response => {
+          const exists = response.ok && !/text\/html/i.test(response.headers.get("content-type") || "");
+          await response.body?.cancel().catch(() => {}); return exists;
+        });
+      } catch { return false; }
+    }
+
+    function resolveCameraSound() {
+      if (cameraSoundProbe) return cameraSoundProbe;
+      const run = optionalAssetsRun;
+      const promise = (async () => {
+        for (const path of cameraSoundCandidates()) {
+          if (await optionalAudioExists(path)) {
+            if (run === optionalAssetsRun) { cameraSoundFile = path; prepareCameraAudio(); }
+            return path;
+          }
+        }
+        return CONFIG.assets.cameraSound;
+      })().catch(() => CONFIG.assets.cameraSound);
+      cameraSoundProbe = promise; return promise;
+    }
+
+    function tryNextCameraSound(failed) {
+      if (failed !== cameraAudio) return;
+      cameraSoundFailed.add(cameraAudioSource);
+      const path = cameraSoundCandidates().find(path => !cameraSoundFailed.has(new URL(path, document.baseURI).href));
+      if (path) { cameraSoundFile = path; prepareCameraAudio(); }
+    }
+
+    function musicDirectoryURL() {
+      return new URL(CONFIG.assets.musicDirectory.replace(/\/?$/, "/"), document.baseURI);
+    }
+
+    function musicSourcesFromNames(names, directory = musicDirectoryURL()) {
+      return [...new Set(names.filter(name => typeof name === "string" && /\.mp3$/i.test(name) && !/[\\/]/.test(name))
+        .map(name => new URL(encodeURIComponent(name), directory).href))];
+    }
+
+    async function readMusicDirectory(directory) {
+      try {
+        return await fetchOptionalAsset(directory, {}, async response => {
+          if (!response.ok) return [];
+          const page = new DOMParser().parseFromString(await response.text(), "text/html");
+          return [...page.querySelectorAll("a[href]")].flatMap(link => {
+            try {
+              const url = new URL(link.getAttribute("href"), directory);
+              if (url.origin !== directory.origin || !url.pathname.startsWith(directory.pathname)) return [];
+              const name = decodeURIComponent(url.pathname.slice(directory.pathname.length));
+              return /\.mp3$/i.test(name) && !name.includes("/") ? [name] : [];
+            } catch { return []; }
+          });
+        });
+      } catch { return []; }
+    }
+
+    function discoverMenuMusic() {
+      if (musicDiscoveryPromise) return musicDiscoveryPromise;
+      const run = optionalAssetsRun, directory = musicDirectoryURL();
+      musicDiscoveryPromise = (async () => {
+        let names;
+        if (localFolderImport) {
+          const prefix = selectedFolderPath(CONFIG.assets.musicDirectory).replace(/\/?$/, "/");
+          names = (localFolderImport.optionalAssetFiles || []).filter(path => path.startsWith(prefix)).map(path => path.slice(prefix.length));
+        } else if (directory.protocol === "file:") names = [];
+        else {
+          const [indexed, listed] = await Promise.all([
+            fetchOptionalAsset(new URL(CONFIG.assets.musicIndexFile, directory), {}, async response => {
+              if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
+              const data = await response.json(); return Array.isArray(data) ? data : Array.isArray(data?.files) ? data.files : [];
+            }).catch(() => []), readMusicDirectory(directory)
+          ]);
+          names = [...indexed, ...listed];
+        }
+        const tracks = musicSourcesFromNames(names, directory);
+        if (run === optionalAssetsRun) musicTracks = tracks;
+        return tracks;
+      })().catch(() => { if (run === optionalAssetsRun) musicTracks = []; return []; });
+      return musicDiscoveryPromise;
+    }
+
+    function cancelMenuMusicFade() {
+      ++musicFadeRun;
+      if (musicFadeFrame) cancelAnimationFrame(musicFadeFrame);
+      musicFadeFrame = 0;
+    }
+
+    function prepareMenuMusicAudio() {
+      if (musicAudio) return musicAudio;
+      const audio = musicAudio = new Audio(); audio.preload = "auto";
+      audio.addEventListener("ended", () => {
+        musicSelected = false; musicPlaying = false;
+        if (menuMusicWanted) startMenuMusic();
+      });
+      audio.addEventListener("error", () => {
+        if (audio.src) musicFailed.add(audio.src);
+        ++musicPlayRun; musicPlayPending = false; musicSelected = musicPlaying = false;
+        if (menuMusicWanted) startMenuMusic();
+      });
+      return audio;
+    }
+
+    function startMenuMusic() {
+      if (!menuMusicWanted || !CONFIG.menuMusic.enabled || isPageInactive() || !musicTracks?.length || musicPlayPending) return;
+      const audio = prepareMenuMusicAudio();
+      if (!audio.paused && !audio.ended) return;
+      if (!musicSelected || audio.ended) {
+        const choices = musicTracks.filter(source => !musicFailed.has(source));
+        if (!choices.length) return;
+        audio.src = chooseScene(choices); audio.currentTime = 0; musicSelected = true; audio.load();
+      }
+      const run = ++musicPlayRun;
+      musicPlayPending = true; audio.volume = CONFIG.menuMusic.volume; audio.muted = CONFIG.menuMusic.volume === 0;
+      try {
+        Promise.resolve(audio.play()).then(() => { if (run === musicPlayRun) musicPlaying = true; }).catch(error => {
+          if (run === musicPlayRun) {
+            musicPlaying = false;
+            if (error.name === "NotSupportedError" && audio.src) musicFailed.add(audio.src);
+          }
+        }).finally(() => { if (run === musicPlayRun) musicPlayPending = false; });
+      } catch { musicPlayPending = musicPlaying = false; }
+    }
+
+    function requestMenuMusic() {
+      menuMusicWanted = true; cancelMenuMusicFade();
+      if (!homeBootReady || !CONFIG.menuMusic.enabled) return;
+      if (musicAudio) musicAudio.volume = CONFIG.menuMusic.volume;
+      if (musicTracks !== null) { startMenuMusic(); return; }
+      const run = optionalAssetsRun;
+      void discoverMenuMusic().then(() => { if (run === optionalAssetsRun && menuMusicWanted) startMenuMusic(); });
+    }
+
+    function fadeOutMenuMusic() {
+      menuMusicWanted = false; cancelMenuMusicFade();
+      if (!musicAudio) return;
+      const audio = musicAudio, run = musicFadeRun, started = performance.now(), from = audio.volume;
+      const stop = () => {
+        if (run !== musicFadeRun || menuMusicWanted) return;
+        ++musicPlayRun; musicPlayPending = musicPlaying = musicSelected = false;
+        audio.pause(); audio.currentTime = 0; audio.volume = CONFIG.menuMusic.volume; musicFadeFrame = 0;
+      };
+      if (audio.paused || !CONFIG.menuMusic.fadeOutMs) { stop(); return; }
+      const step = time => {
+        musicFadeFrame = 0;
+        if (run !== musicFadeRun || menuMusicWanted) return;
+        const fraction = Math.min(1, (time - started) / CONFIG.menuMusic.fadeOutMs);
+        audio.volume = from * (1 - fraction);
+        if (fraction < 1) musicFadeFrame = requestAnimationFrame(step); else stop();
+      };
+      musicFadeFrame = requestAnimationFrame(step);
+    }
+
+    function prepareCompletionAudio() {
+      const source = new URL(CONFIG.assets.completeSound, document.baseURI).href;
+      if (completionAudio && completionSource === source) return completionAudio;
+      if (completionActive || completionPlayPending) return completionAudio;
+      completionAudio?.pause(); completionSource = source;
+      const audio = completionAudio = new Audio(); audio.preload = "auto"; audio.src = source; audio.load();
+      audio.addEventListener("ended", () => {
+        if (audio !== completionAudio) return;
+        completionActive = completionPausedByPage = false; pumpCompletionAudio();
+      });
+      audio.addEventListener("error", () => {
+        if (audio !== completionAudio) return;
+        ++completionRun; completionActive = completionPlayPending = completionPriming = false; completionQueue = 0;
+      });
+      return audio;
+    }
+
+    function primeCompletionAudio() {
+      if (isPageInactive() || completionActive || completionPlayPending || completionQueue || completionPriming) return;
+      const audio = prepareCompletionAudio(); if (!audio || audio.error) return;
+      const run = ++completionRun; completionPriming = true;
+      try {
+        audio.muted = true;
+        Promise.resolve(audio.play()).then(() => {
+          if (run === completionRun && !completionActive) { audio.pause(); audio.currentTime = 0; }
+        }).catch(() => {}).finally(() => { if (run === completionRun) completionPriming = false; });
+      } catch { completionPriming = false; }
+    }
+
+    function pumpCompletionAudio() {
+      if (isPageInactive() || completionPlayPending) return;
+      const audio = prepareCompletionAudio(); if (!audio) return;
+      if (audio.error) { completionQueue = 0; return; }
+      if (completionActive && !completionPausedByPage || !completionActive && !completionQueue) return;
+      const resuming = completionActive, run = ++completionRun;
+      completionPriming = false; completionPlayPending = true;
+      if (!resuming) audio.currentTime = 0;
+      audio.volume = CONFIG.completionAudio.volume; audio.muted = CONFIG.completionAudio.volume === 0;
+      try {
+        Promise.resolve(audio.play()).then(() => {
+          if (run !== completionRun) return;
+          if (!resuming) completionQueue = Math.max(0, completionQueue - 1);
+          completionActive = true; completionPausedByPage = false;
+        }).catch(error => {
+          if (run === completionRun && (audio.error || error.name === "NotSupportedError")) completionQueue = 0;
+        }).finally(() => { if (run === completionRun) completionPlayPending = false; });
+      } catch { completionPlayPending = false; }
+    }
+
+    function playCompletionSound() {
+      if (completionPlayedThisLevel) return;
+      completionPlayedThisLevel = true; completionQueue++; pumpCompletionAudio();
+    }
+
+    function pauseOptionalAudio() {
+      ++musicPlayRun; musicPlayPending = musicPlaying = false;
+      musicAudio?.pause();
+      ++completionRun; completionPlayPending = completionPriming = false;
+      if (completionAudio) {
+        if (completionActive) completionPausedByPage = true;
+        completionAudio.pause();
+      }
+    }
+
+    function resumeOptionalAudioFromGesture(event) {
+      if (event && event.isTrusted === false || isPageInactive()) return;
+      if (menuMusicWanted) startMenuMusic();
+      pumpCompletionAudio();
+    }
+
+    function updateStoryMedia() {
+      const available = storyImageReady && storyImage.naturalWidth > 0;
+      storyImage.hidden = !available;
+      document.getElementById("storyCopy").hidden = available;
+      storyImage.alt = menuText().story;
+    }
+
+    function prepareStoryImage(force = false) {
+      const source = new URL(CONFIG.assets.storyFile, document.baseURI).href;
+      if (!force && storyImageSource === source) return;
+      storyImageSource = source; storyImageReady = false; updateStoryMedia();
+      storyImage.onload = () => { if (storyImage.src === source) { storyImageReady = true; updateStoryMedia(); } };
+      storyImage.onerror = () => { if (storyImage.src === source) { storyImageReady = false; updateStoryMedia(); } };
+      storyImage.src = source;
+    }
+
+    function refreshOptionalAssets() {
+      ++optionalAssetsRun; cameraSoundProbe = null; cameraSoundFile = ""; cameraSoundFailed.clear();
+      musicDiscoveryPromise = null; musicTracks = null; musicFailed.clear();
+      void resolveCameraSound(); prepareCompletionAudio(); prepareStoryImage(true);
+      if (menuMusicWanted) requestMenuMusic();
+    }
+
     function parseRankTitles(text) {
       if (typeof text !== "string" || text.length > 65536 || /<(?:!doctype|html|body)\b/i.test(text)) throw new Error("Invalid ranks.txt.");
       const lines = text.replace(/^\uFEFF/, "").split(/\r\n?|\n/).map(line => line.trim());
@@ -5091,12 +5430,14 @@
     }
 
     function prepareCameraAudio() {
-      const source = new URL(CONFIG.assets.cameraSound, document.baseURI).href;
+      const source = new URL(cameraSoundFile || CONFIG.assets.cameraSound, document.baseURI).href;
       if (cameraAudio && cameraAudioSource === source) return cameraAudio;
       stopCameraSound();
       cameraAudioSource = source;
       cameraAudio = new Audio();
       cameraAudio.preload = "auto";
+      const retained = cameraAudio;
+      retained.addEventListener("error", () => tryNextCameraSound(retained));
       cameraAudio.src = source;
       cameraAudio.load();
       return cameraAudio;
@@ -5311,6 +5652,7 @@
       hiddenObjectShutterAt = !point && !shutterCombo ? now : null;
       const bonus = shutterCombo ? levelType.shutterComboBonusSeconds : tapCombo ? levelType.tapTimeBonusSeconds : 0;
       if (bonus) addCameraTimeBonus(bonus);
+      maybeStartRoomMonochrome();
       if (hiddenObjectScore === hiddenObjectGoal) completeStaticHuntRiddle(0);
       else {
         updateCameraControls();
@@ -5686,8 +6028,9 @@
             languageFiles[language] = { wordsText: otherWordsText, wordsSource: `${folderName}/${otherWordsPath}`, puzzlesText: otherPuzzleText, puzzlesSource: `${folderName}/${otherPuzzlePath}` };
           } catch (error) { console.info("Optional language files were not cached.", language, error.message); }
         }
+        const optionalAssetFiles = [...entries.keys()];
         const data = { version: 4, language: selectedConfig.language.code, configText, wordsText, wordsSource: `${folderName}/${wordsPath}`,
-          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText, arabicJobsText, ranksText };
+          puzzlesText, puzzlesSource: `${folderName}/${puzzlesPath}`, roomsText, saveText, levelFiles, butterflyFiles, scareFiles, languageFiles, objectFiles, jobsText, arabicJobsText, ranksText, optionalAssetFiles };
         rememberLocalFiles(data);
         localFolderImport = data;
         await initializeGame(data);
@@ -5875,6 +6218,7 @@
       readyButton.disabled = false;
       fitClueList();
       clueIntroShown = true;
+      fadeOutMenuMusic();
       viewport.classList.add("clue-intro-active");
       clueIntro.classList.add("show");
       clueIntro.setAttribute("aria-hidden", "false");
@@ -5906,6 +6250,8 @@
       unlockCrowSound();
       unlockScareSound();
       unlockCameraSound();
+      primeCompletionAudio();
+      fadeOutMenuMusic();
       resetIdleHints();
       if (gameOver) return;
       gameplayStarting = false;
@@ -6844,6 +7190,7 @@
       // throttled the interval while the tab was in the background.
       updateCameraTimer();
       if (gameOver || roomCompleted) return;
+      clearRoomMonochrome();
       finishPanGesture();
       stopShutterEffect();
       noteGameplayInteraction("shutter");
@@ -6898,10 +7245,11 @@
       stopShutterEffect();
       // This wrapper is the visible camera window, so zooming stays centred
       // on the current view even after panning to either end of the room.
+      const grayscale = roomMonochromeActive ? " grayscale(1)" : "";
       const animation = sceneEffects.animate([
-        { filter: "blur(0px)", transform: "scale(1)" },
-        { filter: `blur(${CONFIG.shutter.blurPx}px)`, transform: `scale(${CONFIG.shutter.zoom})`, offset: CONFIG.shutter.peakFraction },
-        { filter: "blur(0px)", transform: "scale(1)" }
+        { filter: `blur(0px)${grayscale}`, transform: "scale(1)" },
+        { filter: `blur(${CONFIG.shutter.blurPx}px)${grayscale}`, transform: `scale(${CONFIG.shutter.zoom})`, offset: CONFIG.shutter.peakFraction },
+        { filter: `blur(0px)${grayscale}`, transform: "scale(1)" }
       ], { duration: CONFIG.shutter.durationMs, easing: "ease-in-out" });
       shutterSceneAnimation = animation;
       animation.finished.then(() => {
@@ -6990,6 +7338,7 @@
 
     function beginShutterPress() {
       if (scareFlashActive) return;
+      clearRoomMonochrome();
       noteGameplayInteraction("shutter");
       shutterPressStartedAt = performance.now();
       shutterHoldUsed = false;
@@ -9071,6 +9420,7 @@
       document.getElementById("retryText").textContent = action;
       gameOverScreen.setAttribute("aria-label", `${CONFIG.text.roomComplete}. ${action}.`);
       showResultsScreen();
+      playCompletionSound();
     }
 
     function showGameOver() {
@@ -9527,11 +9877,15 @@
       pageSuspended = suspended;
       for (const wait of mediaWaits) suspended ? wait.pause() : wait.resume();
       if (suspended) {
+        pauseOptionalAudio();
         menuSwipe = null;
         if (menuPage === null && !gameplayStarted && !gameOver) loadingPlaybackInterrupted = true;
         pauseLevelActivity({ cancelPreparation: true });
         holdAppleForegroundAudio();
-      } else if (menuPage === null && !exitConfirmationActive && !reportVisible) resumeLevelActivity();
+      } else {
+        resumeOptionalAudioFromGesture();
+        if (menuPage === null && !exitConfirmationActive && !reportVisible) resumeLevelActivity();
+      }
     }
     document.addEventListener("visibilitychange", syncPageActivity);
     window.addEventListener("pagehide", () => {
@@ -10191,6 +10545,9 @@
     }
 
     function resetLevelState({ rotateEndlessRooms = false } = {}) {
+      clearRoomMonochrome();
+      roomMonochromeUsed = false;
+      completionPlayedThisLevel = false;
       stopProgressReport();
       jobReportData = null;
       stopCameraSound();
@@ -10584,6 +10941,7 @@
         (element.querySelector(".menu-label") || element).textContent = label;
       }
       updateCareerUI();
+      updateStoryMedia();
       updateHorrorChoices();
       document.getElementById("languageChoices").setAttribute("aria-label", text.language);
       menuShell.querySelectorAll(".menu-back").forEach(button => button.setAttribute("aria-label", text.back));
@@ -10627,6 +10985,7 @@
       document.documentElement.classList.add("menu-open");
       menuShell.hidden = false;
       menuShell.dataset.page = page;
+      requestMenuMusic();
       const destination = page === "panning" ? menuShell.dataset.panTarget : page;
       menuShell.dataset.posterPosition = destination === "intro" ? "left" : destination === "home" ? "right" : "center";
       viewport.inert = true;
@@ -10768,6 +11127,7 @@
       prepareCameraAudio();
       void loadRankTitles();
       homeBootReady = true;
+      refreshOptionalAssets();
       updateMenuControls();
       void refreshContinueAvailability();
     }
@@ -10786,6 +11146,8 @@
 
     function primeMediaFromMenuGesture() {
       unlockCameraSound();
+      primeCompletionAudio();
+      if (menuMusicWanted) startMenuMusic();
       if (!horrorEnabled()) return Promise.resolve(true);
       unlockSpiderSound({ refreshAudio: true });
       let room = roomMediaPool[0];
@@ -10955,6 +11317,8 @@
       }
     }
 
+    window.addEventListener("pointerdown", resumeOptionalAudioFromGesture, true);
+    window.addEventListener("keydown", resumeOptionalAudioFromGesture, true);
     homePoster.addEventListener("load", syncHomePoster);
     homePoster.addEventListener("error", () => { homePoster.hidden = true; finishHomePan(); });
     homePoster.addEventListener("transitionend", event => {
@@ -11026,7 +11390,7 @@
         return false;
       }
       gameInitializationStarted = true;
-      if (importedFiles) clearPreparedLevelCache();
+      if (importedFiles) { clearPreparedLevelCache(); refreshOptionalAssets(); }
       void loadRankTitles();
       prepareCameraAudio();
       // Keep independent progression counts for English and Arabic.
@@ -12089,7 +12453,7 @@
     }
     syncVisibleViewport();
     showMenuPage("intro");
-    homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); homeBootReady = true; updateMenuCopy(); updateMenuControls(); void refreshContinueAvailability(); });
+    homeBootPromise = bootstrapHome().catch(error => { console.warn("Using default home settings.", error); homeBootReady = true; refreshOptionalAssets(); updateMenuCopy(); updateMenuControls(); void refreshContinueAvailability(); });
   </script>
 </body>
 </html>
