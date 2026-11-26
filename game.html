@@ -1375,18 +1375,18 @@
     #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: calc(max(14px, env(safe-area-inset-top)) + 62px) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: #000; text-align: center; overflow: auto; font-family: var(--loading-font); }
     #progressReport[hidden] { display: none; }
     #progressReport .home-back { position: absolute; }
-    #reportHeader { margin: 0; }
+    #reportHeader { margin: 0; flex: .5 0 auto; }
     #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--loading-font); }
     #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: 13px; letter-spacing: .12em; }
-    #reportCentre { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 26px 0; min-height: 270px; }
+    #reportCentre { flex: 0 0 auto; display: flex; flex-direction: column; padding: 0; min-height: 0; margin-top: clamp(20px, calc(var(--view-unit) * 3), 32px); }
     #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--loading-font); }
     #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
-    #reportRankBlock { width: min(100%, 300px); margin: 32px auto 0; }
-    #reportRankTrack { height: 5px; border: 1px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 1px; }
+    #reportRankBlock { width: min(100%, 300px); margin: 26px auto 0; }
+    #reportRankTrack { height: 10px; border: 2px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 2px; }
     #reportRankFill { height: 100%; width: 100%; transform: scaleX(0); transform-origin: left center; background: var(--letter-beige); box-shadow: 0 0 9px #e8d9b438; }
     #progressReport[dir="rtl"] #reportRankFill { transform-origin: right center; }
     #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
-    #reportUnlocks { min-height: 76px; display: flex; flex-direction: column; justify-content: center; gap: 7px; margin-top: 24px; }
+    #reportUnlocks { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; }
     #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--loading-font); }
     #reportUnlocks [hidden] { display: none; }
     #reportNewJob { opacity: 0; transition: opacity 180ms ease; }
@@ -1394,10 +1394,11 @@
     #reportUnlocks #locationUnlock { position: static; width: auto; margin: 0; animation: none; font: inherit; }
     #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
     @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
+    #reportAdvance { flex: 1 0 104px; display: grid; place-items: center; min-height: 104px; }
+    #reportContinueButton { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
     #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-    @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { min-height: 220px; padding: 16px 0; } #reportRankBlock { margin-top: 20px; } #reportUnlocks { margin-top: 14px; min-height: 62px; } #reportContinueButton { margin-bottom: 18px; } }
+    @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { margin-top: 20px; } #reportRankBlock { margin-top: 18px; } #reportUnlocks { margin-top: 14px; } }
 
   </style>
 </head>
@@ -1542,13 +1543,13 @@
     </div>
     <section id="progressReport" role="dialog" aria-modal="true" aria-labelledby="reportTitle" hidden>
       <button class="home-back" id="reportHomeButton" type="button" aria-label="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
-      <header id="reportHeader"><h2 id="reportTitle">Progress Report</h2><p id="reportJobLabel"></p></header>
+      <header id="reportHeader"><h2 id="reportTitle">Report</h2><p id="reportJobLabel"></p></header>
       <div id="reportCentre">
         <p id="reportEarningsLabel">JOB EARNINGS</p><output id="reportEarned" dir="ltr">+£0</output>
         <div id="reportRankBlock"><div id="reportRankTrack" role="progressbar" aria-label="Rank progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="reportRankFill"></div></div><p id="reportNextRank"></p></div>
         <div id="reportUnlocks"><p id="reportNewJob">NEW JOB UNLOCKED</p><p id="reportNewRank" hidden>NEW RANK UNLOCKED</p><p id="locationUnlock" hidden>NEW LOCATION UNLOCKED</p></div>
       </div>
-      <button id="reportContinueButton" class="menu-button" type="button">NEXT JOB</button>
+      <div id="reportAdvance"><button id="reportContinueButton" class="menu-button" type="button">Next</button></div>
       <dl id="reportCareer" class="career-stats">
         <div><dt id="reportJobsLabel">JOBS</dt><dd id="reportJobs">1</dd></div>
         <div><dt id="reportCashLabel">CASH</dt><dd id="reportCash" dir="ltr">£0</dd></div>
@@ -2493,14 +2494,14 @@
       "idleMove": "Move the camera left and right.",
       "idleShutter": "Find the named item, then tap the shutter.",
       "idleHand": "Swipe down to lower the hand.",
-      "progressReport": "Progress Report",
+      "progressReport": "Report",
       "jobEarnings": "JOB EARNINGS",
       "reportJob": "JOB #{number}",
       "newJobUnlocked": "NEW JOB UNLOCKED",
       "newRankUnlocked": "NEW RANK UNLOCKED",
       "nextRank": "NEXT RANK: {rank}",
       "maxRank": "HIGHEST RANK",
-      "nextJob": "NEXT JOB",
+      "nextJob": "Next",
       "skipCount": "TAP TO SKIP",
       "reportSummary": "Earned {cash}. Job {job} unlocked.",
       "unlockables": "UNLOCKABLES",
@@ -2544,14 +2545,14 @@
       "idleMove": "حرّك الكاميرا يمينًا ويسارًا.",
       "idleShutter": "اعثر على الشيء المطلوب، ثم اضغط زر التصوير.",
       "idleHand": "اسحب إلى الأسفل لإبعاد اليد.",
-      "progressReport": "تقرير التقدم",
+      "progressReport": "تقرير",
       "jobEarnings": "أجر المهمة",
       "reportJob": "المهمة #{number}",
       "newJobUnlocked": "تم فتح مهمة جديدة",
       "newRankUnlocked": "تم فتح رتبة جديدة",
       "nextRank": "الرتبة التالية: {rank}",
       "maxRank": "أعلى رتبة",
-      "nextJob": "المهمة التالية",
+      "nextJob": "التالي",
       "skipCount": "اضغط للتخطي",
       "reportSummary": "ربحت {cash}. تم فتح المهمة {job}.",
       "unlockables": "العناصر المفتوحة",
