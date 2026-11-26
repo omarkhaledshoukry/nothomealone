@@ -2741,7 +2741,7 @@
     let cameraAudio = null, cameraAudioSource = "", cameraAudioRun = 0, cameraAudioPriming = null;
     const idleHint = document.getElementById("idleHint");
     let idleHintKind = "", idleLastActionAt = 0, idleMoved = false, idleShutterUsed = false, idleHandShownAt = 0;
-    let idleMoveHintShown = false;
+    let idleMoveHintShown = false, idleShutterHintShown = false;
     const reportScreen = document.getElementById("progressReport"), valuePunches = new WeakMap();
     let reportVisible = false, reportCounting = false, reportFrame = 0, reportRun = 0, reportNextPending = false;
     let jobReportData = null, reportRankPunched = false, reportLastPaid = -1, reportLastPunch = 0;
@@ -5141,7 +5141,7 @@
     function resetIdleHints() {
       hideIdleHint();
       idleMoved = idleShutterUsed = false;
-      idleMoveHintShown = false;
+      idleMoveHintShown = idleShutterHintShown = false;
       idleLastActionAt = performance.now();
       idleHandShownAt = handVisible ? idleLastActionAt : 0;
     }
@@ -5160,14 +5160,16 @@
       const now = performance.now();
       let kind = "";
       if (handVisible && !handDismissing && now - idleHandShownAt >= CONFIG.idleHints.handDelayMs) kind = "hand";
-      else if (!handVisible && now - idleLastActionAt >= CONFIG.idleHints.delayMs) {
-        const canShowMoveHint = progressionLevel() <= 2 && !surveillanceActive && !idleMoved && !idleShutterUsed &&
+      else if (!handVisible && progressionLevel() <= 2 && now - idleLastActionAt >= CONFIG.idleHints.delayMs) {
+        const canShowMoveHint = !surveillanceActive && !idleMoved && !idleShutterUsed &&
           (!idleMoveHintShown || idleHintKind === "move");
-        kind = canShowMoveHint ? "move" : "shutter";
+        const canShowShutterHint = !idleShutterUsed && (!idleShutterHintShown || idleHintKind === "shutter");
+        kind = canShowMoveHint ? "move" : canShowShutterHint ? "shutter" : "";
       }
       if (!kind) { hideIdleHint(); return; }
       idleHintKind = kind;
       if (kind === "move") idleMoveHintShown = true;
+      if (kind === "shutter") idleShutterHintShown = true;
       const copy = menuText();
       const message = copy[kind === "hand" ? "idleHand" : kind === "move" ? "idleMove" : "idleShutter"];
       if (idleHint.textContent !== message) idleHint.textContent = message;
