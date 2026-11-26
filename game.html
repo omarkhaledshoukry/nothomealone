@@ -87,6 +87,16 @@
       background: #000;
     }
 
+    /* Decorative surround only: the portrait game keeps its existing layout. */
+    @media (orientation: landscape) {
+      html.desktop-browser #game {
+        background-image: url("./background.png");
+        background-position: center;
+        background-repeat: no-repeat;
+        background-size: cover;
+      }
+    }
+
     #portraitFrame {
       position: relative;
       height: 100%;
@@ -2749,6 +2759,9 @@
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
       (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const IS_DESKTOP_BROWSER = !IS_APPLE_MOBILE && navigator.userAgentData?.mobile !== true &&
+      !/Android|Mobile|Tablet|Silk|Kindle|PlayBook|IEMobile|Windows Phone|Opera Mini|Opera Mobi/i.test(navigator.userAgent);
+    document.documentElement.classList.toggle("desktop-browser", IS_DESKTOP_BROWSER);
     let appleForegroundAudioPending = false;
     let gameplayPaused = pageSuspended;
     let endlessIntermission = null; // Riddle transitions, room loading, or the butterfly completion screen.
