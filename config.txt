@@ -64,11 +64,12 @@ code = "en"
 [assets]
 tapSound = "tap.mp3"
 batterySound = "battery.mp3"
-arabicMusicDirectory = "sounds/"
+arabicMusicDirectory = "music/"
 completeSound = "complete.mp3"
 musicDirectory = "music/"
 musicIndexFile = "index.json"
 storyFile = "story.png"
+arabicStoryFile = "story_ar.png"
 # Optional room-numbered job sentences, beside game.html.
 jobsFile = "jobs.txt"
 # Arabic job sentences use the matching numbered room batch in this file.

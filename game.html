@@ -1701,7 +1701,8 @@
     "storyFile": "story.png",
     "tapSound": "tap.mp3",
     "batterySound": "battery.mp3",
-    "arabicMusicDirectory": "sounds/"
+    "arabicMusicDirectory": "music/",
+    "arabicStoryFile": "story_ar.png"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -2813,6 +2814,7 @@
     let completionQueue = 0, completionActive = false, completionPlayPending = false, completionPausedByPage = false, completionPlayedThisLevel = false;
     const storyImage = document.getElementById("storyImage");
     let storyImageSource = "", storyImageReady = false;
+    let storyImageKey = "", storyImageRun = 0;
     let storyTextVisible = false, newGameStoryPending = false;
     const uiSounds = new Map();
     const missedFeedback = document.getElementById("missedFeedback");
@@ -5422,13 +5424,30 @@
     }
 
     function prepareStoryImage(force = false) {
-      const source = new URL(CONFIG.assets.storyFile, document.baseURI).href;
-      if (!force && storyImageSource === source) return;
-      storyImageSource = source; storyImageReady = false; updateStoryMedia();
-      storyImage.onload = () => { if (storyImage.src === source) { storyImageReady = true; updateStoryMedia(); } };
-      storyImage.onerror = () => { if (storyImage.src === source) { storyImageReady = false; updateStoryMedia(); } };
-      storyImage.src = source;
-      document.getElementById("newGameStoryImage").src = source;
+      const paths = isArabic() ? [CONFIG.assets.arabicStoryFile, CONFIG.assets.storyFile] : [CONFIG.assets.storyFile];
+      const sources = [...new Set(paths.map(path => new URL(path, document.baseURI).href))];
+      const key = JSON.stringify(sources);
+      if (!force && storyImageKey === key) return;
+      const run = ++storyImageRun;
+      storyImageKey = key; storyImageReady = false; storyTextVisible = false;
+      updateStoryMedia();
+      const load = index => {
+        if (run !== storyImageRun) return;
+        const source = sources[index];
+        if (!source) { storyImage.onload = storyImage.onerror = null; return; }
+        storyImageSource = source;
+        storyImage.onload = () => {
+          if (run !== storyImageRun || storyImage.src !== source) return;
+          storyImageReady = true; updateStoryMedia();
+        };
+        storyImage.onerror = () => {
+          if (run !== storyImageRun || storyImage.src !== source) return;
+          storyImageReady = false; updateStoryMedia(); load(index + 1);
+        };
+        storyImage.src = source;
+        document.getElementById("newGameStoryImage").src = source;
+      };
+      load(0);
     }
 
     function refreshOptionalAssets() {
@@ -5598,7 +5617,7 @@
           names = [...indexed, ...listed];
         }
       }
-      if (arabic) names = names.filter(name => /^ar_\d+\.mp3$/i.test(name));
+      names = names.filter(name => arabic ? /^ar_\d+\.mp3$/i.test(name) : !/^ar_\d+\.mp3$/i.test(name));
       return musicSourcesFromNames(names, directory);
     }
 
@@ -11428,7 +11447,7 @@
       if (!["en", "ar"].includes(language) || homePlayPending || menuActionPending) return;
       const changed = CONFIG.language.code !== language;
       CONFIG.language.code = language;
-      if (changed) resetMenuMusicForLanguage();
+      if (changed) { resetMenuMusicForLanguage(); prepareStoryImage(); }
       saveMenuPreference();
       puzzleTextOverride = puzzleFilePromise = null;
       gameInitializationStarted = false;
