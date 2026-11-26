@@ -34,7 +34,9 @@
       --paper-text-scale: 1.5;
       --menu-text-scale: 2;
       --time-bonus-ms: 820ms;
-      --loading-font: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      --special-font: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      --special-size-scale: 1;
+      --loading-font: var(--special-font);
     }
 
     @supports (height: 100dvh) {
@@ -214,7 +216,7 @@
       place-items: center;
       color: var(--letter-beige);
       background: transparent;
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-family: var(--special-font);
       line-height: 1;
       user-select: none;
       pointer-events: none;
@@ -225,8 +227,8 @@
     .letter-glyph {
       display: block;
       color: var(--letter-beige);
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      font-size: calc(var(--letter-base-size, 53px) * var(--letter-scale, 1) * var(--surveillance-letter-fit, 1));
+      font-family: var(--special-font);
+      font-size: calc(calc(var(--letter-base-size, 53px) * var(--letter-scale, 1) * var(--surveillance-letter-fit, 1)) * var(--special-size-scale));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -549,7 +551,7 @@
       gap: 0.02em;
       color: var(--letter-beige);
       font-family: var(--loading-font);
-      font-size: clamp(38px, calc(var(--view-unit) * 6), 62px);
+      font-size: calc(clamp(38px, calc(var(--view-unit) * 6), 62px) * var(--special-size-scale));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -703,7 +705,7 @@
          text paint colours. The paper image stays outside this filter. */
       -webkit-filter: brightness(0);
       filter: brightness(0);
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-family: var(--special-font);
       text-align: left;
       transform: rotate(-0.4deg);
       pointer-events: none;
@@ -712,7 +714,7 @@
     #clueTitle {
       margin: 0 0 10% 0;
       text-align: center;
-      font-size: calc(clamp(31px, calc(var(--view-unit) * 5.2), 48px) * var(--paper-text-scale));
+      font-size: calc(calc(clamp(31px, calc(var(--view-unit) * 5.2), 48px) * var(--paper-text-scale)) * var(--special-size-scale));
       overflow-wrap: anywhere;
       font-weight: 400;
       line-height: 1;
@@ -734,7 +736,7 @@
       list-style: none;
       display: grid;
       gap: clamp(13px, calc(var(--view-unit) * 2.3), 24px);
-      font-size: calc(clamp(22px, calc(var(--view-unit) * 3.5), 34px) * var(--paper-text-scale));
+      font-size: calc(calc(clamp(22px, calc(var(--view-unit) * 3.5), 34px) * var(--paper-text-scale)) * var(--special-size-scale));
       line-height: 1.05;
       text-transform: uppercase;
     }
@@ -743,7 +745,7 @@
 
     #puzzleText {
       margin: 0;
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-family: var(--special-font);
       font-size: calc(var(--puzzle-font-size, 25px) * var(--paper-text-scale));
       line-height: 1.3;
       overflow-wrap: anywhere;
@@ -767,8 +769,8 @@
       align-self: flex-end;
       background: transparent;
       color: var(--letter-beige);
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale));
+      font-family: var(--special-font);
+      font-size: calc(calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)) * var(--special-size-scale));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -959,7 +961,7 @@
       gap: 14px;
       background: #000;
       color: var(--letter-beige);
-      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-family: var(--special-font);
       text-align: center;
       cursor: pointer;
     }
@@ -969,8 +971,8 @@
     #levelLoadDetails[hidden] { display: none; }
     #gameOverScreen.show #gameOverTitle { animation: gameOverJitter var(--game-over-jitter-ms, 380ms) steps(1, end) infinite; }
     #gameOverScreen.show #retryText { animation: gameOverJitter var(--retry-jitter-ms, 430ms) steps(1, end) var(--retry-jitter-delay, 75ms) infinite; }
-    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: calc(clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)) * var(--ui-text-scale)); line-height: 1; }
-    #retryText { max-width: 94%; font-size: calc(clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)) * var(--ui-text-scale)); opacity: .78; }
+    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: calc(calc(clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)) * var(--ui-text-scale)) * var(--special-size-scale)); line-height: 1; }
+    #retryText { max-width: 94%; font-size: calc(calc(clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)) * var(--ui-text-scale)) * var(--special-size-scale)); opacity: .78; }
 
     @keyframes gameOverJitter {
       0%, 100% { transform: translate(0, 0); }
@@ -1087,7 +1089,7 @@
     }
 
     :root[data-game-language="ar"] .letter-glyph {
-      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       text-transform: none;
       letter-spacing: 0;
       line-height: 1.5;
@@ -1104,7 +1106,7 @@
     :root[data-game-language="ar"] #wordDisplay {
       direction: rtl;
       gap: 4px;
-      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       font-size: var(--hud-letter-size, 40px);
       line-height: 1.6;
       letter-spacing: 0;
@@ -1163,7 +1165,7 @@
       outline: 2px solid var(--camera-color, #fff);
       outline-offset: 3px;
     }
-    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
+    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: var(--special-font); -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
     #menuShell[hidden], .menu-page[hidden] { display: none !important; }
     html.menu-open, html.menu-open body, #menuShell { touch-action: pan-y; }
     #homeBackdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -1179,14 +1181,14 @@
     #homeStartButton {
       position: relative;
       top: calc(0px - var(--menu-start-button-raise, 24px));
-      font-size: calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale));
+      font-size: calc(calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale)) * var(--special-size-scale));
     }
     /* Keep the menu at its original vertical position after removing the heading. */
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
-    .menu-page h2 { margin: 0 0 28px; font-size: calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
+    .menu-page h2 { margin: 0 0 28px; font-size: calc(calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)) * var(--special-size-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
     .home-actions, .language-choices { display: flex; flex-direction: column; align-items: center; gap: 9px; }
     .menu-button, .home-back, .paper-button { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; -webkit-text-fill-color: currentColor; font: inherit; font-weight: 400; cursor: pointer; animation: readyJitter .4s steps(1, end) infinite; touch-action: manipulation; }
-    .menu-button { min-height: 44px; max-width: 100%; padding: 7px 12px; font-size: calc(clamp(24px, calc(var(--view-unit) * 3.7), 36px) * var(--menu-text-scale)); line-height: 1.12; }
+    .menu-button { min-height: 44px; max-width: 100%; padding: 7px 12px; font-size: calc(calc(clamp(24px, calc(var(--view-unit) * 3.7), 36px) * var(--menu-text-scale)) * var(--special-size-scale)); line-height: 1.12; }
     .menu-button > .menu-label { display: inline-block; }
     .menu-button > .menu-label, .menu-back > svg { transition: transform 180ms ease; }
     .menu-button[data-selected] > .menu-label, .menu-back[data-selected] > svg { transform: scale(1.08); }
@@ -1206,10 +1208,10 @@
     .home-actions [data-selected] > .menu-label { font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
     .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; animation-duration: .487s; animation-delay: -.055s; }
     .menu-back svg, .home-back svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .menu-body { margin: 0; font-size: clamp(20px, calc(var(--view-unit) * 3.2), 28px); line-height: 1.38; text-align: start; }
+    .menu-body { margin: 0; font-size: calc(clamp(20px, calc(var(--view-unit) * 3.2), 28px) * var(--special-size-scale)); line-height: 1.38; text-align: start; }
     #homeCareer { position: absolute; left: 6%; right: 6%; bottom: max(20px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; pointer-events: none; }
     #homeCareer > div { min-width: 0; }
-    #homeCareer dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: 16px; line-height: 1.3; }
+    #homeCareer dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: calc(16px * var(--special-size-scale)); line-height: 1.3; }
     #homeCareer dd { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace; overflow-wrap: anywhere; }
     #homePage { padding-bottom: 112px; }
     @media (max-height: 720px) { #homeCareer { position: static; margin-top: 26px; } #homePage { padding-bottom: 30px; } }
@@ -1219,30 +1221,30 @@
     :root[data-game-language="ar"] #idleHint { font-family: "Game Arabic", Tahoma, serif; direction: rtl; }
     #locationUnlock { position: absolute; left: 5%; bottom: max(32px, env(safe-area-inset-bottom)); width: 90%; margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 18px/1.3 var(--camera-font, monospace); text-align: center; animation: surveillanceBlink 900ms steps(1, end) infinite; }
     #locationUnlock[hidden] { display: none; }
-    #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: 18px; }
+    #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: calc(18px * var(--special-size-scale)); }
     #homeNotice > span { animation: clearNoticeFade 1800ms ease both; }
     @keyframes clearNoticeFade {
       0%, 25% { opacity: 1; }
       100% { opacity: 0; }
     }
-    #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #menuShell[data-language="ar"] .menu-page:not(#homePage) { direction: rtl; }
     #menuShell[data-language="ar"] .menu-body { line-height: 1.65; }
-    #menuShell [lang="en"] { font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", cursive; }
+    #menuShell [lang="en"] { font-family: var(--special-font); }
     .home-back:focus-visible, .paper-button:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
     #menuShell button { -webkit-tap-highlight-color: transparent; outline: none; }
     #menuShell button:focus-visible { color: #ffd986; }
-    #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #clueIntro.hint-mode .home-back, #clueIntro.exit-mode .home-back { display: none; }
     #portraitViewport.next-riddle .clue-file-controls, #clueIntro.dismiss .clue-file-controls { display: none; }
     #clueIntro.exit-mode { visibility: visible; transition: opacity var(--hint-fade-ms, 140ms) ease; }
     #clueIntro.exit-mode #clueTitle, #clueIntro.exit-mode #clueList, #clueIntro.exit-mode #puzzleText, #clueIntro.exit-mode #readyButton, #clueIntro.exit-mode .clue-file-controls { display: none; }
     #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; justify-content: safe center; gap: 12px; overflow: auto; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
     #exitConfirmContent[hidden] { display: none; }
-    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: calc(clamp(24px, calc(var(--view-unit) * 4), 38px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.15; }
-    #exitConfirmContent p { margin: 0; font-size: calc(clamp(18px, calc(var(--view-unit) * 2.7), 26px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.3; }
+    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: calc(calc(clamp(24px, calc(var(--view-unit) * 4), 38px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); line-height: 1.15; }
+    #exitConfirmContent p { margin: 0; font-size: calc(calc(clamp(18px, calc(var(--view-unit) * 2.7), 26px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); line-height: 1.3; }
     .paper-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
-    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: calc(clamp(22px, calc(var(--view-unit) * 3.3), 32px) * var(--paper-text-scale) * var(--exit-fit, 1)); }
+    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: calc(calc(clamp(22px, calc(var(--view-unit) * 3.3), 32px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); }
     :root[data-game-language="ar"] #exitConfirmContent { font-family: "Game Arabic Paper", "Game Arabic", serif; direction: rtl; }
     #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
     @media (max-height: 580px) { #homePage { --home-menu-gap: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
@@ -1289,7 +1291,7 @@
     }
     #objectTarget[hidden] { display: none; }
     :root[data-game-language="ar"] #objectTarget {
-      font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
+      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
       direction: rtl;
     }
     .endless-butterfly, .endless-butterfly-capture {
@@ -1320,7 +1322,7 @@
     }
     #status.butterfly-area,
     #butterflyProgress {
-      font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale))/1 var(--loading-font);
+      font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale) * var(--special-size-scale))/1 var(--loading-font);
     }
     #butterflyProgress:not([hidden]) {
       display: block;
@@ -1351,48 +1353,48 @@
     @keyframes butterflyDangerPulse { 50% { opacity: .36; } }
     #portraitViewport.level-paused .butterfly-danger-light { animation-play-state: paused; }
     @media (prefers-reduced-motion: reduce) { .butterfly-danger-light { animation: none; } }
-    :root { --career-label-font: "Dudu Calligraphy", "Segoe Print", cursive; --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
-    :root[data-game-language="ar"] { --career-label-font: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    :root { --career-label-font: var(--special-font); --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
+    :root[data-game-language="ar"] { --career-label-font: var(--special-font); }
     #storyImage { display: block; width: calc(100% - 28px); height: auto; max-height: calc(var(--game-height) - 170px); object-fit: contain; margin: 0 auto; }
     #storyImage[hidden] { display: none; }
     #storyCopy, #howCopy { text-align: center; text-wrap: pretty; }
     .career-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; text-align: center; }
     .career-stats > div { min-width: 0; }
-    .career-stats dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 16px/1.3 var(--career-label-font); }
+    .career-stats dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(16px * var(--special-size-scale))/1.3 var(--career-label-font); }
     .career-stats dd, #menuShell .career-stats dd[lang] { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 var(--career-value-font); overflow-wrap: anywhere; }
     #homeCareer dt { font-family: var(--career-label-font); }
     #homeCareer dd { font-family: var(--career-value-font); }
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.75 + var(--home-menu-gap, 26px)); }
     .home-actions > :nth-child(6) { --jitter-phase: -5; }
-    #settingsPage #settingsTitle { margin-bottom: 26px; font-size: clamp(36px, calc(var(--view-unit) * 5.8), 48px); }
-    #settingsPage .setting-heading { margin: 24px 0 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.6), 26px); line-height: 1.2; }
+    #settingsPage #settingsTitle { margin-bottom: 26px; font-size: calc(clamp(36px, calc(var(--view-unit) * 5.8), 48px) * var(--special-size-scale)); }
+    #settingsPage .setting-heading { margin: 24px 0 8px; font-size: calc(clamp(22px, calc(var(--view-unit) * 3.6), 26px) * var(--special-size-scale)); line-height: 1.2; }
     #settingsPage #languageTitle { margin-top: 0; }
-    #settingsPage .language-choices .menu-button, #settingsPage #horrorChoices .menu-button { font-size: clamp(24px, calc(var(--view-unit) * 4.2), 30px); }
-    .setting-heading { margin: 24px 0 8px; font-size: 22px; font-weight: 400; }
+    #settingsPage .language-choices .menu-button, #settingsPage #horrorChoices .menu-button { font-size: calc(clamp(24px, calc(var(--view-unit) * 4.2), 30px) * var(--special-size-scale)); }
+    .setting-heading { margin: 24px 0 8px; font-size: calc(22px * var(--special-size-scale)); font-weight: 400; }
     #horrorChoices { display: flex; justify-content: center; gap: 22px; }
     #horrorChoices [aria-pressed="true"] > .menu-label { text-decoration: underline; text-underline-offset: .2em; font-weight: 700; }
     #unlockablesPage { width: min(88%, 510px); }
     #unlockableCounts { display: grid; gap: 26px; margin: 30px auto 0; width: min(100%, 320px); }
     #unlockableCounts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid #e8d9b438; }
-    #unlockableCounts dt { font: 26px/1.3 var(--career-label-font); }
+    #unlockableCounts dt { font: calc(26px * var(--special-size-scale))/1.3 var(--career-label-font); }
     #unlockableCounts dd { margin: 0; color: #fff; -webkit-text-fill-color: #fff; font: 24px/1.2 var(--career-value-font); }
     #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: calc(max(14px, env(safe-area-inset-top)) + 62px) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: #000; text-align: center; overflow: auto; font-family: var(--loading-font); }
     #progressReport[hidden] { display: none; }
     #progressReport .home-back { position: absolute; }
     #reportHeader { margin: 0; flex: .5 0 auto; }
-    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--loading-font); }
-    #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: 13px; letter-spacing: .12em; }
+    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(clamp(32px, calc(var(--view-unit) * 5), 46px) * var(--special-size-scale))/1.15 var(--loading-font); }
+    #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: calc(13px * var(--special-size-scale)); letter-spacing: .12em; }
     #reportCentre { flex: 0 0 auto; display: flex; flex-direction: column; padding: 0; min-height: 0; margin-top: clamp(20px, calc(var(--view-unit) * 3), 32px); }
-    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--loading-font); }
-    #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
+    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: calc(18px * var(--special-size-scale))/1.3 var(--loading-font); }
+    #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: calc(clamp(48px, calc(var(--view-unit) * 8.8), 76px) * var(--special-size-scale)); line-height: 1.12; font-variant-numeric: tabular-nums; }
     #reportRankBlock { width: min(100%, 300px); margin: 26px auto 0; }
     #reportRankTrack { height: 10px; border: 2px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 2px; }
     #reportRankFill { height: 100%; width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
     .rank-step { display: block; height: 100%; background: #555; }
     .rank-step.completed { background: #fff; }
-    #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
+    #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: calc(12px * var(--special-size-scale)); line-height: 1.4; }
     #reportUnlocks { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; }
-    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--loading-font); }
+    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(17px * var(--special-size-scale))/1.3 var(--loading-font); }
     #reportUnlocks [hidden] { display: none; }
     #reportNewJob { opacity: 0; transition: opacity 180ms ease; }
     #reportNewJob.revealed { opacity: 1; }
@@ -1400,17 +1402,30 @@
     #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
     @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     #reportAdvance { flex: 1 0 104px; display: grid; place-items: center; min-height: 104px; }
-    #reportContinueButton { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
+    #reportContinueButton { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)) * var(--special-size-scale)); }
     #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
     @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { margin-top: 20px; } #reportRankBlock { margin-top: 18px; } #reportUnlocks { margin-top: 14px; } }
 
-  </style>
+  
+    :root[data-game-language="ar"] { --special-font: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #readyButton { align-self: center; margin-inline: auto; text-align: center; }
+    #missedFeedback { position: absolute; inset: 0; z-index: 155; display: grid; place-items: center; pointer-events: none; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(clamp(36px, calc(var(--view-unit) * 6), 58px) * var(--special-size-scale))/1.2 var(--special-font); text-shadow: 0 2px 8px #000; }
+    #missedFeedback[hidden] { display: none; }
+    #newStoryPage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 80%; }
+    #newStoryPage[hidden] { display: none; }
+    #newGameStoryImage { display: block; width: 100%; max-height: calc(var(--game-height) - 230px); object-fit: contain; }
+    #newGameStoryImage[hidden] { display: none; }
+    #newGameStoryCopy { text-align: center; }
+    #newGameStoryButton { font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale) * var(--special-size-scale)); }
+    #storyImage, #storyCopy[role="button"] { cursor: pointer; }
+</style>
 </head>
 <body>
   <div id="game">
     <div id="portraitFrame">
     <div id="portraitViewport">
+      <div id="missedFeedback" role="status" aria-live="polite" hidden></div>
       <div id="loadingScreen" aria-live="polite">
         <div id="loadingWord" aria-label="Loading">
           <span class="loading-letter">L</span>
@@ -1612,9 +1627,14 @@
         <h2 id="unlockablesTitle">UNLOCKABLES</h2>
         <dl id="unlockableCounts"><div><dt id="unlockJobsLabel">JOBS</dt><dd id="unlockJobs" dir="ltr">—</dd></div><div><dt id="unlockRanksLabel">RANKS</dt><dd id="unlockRanks" dir="ltr">—</dd></div><div><dt id="unlockLocationsLabel">LOCATIONS</dt><dd id="unlockLocations" dir="ltr">—</dd></div></dl>
       </div>
+      <div id="newStoryPage" class="menu-page" hidden>
+        <img id="newGameStoryImage" alt="Story" draggable="false" hidden />
+        <p id="newGameStoryCopy" class="menu-body"></p>
+        <button id="newGameStoryButton" class="menu-button" type="button"><span class="menu-label">TAP</span></button>
+      </div>
       <div id="storyPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
-        <h2 id="storyTitle">STORY</h2><img id="storyImage" alt="Story" draggable="false" hidden /><p id="storyCopy" class="menu-body"></p>
+        <h2 id="storyTitle">STORY</h2><img id="storyImage" alt="Story" role="button" tabindex="0" draggable="false" hidden /><p id="storyCopy" class="menu-body" role="button" tabindex="0"></p>
       </div>
       <div id="howPage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
@@ -1680,7 +1700,10 @@
     "completeSound": "complete.mp3",
     "musicDirectory": "music/",
     "musicIndexFile": "index.json",
-    "storyFile": "story.png"
+    "storyFile": "story.png",
+    "tapSound": "tap.mp3",
+    "batterySound": "battery.mp3",
+    "arabicMusicDirectory": "sounds/"
   },
   "loading": {
     "wordsTimeoutMs": 15000,
@@ -2292,7 +2315,7 @@
     "clueFormat": "{current}/{total}",
     "roomFormat": "ROOM {number}",
     "clueTitle": "CLUES",
-    "ready": "GO",
+    "ready": "LET’S GO",
     "found": "FOUND",
     "roomComplete": "JOB COMPLETE",
     "nextLevel": "TAP TO CONTINUE",
@@ -2313,7 +2336,10 @@
     "catchFliesInstruction": "catch the flies",
     "catchFliesInstructionAr": "التقط الفراشات",
     "findItemsInstruction": "find the items",
-    "findItemsInstructionAr": "اعثر على الأشياء"
+    "findItemsInstructionAr": "اعثر على الأشياء",
+    "readyAr": "هيا بنا",
+    "missed": "Missed",
+    "missedAr": "أخطأت"
   },
   "rooms": {
     "count": 4,
@@ -2485,14 +2511,14 @@
       "exitText": "Return to the home screen?",
       "stay": "STAY",
       "leave": "LEAVE",
-      "howText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "howText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view. Don't let your batteries die.",
       "storyText": "Welcome to After Hours Housekeeping. Send the photos, collect your pay, move on. The clients insist the rooms are empty. Be careful: don’t photograph the wrong items, and make sure you get out in one piece.",
       "butterflyHowText": "Look for butterflies in the middle and pan left or right to find more. Tap them or use the shutter to catch them. The counter below the area number shows your catches and target across all rooms. Use Prev and Next to collect each room's share. Clearing a room adds {roomBonusSeconds} seconds. Reach the level target before time runs out, then tap to continue to a fresh room set. Two successful taps in a row within two seconds earn two extra seconds. When the red light appears, find the anomaly and look away before its countdown runs out.",
       "butterflyRiddleHowText": "Read the riddle and press Ready. Catch every butterfly of a type to reveal its letter in the answer. Tap a butterfly to catch it or spend one battery slot to photograph all butterflies in view. Two quick catches by tapping add two seconds. Pan away from black-and-white butterflies and dolls before capturing. Hold Hint to read the riddle again.",
       "staticHuntHowText": "Read the riddle and press Ready. Find the still letters around the room. Every word area uses the automatic surveillance camera and shows all letters together, spaced apart across the room. Each correct letter tap adds one second. Collect a flying butterfly to reveal the current letter wherever it is in the room. Only missed captures use a battery slot. Look fully away from Greek letters and black-and-white butterflies or dolls before capturing. Each solved riddle adds ten seconds and pauses the clock until Ready. Finish the area’s riddle target to continue. A blinking red circle marks an automatic surveillance camera: swipe against its movement to reverse the scan. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyAreaHowText": "Some areas ask you to catch the flies. Read the paper and press Ready. Several butterflies start in the middle. More arrive on their own and fly throughout the room; look left and right to follow them. Tap a butterfly or use the shutter to capture the butterfly nearest the centre of the view. The upper counter shows your catches and target. Reach that target before time runs out to complete the area. Successful captures keep the battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Only capturing a black-and-white butterfly triggers its anomaly; other butterflies remain safe to catch. Look away to restore it to colour. Look away from black-and-white dolls before capturing. A blinking red circle beside the counter marks an automatic camera: swipe against its movement to reverse it. Hold the shutter to fade the room to black and clear look-away anomalies. Release to reveal the room. The UI stays visible, time continues, and the hand cannot interrupt the hold.",
       "butterflyRushHowText": "Read the paper and press Ready. The surveillance camera scans the room. After a short quiet opening, butterflies arrive from unpredictable edges, one at a time, with occasional overlapping pairs. Some cross quickly; others linger or return later. Tap a butterfly or use the shutter to catch the butterfly nearest the centre. Each capture takes one target. Avoid black-and-white butterflies until you have looked away or held the shutter to black out the room and restore their colour. An untouched black-and-white butterfly does not spoil a normal capture. Missed butterflies can return. Correct catches keep battery intact. Three consecutive catches of the same sprite restore one battery slot, and two quick tap captures add two seconds. Reach the upper counter target before time runs out. Swipe against the scan to reverse direction. Swipe the hand down when it covers the view and UI.",
-      "hiddenObjectHowText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view.",
+      "hiddenObjectHowText": "Drag (or swipe) left or right to look around. Tap the shutter to photograph the named item. Swipe the hand down when it blocks your view. Don't let your batteries die.",
       "jobs": "JOBS",
       "cash": "CASH",
       "rank": "RANK",
@@ -2536,14 +2562,14 @@
       "exitText": "العودة إلى الصفحة الرئيسية؟",
       "stay": "البقاء",
       "leave": "الخروج",
-      "howText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "howText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية. احرص على ألا تنفد البطارية.",
       "storyText": "مرحبًا بك في خدمة التنظيف الليلية. أرسل الصور، واقبض أجرك، وانتقل للمهمة التالية. يصرّ العملاء على أن الغرف خالية. توخّ الحذر: لا تصوّر الأشياء الخطأ، واحرص على أن تخرج سالمًا.",
       "butterflyHowText": "ابحث عن الفراشات في المنتصف وحرّك الكاميرا يمينًا أو يسارًا للعثور على المزيد. المسها أو التقط صورًا لها. يعرض العدّاد أسفل رقم المنطقة عدد الفراشات التي التقطتها والعدد المطلوب في كل غرف المستوى مجتمعة. تنقّل بزرّي السابق والتالي لالتقاط العدد المطلوب من كل غرفة. إكمال الغرفة يضيف {roomBonusSeconds} ثانية. حقّق هدف المستوى قبل نفاد الوقت، ثم اضغط للمتابعة إلى مجموعة غرف جديدة. لمس فراشتين بنجاح على التوالي خلال ثانيتين يمنحك ثانيتين إضافيتين. عند ظهور الضوء الأحمر، اعثر على الشيء الغريب وانظر بعيدًا قبل انتهاء العدّ التنازلي.",
       "butterflyRiddleHowText": "اقرأ اللغز ثم اضغط استعداد. التقط كل الفراشات من نوع واحد لكشف حرفه في الإجابة. المس فراشة لالتقاطها، أو استخدم شحنة واحدة من البطارية لتصوير كل الفراشات الظاهرة. التقاط فراشتين باللمس خلال ثانيتين يضيف ثانيتين. أدر الكاميرا بعيدًا عن الفراشات والدمى بالأبيض والأسود قبل الالتقاط. اضغط مطولًا على التلميح لقراءة اللغز مجددًا.",
       "staticHuntHowText": "اقرأ اللغز ثم اضغط استعداد. ابحث عن الحروف الثابتة في الغرفة. تستخدم جميع مناطق الكلمات كاميرا المراقبة التلقائية وتظهر جميع الحروف معًا، متباعدة في أنحاء الغرفة. كل لمسة صحيحة للحرف تضيف ثانية واحدة. التقط فراشة طائرة لكشف الحرف الحالي أينما كان في الغرفة. الالتقاط الخاطئ فقط يستهلك شحنة من البطارية. انظر بعيدًا تمامًا عن الحروف اليونانية والفراشات والدمى بالأبيض والأسود قبل الالتقاط. حل كل لغز يضيف عشر ثوانٍ ويوقف الساعة حتى تضغط استعداد. أكمل ألغاز المنطقة للمتابعة. الدائرة الحمراء الوامضة تعني أن الكاميرا تتحرك تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyAreaHowText": "تطلب بعض المناطق التقاط الفراشات. اقرأ الورقة ثم اضغط استعداد. تبدأ عدة فراشات في المنتصف وتصل المزيد تلقائيًا وتطير في أنحاء الغرفة؛ انظر يمينًا ويسارًا لمتابعتها. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى مركز المشهد. يعرض العداد العلوي عدد الفراشات الملتقطة والهدف. أكمل الهدف قبل نفاد الوقت لإنهاء المنطقة. الالتقاط الناجح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة واحدة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. التقاط الفراشة بالأبيض والأسود فقط يفعّل ظاهرتها؛ يمكنك التقاط الفراشات الأخرى بأمان. انظر بعيدًا عنها لاستعادة لونها. انظر بعيدًا عن الدمى بالأبيض والأسود قبل الالتقاط. الدائرة الحمراء الوامضة بجوار العداد تعني حركة الكاميرا تلقائيًا؛ اسحب عكس حركتها لعكس اتجاهها. اضغط مطولًا على زر التصوير لتعتيم الغرفة وإزالة الأشياء غير الطبيعية التي تزول بالنظر بعيدًا. ارفع إصبعك لكشف الغرفة. تبقى الواجهة ظاهرة ويستمر الوقت، ولا تقطع اليد الضغط المطول.",
       "butterflyRushHowText": "اقرأ الورقة ثم اضغط استعداد. تمسح كاميرا المراقبة الغرفة تلقائيًا. بعد بداية هادئة قصيرة تصل الفراشات من حواف غير متوقعة، واحدة تلو الأخرى، وأحيانًا يظهر زوج متداخل. تعبر بعضها بسرعة وتبقى أخرى قليلًا أو تعود لاحقًا. المس فراشة أو استخدم زر التصوير لالتقاط الفراشة الأقرب إلى المركز. كل لقطة تلتقط فراشة واحدة. تجنّب الفراشات بالأبيض والأسود حتى تنظر بعيدًا أو تضغط مطولًا على التصوير لتعتيم الغرفة واستعادة ألوانها. الفراشة بالأبيض والأسود التي لم تلتقطها لا تفسد التقاط فراشة عادية. يمكن أن تعود الفراشات الفائتة. الالتقاط الصحيح لا يستهلك البطارية. التقاط ثلاث فراشات متتالية بالشكل نفسه يعيد شحنة، والتقاط فراشتين باللمس سريعًا يضيف ثانيتين. أكمل الهدف في العداد العلوي قبل نفاد الوقت. اسحب عكس المسح لعكس اتجاه الكاميرا. اسحب اليد إلى الأسفل عندما تغطي المشهد والواجهة.",
-      "hiddenObjectHowText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية.",
+      "hiddenObjectHowText": "اسحب (أو مرّر إصبعك) يمينًا ويسارًا للنظر حولك. اضغط زر التصوير لالتقاط الشيء المطلوب. اسحب اليد إلى الأسفل عندما تحجب الرؤية. احرص على ألا تنفد البطارية.",
       "jobs": "المهام",
       "cash": "الرصيد",
       "rank": "الرتبة",
@@ -2637,6 +2663,13 @@
     "enabled": true,
     "startLevel": 31,
     "spawnChance": 0.1
+  },
+  "uiSounds": {
+    "tapVolume": 1,
+    "batteryVolume": 1
+  },
+  "uiFeedback": {
+    "missedDurationMs": 520
   }
 };
     const CONFIG_LIMITS = {"loading.levelProbeGap": [1, 200, true], "loading.levelProbeBatchSize": [1, 16, true], "battery.slotCount": [1, 12, true], "battery.missCost": [0, 12, true], "battery.wordCost": [0, 12, true], "battery.wordReserve": [0, 12, true], "camera.dragGain": [0.05, 10], "camera.velocityWindowMs": [1, 2000], "camera.momentumMinSpeed": [0.001, 20], "camera.flickSpeed": [0.001, 20], "letters.minScale": [0.05, 3], "letters.maxScale": [0.05, 3], "letters.minRotationDeg": [-360, 360], "letters.maxRotationDeg": [-360, 360], "letters.minFontPx": [1, 300], "letters.maxFontPx": [1, 300], "letters.hudMinFontPx": [1, 150], "letters.hudMaxFontPx": [1, 150], "letters.hudGlyphWidthRatio": [0.1, 3], "butterfly.steering": [0.01, 100], "butterfly.slowdownDistancePx": [1, 5000], "spider.topPx": [-2000, 2000], "spider.scale": [0.01, 2], "spider.soundPreRollSamples": [0, 100000, true], "spider.revealFraction": [0.01, 1], "anomaly.alphaThreshold": [0, 254, true], "ui.viewportAspectRatio": [0.1, 4], "shutter.zoom": [1, 1.3], "shutter.peakFraction": [0.01, 0.99], "shutter.heldScale": [0.1, 1], "hand.afterWords": [0, 100, true], "anomaly.afterWords": [0, 100, true], "spider.afterWords": [0, 100, true], "levels.standard.wordCount": [1, 20, true], "levels.standard.timeLimitMs": [1000, 86400000, true], "levels.decoy.wordCount": [1, 20, true], "levels.decoy.timeLimitMs": [1000, 86400000, true], "levels.butterfly.wordCount": [1, 20, true], "levels.butterfly.timeLimitMs": [1000, 86400000, true], "levels.flyingDecoy.wordCount": [1, 20, true], "levels.flyingDecoy.timeLimitMs": [1000, 86400000, true], "butterfly.evadeApproachScreens": [0.1, 5], "butterfly.evadeMaxSpeedMultiplier": [1, 10], "butterfly.evadeSteeringMultiplier": [1, 10], "butterfly.evadeSwayMultiplier": [1, 5], "butterfly.evadeFlutterMultiplier": [1, 5], "rooms.count": [1, 32, true], "levels.puzzle.wordCount": [1, 1, true], "levels.puzzle.timeLimitMs": [1000, 86400000, true], "puzzles.minAnswerLength": [1, 32, true], "puzzles.maxAnswerLength": [1, 32, true], "puzzles.minFontPx": [1, 150], "puzzles.maxFontPx": [1, 150], "levels.standard.startLevel": [1, 1000000001, true], "levels.decoy.startLevel": [1, 1000000001, true], "levels.butterfly.startLevel": [1, 1000000001, true], "levels.flyingDecoy.startLevel": [1, 1000000001, true], "levels.puzzle.startLevel": [1, 1000000001, true], "levels.flyingPuzzle.startLevel": [1, 1000000001, true], "hand.startLevel": [1, 1000000001, true], "spider.startLevel": [1, 1000000001, true], "anomaly.startLevel": [1, 1000000001, true], "letters.decoyStartLevel": [1, 1000000001, true], "levels.flyingPuzzle.wordCount": [1, 1, true], "levels.flyingPuzzle.timeLimitMs": [1000, 86400000, true], "anomaly.riddleAfterWords": [0, 100, true], "puzzles.en.minFontPx": [1, 150], "puzzles.en.maxFontPx": [1, 150], "puzzles.en.fontHeightFraction": [0, 1], "puzzles.ar.minFontPx": [1, 150], "puzzles.ar.maxFontPx": [1, 150], "puzzles.ar.fontHeightFraction": [0, 1], "keyboard.panSpeedScreensPerSecond": [0.05, 10], "doll.startLevel": [1, 1000000001, true], "doll.heightViewportFraction": [0.1, 4], "doll.topImageFraction": [-1.5, 1], "doll.verticalJitterImageFraction": [0, 0.5], "doll.scaleJitterFraction": [0, 0.5], "doll.parallaxMultiplier": [1, 4], "doll.blurPx": [0, 20], "doll.opacity": [0, 1], "doll.retreatMs": [20, 2000, true], "doll.retreatExtraPx": [0, 2000], "doll.loadTimeoutMs": [100, 60000, true]};
@@ -2746,7 +2779,7 @@
     const portraitFrame = document.getElementById("portraitFrame");
     const menuShell = document.getElementById("menuShell");
     const homePoster = document.getElementById("homePoster");
-    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "unlockables", "story", "how", "newGame"], unlockables: ["home"], newGame: ["home"], settings: ["home"], story: ["home"], how: ["home"] };
+    const MENU_ROUTES = { intro: ["home"], home: ["intro", "settings", "unlockables", "story", "how", "newGame"], unlockables: ["home"], newGame: ["home"], newStory: ["home"], settings: ["home"], story: ["home"], how: ["home"] };
     const MENU_PAGES = Object.keys(MENU_ROUTES);
     let menuPage = "intro";
     let selectedMenuButton = null;
@@ -2782,6 +2815,10 @@
     let completionQueue = 0, completionActive = false, completionPlayPending = false, completionPausedByPage = false, completionPlayedThisLevel = false;
     const storyImage = document.getElementById("storyImage");
     let storyImageSource = "", storyImageReady = false;
+    let storyTextVisible = false, newGameStoryPending = false;
+    const uiSounds = new Map();
+    const missedFeedback = document.getElementById("missedFeedback");
+    let missedAnimation = null;
     let pageParked = false;
     let pageSuspended = document.hidden;
     const IS_APPLE_MOBILE = /\b(iPad|iPhone|iPod)\b/i.test(navigator.userAgent) ||
@@ -2803,6 +2840,7 @@
     const KEYBOARD_CODE_PATTERN = /^(Arrow(?:Left|Right|Up|Down)|Space|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Tab|Key[A-Z]|Digit[0-9]|Numpad(?:[0-9]|Enter|Add|Subtract|Multiply|Divide|Decimal)|Backquote|Minus|Equal|BracketLeft|BracketRight|Backslash|Semicolon|Quote|Comma|Period|Slash|F(?:[1-9]|1[0-9]|2[0-4]))$/;
 
     Object.assign(CONFIG_LIMITS, {
+      "uiSounds.tapVolume": [0, 1], "uiSounds.batteryVolume": [0, 1], "uiFeedback.missedDurationMs": [80, 3000, true],
       "menuMusic.fadeOutMs": [0, 3000, true], "loading.optionalAssetTimeoutMs": [250, 15000, true],
       "roomMonochrome.startLevel": [1, 1000000001, true],
       "career.reportCountMs": [200, 10000, true], "ui.valuePunchMs": [80, 1000, true], "ui.valuePunchScale": [1, 1.5],
@@ -5206,11 +5244,11 @@
       } catch { return []; }
     }
 
-    async function readNumberedMusic(directory) {
+    async function readNumberedMusic(directory, prefix = "") {
       const names = [], batchSize = 4, maxTracks = 100;
       // Consecutive filenames need neither a folder listing nor an index file.
       for (let first = 1; first <= maxTracks; first += batchSize) {
-        const batch = Array.from({ length: Math.min(batchSize, maxTracks - first + 1) }, (_, i) => `${first + i}.mp3`);
+        const batch = Array.from({ length: Math.min(batchSize, maxTracks - first + 1) }, (_, i) => `${prefix}${first + i}.mp3`);
         const available = await Promise.all(batch.map(name => optionalAudioExists(new URL(name, directory).href)));
         for (let index = 0; index < batch.length; index++) {
           if (!available[index]) return names;
@@ -5222,28 +5260,13 @@
 
     function discoverMenuMusic() {
       if (musicDiscoveryPromise) return musicDiscoveryPromise;
-      const run = optionalAssetsRun, directory = musicDirectoryURL();
+      const run = optionalAssetsRun, language = CONFIG.language.code;
       musicDiscoveryPromise = (async () => {
-        let names;
-        if (Array.isArray(localFolderImport?.optionalAssetFiles)) {
-          const prefix = selectedFolderPath(CONFIG.assets.musicDirectory).replace(/\/?$/, "/");
-          names = (localFolderImport.optionalAssetFiles || []).filter(path => path.startsWith(prefix)).map(path => path.slice(prefix.length));
-        } else {
-          names = await readNumberedMusic(directory);
-          if (!names.length && directory.protocol !== "file:") {
-            const [indexed, listed] = await Promise.all([
-              fetchOptionalAsset(new URL(CONFIG.assets.musicIndexFile, directory), {}, async response => {
-                if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
-                const data = await response.json(); return Array.isArray(data) ? data : Array.isArray(data?.files) ? data.files : [];
-              }).catch(() => []), readMusicDirectory(directory)
-            ]);
-            names = [...indexed, ...listed];
-          }
-        }
-        const tracks = musicSourcesFromNames(names, directory);
-        if (run === optionalAssetsRun) musicTracks = tracks;
+        let tracks = await discoverLanguageMusic(language);
+        if (language === "ar" && !tracks.length) tracks = await discoverLanguageMusic("en");
+        if (run === optionalAssetsRun && language === CONFIG.language.code) musicTracks = tracks;
         return tracks;
-      })().catch(() => { if (run === optionalAssetsRun) musicTracks = []; return []; });
+      })().catch(() => { if (run === optionalAssetsRun && language === CONFIG.language.code) musicTracks = []; return []; });
       return musicDiscoveryPromise;
     }
 
@@ -5390,9 +5413,14 @@
 
     function updateStoryMedia() {
       const available = storyImageReady && storyImage.naturalWidth > 0;
-      storyImage.hidden = !available;
-      document.getElementById("storyCopy").hidden = available;
+      storyImage.hidden = !available || storyTextVisible;
+      const copy = document.getElementById("storyCopy"); copy.hidden = available && !storyTextVisible;
       storyImage.alt = menuText().story;
+      const toggleLabel = isArabic() ? "اضغط للتبديل بين الصورة والقصة" : "Tap to switch between image and story";
+      storyImage.setAttribute("aria-label", toggleLabel); copy.setAttribute("aria-label", toggleLabel);
+      const introImage = document.getElementById("newGameStoryImage");
+      introImage.hidden = !available; introImage.alt = menuText().story;
+      document.getElementById("newGameStoryCopy").hidden = available;
     }
 
     function prepareStoryImage(force = false) {
@@ -5402,14 +5430,188 @@
       storyImage.onload = () => { if (storyImage.src === source) { storyImageReady = true; updateStoryMedia(); } };
       storyImage.onerror = () => { if (storyImage.src === source) { storyImageReady = false; updateStoryMedia(); } };
       storyImage.src = source;
+      document.getElementById("newGameStoryImage").src = source;
     }
 
     function refreshOptionalAssets() {
       ++optionalAssetsRun; cameraSoundProbe = null; cameraSoundFile = ""; cameraSoundFailed.clear();
       musicDiscoveryPromise = null; musicTracks = null; musicFailed.clear();
       ++cameraBufferRun; cameraBufferKey = ""; cameraBufferPromise = cameraBuffer = null;
-      void resolveCameraSound().then(() => prepareCameraBuffer()); prepareCompletionAudio(); prepareStoryImage(true);
+      void resolveCameraSound().then(() => prepareCameraBuffer());
+      prepareUISound("tap"); prepareUISound("battery"); prepareCompletionAudio(); prepareStoryImage(true);
       if (menuMusicWanted) requestMenuMusic();
+    }
+
+    function uiSoundCandidates(kind) {
+      const source = kind === "tap" ? CONFIG.assets.tapSound : CONFIG.assets.batterySound;
+      const alternate = /\.mp3$/i.test(source) ? source.replace(/\.mp3$/i, ".wav") : /\.wav$/i.test(source) ? source.replace(/\.wav$/i, ".mp3") : null;
+      return [...new Set([source, alternate].filter(Boolean))];
+    }
+
+    function prepareUINativeSound(entry, index = 0) {
+      const path = entry.paths[index];
+      if (!path) return null;
+      entry.audio?.pause();
+      const audio = entry.audio = new Audio();
+      audio.preload = "auto"; audio.src = new URL(path, document.baseURI).href;
+      audio.addEventListener("error", () => {
+        if (entry.audio === audio) { entry.primed = false; prepareUINativeSound(entry, index + 1); }
+      });
+      audio.load(); return audio;
+    }
+
+    function prepareUISound(kind) {
+      const paths = uiSoundCandidates(kind), key = JSON.stringify([paths, optionalAssetsRun]);
+      let entry = uiSounds.get(kind);
+      if (entry?.key === key) return entry;
+      if (entry) stopUISound(kind);
+      entry = { key, paths, audio: null, buffer: null, voice: null, run: 0, primed: false, priming: false };
+      uiSounds.set(kind, entry); prepareUINativeSound(entry);
+      const context = getCameraAudioContext();
+      entry.preparing = (async () => {
+        if (!context) return null;
+        for (const path of paths) {
+          try {
+            const bytes = await fetchOptionalAsset(new URL(path, document.baseURI), { cache: "force-cache" }, response => {
+              if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error("Optional sound missing.");
+              return response.arrayBuffer();
+            });
+            const buffer = await new Promise((resolve, reject) => {
+              const result = context.decodeAudioData(bytes, resolve, reject); result?.then(resolve, reject);
+            });
+            if (uiSounds.get(kind) !== entry) return null;
+            entry.buffer = buffer; return buffer;
+          } catch { /* A missing/unsupported optional format falls back. */ }
+        }
+        return null;
+      })();
+      return entry;
+    }
+
+    function stopUISound(kind) {
+      const entry = uiSounds.get(kind); if (!entry) return;
+      ++entry.run; entry.priming = false;
+      entry.audio?.pause();
+      const voice = entry.voice; entry.voice = null;
+      if (voice) { try { voice.stop(); voice.disconnect(); } catch {} }
+    }
+
+    function playUISound(kind) {
+      if (isPageInactive()) return;
+      resumeCameraAudioFromGesture();
+      const entry = prepareUISound(kind), volume = kind === "tap" ? CONFIG.uiSounds.tapVolume : CONFIG.uiSounds.batteryVolume;
+      stopUISound(kind);
+      if (entry.buffer && cameraContext?.state === "running") {
+        let voice, gain;
+        try {
+          voice = cameraContext.createBufferSource(); gain = cameraContext.createGain();
+          voice.buffer = entry.buffer; gain.gain.setValueAtTime(volume, cameraContext.currentTime);
+          voice.connect(gain); gain.connect(cameraContext.destination); entry.voice = voice;
+          voice.onended = () => { if (entry.voice === voice) entry.voice = null; voice.disconnect(); gain.disconnect(); };
+          voice.start(0); return;
+        } catch { try { voice?.stop(); voice?.disconnect(); gain?.disconnect(); } catch {} entry.voice = null; }
+      }
+      const audio = entry.audio; if (!audio) return;
+      try { audio.currentTime = 0; audio.volume = volume; audio.muted = volume === 0; audio.play()?.catch(() => {}); } catch {}
+    }
+
+    function primeUISoundsFromGesture(event) {
+      if (event && event.isTrusted === false || isPageInactive()) return;
+      for (const kind of ["tap", "battery"]) {
+        const entry = prepareUISound(kind), audio = entry.audio;
+        if (!audio || audio.error || entry.primed || entry.priming || entry.voice || !audio.paused) continue;
+        const run = ++entry.run; entry.priming = true; audio.muted = true;
+        try {
+          Promise.resolve(audio.play()).then(() => {
+            if (run !== entry.run) return;
+            audio.pause(); audio.currentTime = 0; entry.primed = true;
+          }).catch(() => {}).finally(() => { if (run === entry.run) entry.priming = false; });
+        } catch { entry.priming = false; }
+      }
+    }
+
+    function playUIButtonTap(event) {
+      const button = event.target?.closest?.('button, [role="button"]');
+      if (!button || button.id === "snapButton" || button.disabled || button.getAttribute("aria-disabled") === "true" || button.closest("[hidden], [inert]") ||
+          button.id === "gameOverScreen" && !button.classList.contains("show") || suppressMenuClick && menuShell.contains(button)) return;
+      playUISound("tap");
+    }
+
+    function clearMissedFeedback() {
+      missedAnimation?.cancel(); missedAnimation = null;
+      missedFeedback.hidden = true;
+    }
+
+    function showMissedFeedback() {
+      if (gameOver || roomCompleted || scareFlashActive || isPageInactive()) return;
+      clearMissedFeedback();
+      missedFeedback.textContent = isArabic() ? CONFIG.text.missedAr : CONFIG.text.missed;
+      missedFeedback.hidden = false;
+      const animation = missedAnimation = missedFeedback.animate([
+        { opacity: 1, transform: "translateY(0)" }, { opacity: 1, offset: .15 }, { opacity: 0, transform: "translateY(-8px)" }
+      ], { duration: CONFIG.uiFeedback.missedDurationMs, easing: "ease-out", fill: "both" });
+      animation.finished.then(() => { if (missedAnimation === animation) { missedFeedback.hidden = true; missedAnimation = null; animation.cancel(); } }).catch(() => {});
+    }
+
+    function showOrdinaryMissFeedback(previousBattery) {
+      if (gameOver || roomCompleted || scareFlashActive) return;
+      showMissedFeedback();
+      if (previousBattery > 1 && batterySlotsRemaining === 1) playUISound("battery");
+    }
+
+    function toggleStoryMedia() {
+      if (!storyImageReady || !storyImage.naturalWidth) return;
+      storyTextVisible = !storyTextVisible; updateStoryMedia();
+    }
+
+    function startNewGameStory(primed) {
+      newGameStoryPending = true;
+      const fading = fadeCurrentMenuOut().then(async animation => {
+        const showing = showMenuPage("newStory", true); animation?.cancel(); await showing;
+      });
+      homePlayPending = Promise.all([homeBootPromise, primed, fading]).catch(showLevelLoadError)
+        .finally(() => { homePlayPending = null; updateMenuControls(); });
+      updateMenuControls(); return homePlayPending;
+    }
+
+    function resetMenuMusicForLanguage() {
+      cancelMenuMusicFade(); ++musicPlayRun; musicPlayPending = musicSelected = musicPlaying = false;
+      musicAudio?.pause(); musicTracks = musicDiscoveryPromise = null; musicFailed.clear();
+      if (menuMusicWanted) requestMenuMusic();
+    }
+
+    async function discoverLanguageMusic(language) {
+      const arabic = language === "ar", prefix = arabic ? "ar_" : "";
+      const path = arabic ? CONFIG.assets.arabicMusicDirectory : CONFIG.assets.musicDirectory;
+      const directory = new URL(path.replace(/\/?$/, "/"), document.baseURI);
+      let names;
+      if (Array.isArray(localFolderImport?.optionalAssetFiles)) {
+        const localPrefix = selectedFolderPath(path).replace(/\/?$/, "/");
+        names = localFolderImport.optionalAssetFiles.filter(name => name.startsWith(localPrefix)).map(name => name.slice(localPrefix.length));
+      } else {
+        names = await readNumberedMusic(directory, prefix);
+        if (!names.length && directory.protocol !== "file:") {
+          const [indexed, listed] = await Promise.all([
+            fetchOptionalAsset(new URL(CONFIG.assets.musicIndexFile, directory), {}, async response => {
+              if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
+              const data = await response.json(); return Array.isArray(data) ? data : Array.isArray(data?.files) ? data.files : [];
+            }).catch(() => []), readMusicDirectory(directory)
+          ]);
+          names = [...indexed, ...listed];
+        }
+      }
+      if (arabic) names = names.filter(name => /^ar_\d+\.mp3$/i.test(name));
+      return musicSourcesFromNames(names, directory);
+    }
+
+    function updateSpecialTypography() {
+      const height = viewport.getBoundingClientRect().height;
+      const paperSize = language => {
+        const font = CONFIG.puzzles[language];
+        return clamp(height * font.fontHeightFraction, font.minFontPx, font.maxFontPx);
+      };
+      const scale = isArabic() ? Math.max(1.01, paperSize("ar") / paperSize("en")) : 1;
+      document.documentElement.style.setProperty("--special-size-scale", String(scale));
     }
 
     function parseRankTitles(text) {
@@ -5558,6 +5760,10 @@
       cameraContextNeedsRefresh = true;
       stopCameraSound();
       if (!cameraBuffer) { ++cameraBufferRun; cameraBufferPromise = null; cameraBufferKey = ""; }
+      for (const kind of ["tap", "battery"]) {
+        const entry = uiSounds.get(kind); stopUISound(kind);
+        if (entry) { entry.primed = false; if (!entry.buffer) uiSounds.delete(kind); }
+      }
       if (cameraContext?.state === "running") {
         try { Promise.resolve(cameraContext.suspend()).catch(() => {}); } catch {}
       }
@@ -7166,6 +7372,7 @@
     function playScareFlash(after = null) {
       if (!horrorEnabled()) return false;
       if (scareFlashActive || !scareSprites.length || gameOver || roomCompleted) return false;
+      clearMissedFeedback(); stopUISound("battery");
       stopScareSound();
       const request = scareFlashRequest = { sprite: chooseScene(scareSprites), generation: levelGeneration,
         run: 0, phase: "audio", soundStarted: false, revealTimer: null };
@@ -7275,14 +7482,15 @@
     }
 
     function handleMissedCameraShot(directTap = false) {
+      const previousBattery = batterySlotsRemaining;
       const lost = Math.min(batterySlotsRemaining, CONFIG.battery.missCost);
-      // A final-charge miss goes straight to the existing battery failure.
       const selected = horrorEnabled() && !directTap && lost > 0 && batterySlotsRemaining > lost && CONFIG.scare.enabled && levelIsUnlocked(CONFIG.scare.startLevel) &&
         scareSprites.length > 0 && !scareFlashActive && Math.random() < CONFIG.scare.spawnChance;
-      if (!selected) { drainBatterySlot(); return; }
+      if (!selected) { drainBatterySlot(); showOrdinaryMissFeedback(previousBattery); return; }
+      clearMissedFeedback(); stopUISound("battery");
       drainBatterySlot(CONFIG.battery.missCost, { deferFailure: true });
       const finish = () => { if (batterySlotsRemaining === 0) endGame("battery"); };
-      if (!playScareFlash(finish)) finish();
+      if (!playScareFlash(finish)) { finish(); showOrdinaryMissFeedback(previousBattery); }
     }
 
     function pauseScareFlash() {
@@ -7322,6 +7530,7 @@
       stopShutterEffect();
       noteGameplayInteraction("shutter");
       playCameraSound();
+      playUISound("tap");
       // The shutter chooses the current target, or the closest X in spread mode.
       const butterflies = usesButterflyActors();
       const index = !butterflies && targetIndex === null ? shutterLetterIndex() : targetIndex;
@@ -8395,6 +8604,7 @@
       if (!preparationVisible && !readyVisible && !nextRiddleReady && !endVisible) return false;
       event.preventDefault(); event.stopPropagation();
       if (event.repeat) return true;
+      playUISound("tap");
       if (endVisible) retryOrContinue();
       else if (preparationVisible) prepareMediaBeforeReady({ gesture: true });
       else beginGameplayFromClues();
@@ -9447,6 +9657,7 @@
     }
 
     function triggerJumpscare(reason = "other") {
+      clearMissedFeedback(); stopUISound("battery");
       if (!horrorEnabled()) { if (beginGameOver(reason)) showGameOver(); return; }
       if (!beginGameOver(reason)) return;
 
@@ -9531,6 +9742,7 @@
     }
 
     function showResultsScreen() {
+      clearMissedFeedback(); stopUISound("battery");
       stopScareFlash();
       stopCrowEncounter();
       viewport.classList.add("scene-blackout");
@@ -9740,6 +9952,7 @@
       viewportLayoutFrame = 0;
       stopButterflyFlight();
       syncVisibleViewport();
+      updateSpecialTypography();
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
@@ -9810,6 +10023,7 @@
     }
 
     function pauseLevelActivity({ cancelPreparation = false } = {}) {
+      clearMissedFeedback();
       stopCameraSound();
       hideIdleHint();
       hiddenObjectTapAt = hiddenObjectShutterAt = null;
@@ -10674,6 +10888,7 @@
     }
 
     function resetLevelState({ rotateEndlessRooms = false } = {}) {
+      clearMissedFeedback(); stopUISound("battery");
       clearRoomMonochrome();
       roomMonochromeUsed = false;
       completionPlayedThisLevel = false;
@@ -10886,6 +11101,7 @@
       if (menuPage !== null || !gameOverScreen.classList.contains("show")) return;
       if (event?.target.closest?.("button, input, .progress-actions")) return;
       if (event?.type === "keydown" && (event.repeat || event.key !== "Enter" && event.key !== " ")) return;
+      if (event?.type === "keydown") playUISound("tap");
       saveProgress();
       if (roomCompleted) { showProgressReport(); return; }
       return transitionToLevel({ continueButterflies: roomCompleted && isEndlessButterflies() });
@@ -10925,6 +11141,7 @@
     }
 
     function configureGamePresentation() {
+      updateSpecialTypography();
       batteryLow.textContent = isArabic() ? "البطارية ضعيفة" : "BATTERY LOW";
       const style = document.documentElement.style;
       viewport.classList.toggle("shutter-blackout-enabled", CONFIG.shutter.holdBlackoutEnabled);
@@ -10980,7 +11197,7 @@
       nextRoomButton.textContent = CONFIG.text.nextRoom;
       updateLevelStatus();
       document.getElementById("clueTitle").textContent = CONFIG.text.clueTitle;
-      readyButton.textContent = CONFIG.text.ready;
+      readyButton.textContent = isArabic() ? CONFIG.text.readyAr : CONFIG.text.ready;
       document.querySelectorAll(".clear-progress").forEach(button => { button.textContent = CONFIG.text.clearProgress; });
       messageText.textContent = CONFIG.text.found;
       // Keep the local-first font rule (especially iOS), changing its source only
@@ -11062,6 +11279,7 @@
         languageTitle: text.language, horrorTitle: text.horror, horrorOnButton: text.on, horrorOffButton: text.off,
         homeHowButton: text.how, homeClearButton: text.clear, settingsTitle: text.settings,
         storyTitle: text.story, howTitle: text.how, storyCopy: text.storyText, howCopy,
+        newGameStoryCopy: text.storyText, newGameStoryButton: text.start,
         careerJobsLabel: text.jobs, careerCashLabel: text.cash, careerRankLabel: text.rank,
         newGameTitle: text.newGameTitle, newGameText: text.newGameText, newGameYesButton: text.yes, newGameNoButton: text.no,
         exitConfirmTitle: text.exitTitle, exitConfirmText: text.exitText, exitStayButton: text.stay, exitLeaveButton: text.leave };
@@ -11108,6 +11326,7 @@
     function showMenuPage(page = "home", focus = false) {
       if (page !== "panning" && !MENU_PAGES.includes(page)) page = "home";
       const changed = menuPage !== page;
+      if (changed && page === "story") storyTextVisible = false;
       if (changed) { menuFadeAnimation?.cancel(); menuFadeAnimation = null; }
       menuSwipe = null;
       menuPage = page;
@@ -11129,6 +11348,7 @@
       const action = page === "home" ? document.getElementById(menuContinueAvailable ? "homePlayButton" : "homeClearButton")
         : page === "intro" ? document.getElementById("homeStartButton")
         : page === "newGame" ? document.getElementById("newGameNoButton")
+        : page === "newStory" ? document.getElementById("newGameStoryButton")
         : screen?.querySelector('[data-language][aria-pressed="true"]') || screen?.querySelector(".menu-back") || null;
       selectMenuButton(action);
       if (focus && action) requestAnimationFrame(() => {
@@ -11219,7 +11439,9 @@
 
     function selectMenuLanguage(language) {
       if (!["en", "ar"].includes(language) || homePlayPending || menuActionPending) return;
+      const changed = CONFIG.language.code !== language;
       CONFIG.language.code = language;
+      if (changed) resetMenuMusicForLanguage();
       saveMenuPreference();
       puzzleTextOverride = puzzleFilePromise = null;
       gameInitializationStarted = false;
@@ -11326,9 +11548,10 @@
       });
     }
 
-    function beginHomePlay({ fresh = false, confirmed = false } = {}) {
-      if (menuPage !== "home" && !(menuPage === "newGame" && fresh && confirmed) || isPageInactive() || !homeBootReady || continueProbeBusy || homePlayPending || menuActionPending || menuTransitionPending ||
-          !fresh && !menuContinueAvailable) return homePlayPending;
+    function beginHomePlay({ fresh = false, confirmed = false, storyAccepted = false } = {}) {
+      const acceptingStory = storyAccepted && menuPage === "newStory" && newGameStoryPending;
+      if (menuPage !== "home" && !(menuPage === "newGame" && fresh && confirmed) && !acceptingStory || isPageInactive() || !homeBootReady || continueProbeBusy || homePlayPending || menuActionPending || menuTransitionPending ||
+          !fresh && !menuContinueAvailable && !acceptingStory) return homePlayPending;
       if (fresh && menuContinueAvailable && !confirmed) return panHomeTo("newGame");
       if (fresh) {
         ++continueProbeRun;
@@ -11345,6 +11568,8 @@
       // Keep native media permission inside the New Game/Continue tap, before
       // waiting on the outgoing menu fade or any asynchronous loading.
       const primed = primeMediaFromMenuGesture();
+      if (fresh) return startNewGameStory(primed);
+      newGameStoryPending = false;
       const fading = fadeCurrentMenuOut().then(animation => {
         hideMenuForLoading();
         animation?.cancel();
@@ -11357,6 +11582,7 @@
     }
 
     function returnToHome() {
+      newGameStoryPending = false;
       stopProgressReport();
       if (menuActionPending) return menuActionPending;
       if (progressInitializedLanguage === CONFIG.language.code) saveProgress();
@@ -11420,10 +11646,11 @@
 
     function handleMenuKeys(event) {
       if (event.defaultPrevented || event.isComposing || event.ctrlKey || event.altKey || event.metaKey) return;
+      if (menuPage === "story" && event.target?.closest?.("#storyImage, #storyCopy") && (event.key === "Enter" || event.key === " ")) return;
       const code = keyboardEventCode(event);
       if (code === "Escape") {
         if (exitConfirmationActive) { event.preventDefault(); event.stopImmediatePropagation(); stayInLevel(); }
-        else if (["settings", "unlockables", "story", "how", "newGame"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
+        else if (["settings", "unlockables", "story", "how", "newGame", "newStory"].includes(menuPage)) { event.preventDefault(); event.stopImmediatePropagation(); panHomeTo("home"); }
         else if (menuPage === null && gameplayStarted && !keyboardAction("Escape")) { event.preventDefault(); event.stopImmediatePropagation(); openExitConfirmation(); }
         return;
       }
@@ -11449,6 +11676,10 @@
     for (const type of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) {
       window.addEventListener(type, resumeCameraAudioFromGesture, { capture: true, passive: true });
     }
+    for (const type of ["pointerdown", "pointerup", "touchend", "keydown"]) {
+      window.addEventListener(type, primeUISoundsFromGesture, { capture: true, passive: true });
+    }
+    window.addEventListener("click", playUIButtonTap, true);
     window.addEventListener("pointerdown", resumeOptionalAudioFromGesture, true);
     window.addEventListener("keydown", resumeOptionalAudioFromGesture, true);
     homePoster.addEventListener("load", syncHomePoster);
@@ -11489,6 +11720,13 @@
     document.getElementById("homeStoryButton").addEventListener("click", () => panHomeTo("story"));
     document.getElementById("homeHowButton").addEventListener("click", () => panHomeTo("how"));
     document.getElementById("homeClearButton").addEventListener("click", clearDataFromHome);
+    document.getElementById("newGameStoryButton").addEventListener("click", () => beginHomePlay({ storyAccepted: true }));
+    for (const element of [storyImage, document.getElementById("storyCopy")]) {
+      element.addEventListener("click", toggleStoryMedia);
+      element.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") { event.preventDefault(); event.stopPropagation(); if (!event.repeat) element.click(); }
+      });
+    }
     document.getElementById("newGameYesButton").addEventListener("click", () => beginHomePlay({ fresh: true, confirmed: true }));
     document.getElementById("newGameNoButton").addEventListener("click", () => panHomeTo("home"));
     menuShell.querySelectorAll(".menu-back:not(#homeBackButton)").forEach(button => button.addEventListener("click", () => panHomeTo("home")));
