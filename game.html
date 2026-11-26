@@ -34,9 +34,7 @@
       --paper-text-scale: 1.5;
       --menu-text-scale: 2;
       --time-bonus-ms: 820ms;
-      --special-font: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
-      --special-size-scale: 1;
-      --loading-font: var(--special-font);
+      --loading-font: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
     }
 
     @supports (height: 100dvh) {
@@ -216,7 +214,7 @@
       place-items: center;
       color: var(--letter-beige);
       background: transparent;
-      font-family: var(--special-font);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       line-height: 1;
       user-select: none;
       pointer-events: none;
@@ -227,8 +225,8 @@
     .letter-glyph {
       display: block;
       color: var(--letter-beige);
-      font-family: var(--special-font);
-      font-size: calc(calc(var(--letter-base-size, 53px) * var(--letter-scale, 1) * var(--surveillance-letter-fit, 1)) * var(--special-size-scale));
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: calc(var(--letter-base-size, 53px) * var(--letter-scale, 1) * var(--surveillance-letter-fit, 1));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -551,7 +549,7 @@
       gap: 0.02em;
       color: var(--letter-beige);
       font-family: var(--loading-font);
-      font-size: calc(clamp(38px, calc(var(--view-unit) * 6), 62px) * var(--special-size-scale));
+      font-size: clamp(38px, calc(var(--view-unit) * 6), 62px);
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -705,7 +703,7 @@
          text paint colours. The paper image stays outside this filter. */
       -webkit-filter: brightness(0);
       filter: brightness(0);
-      font-family: var(--special-font);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       text-align: left;
       transform: rotate(-0.4deg);
       pointer-events: none;
@@ -714,7 +712,7 @@
     #clueTitle {
       margin: 0 0 10% 0;
       text-align: center;
-      font-size: calc(calc(clamp(31px, calc(var(--view-unit) * 5.2), 48px) * var(--paper-text-scale)) * var(--special-size-scale));
+      font-size: calc(clamp(31px, calc(var(--view-unit) * 5.2), 48px) * var(--paper-text-scale));
       overflow-wrap: anywhere;
       font-weight: 400;
       line-height: 1;
@@ -736,7 +734,7 @@
       list-style: none;
       display: grid;
       gap: clamp(13px, calc(var(--view-unit) * 2.3), 24px);
-      font-size: calc(calc(clamp(22px, calc(var(--view-unit) * 3.5), 34px) * var(--paper-text-scale)) * var(--special-size-scale));
+      font-size: calc(clamp(22px, calc(var(--view-unit) * 3.5), 34px) * var(--paper-text-scale));
       line-height: 1.05;
       text-transform: uppercase;
     }
@@ -745,7 +743,7 @@
 
     #puzzleText {
       margin: 0;
-      font-family: var(--special-font);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       font-size: calc(var(--puzzle-font-size, 25px) * var(--paper-text-scale));
       line-height: 1.3;
       overflow-wrap: anywhere;
@@ -769,8 +767,8 @@
       align-self: flex-end;
       background: transparent;
       color: var(--letter-beige);
-      font-family: var(--special-font);
-      font-size: calc(calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)) * var(--special-size-scale));
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
+      font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale));
       font-weight: 400;
       line-height: 1;
       text-transform: uppercase;
@@ -961,7 +959,7 @@
       gap: 14px;
       background: #000;
       color: var(--letter-beige);
-      font-family: var(--special-font);
+      font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive;
       text-align: center;
       cursor: pointer;
     }
@@ -971,8 +969,8 @@
     #levelLoadDetails[hidden] { display: none; }
     #gameOverScreen.show #gameOverTitle { animation: gameOverJitter var(--game-over-jitter-ms, 380ms) steps(1, end) infinite; }
     #gameOverScreen.show #retryText { animation: gameOverJitter var(--retry-jitter-ms, 430ms) steps(1, end) var(--retry-jitter-delay, 75ms) infinite; }
-    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: calc(calc(clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)) * var(--ui-text-scale)) * var(--special-size-scale)); line-height: 1; }
-    #retryText { max-width: 94%; font-size: calc(calc(clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)) * var(--ui-text-scale)) * var(--special-size-scale)); opacity: .78; }
+    #gameOverTitle { max-width: 94%; overflow-wrap: anywhere; font-size: calc(clamp(var(--game-over-min, 42px), calc(var(--view-unit) * var(--game-over-vh, 7)), var(--game-over-max, 72px)) * var(--ui-text-scale)); line-height: 1; }
+    #retryText { max-width: 94%; font-size: calc(clamp(var(--retry-min, 20px), calc(var(--view-unit) * var(--retry-vh, 3)), var(--retry-max, 30px)) * var(--ui-text-scale)); opacity: .78; }
 
     @keyframes gameOverJitter {
       0%, 100% { transform: translate(0, 0); }
@@ -1089,7 +1087,7 @@
     }
 
     :root[data-game-language="ar"] .letter-glyph {
-      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       text-transform: none;
       letter-spacing: 0;
       line-height: 1.5;
@@ -1106,7 +1104,7 @@
     :root[data-game-language="ar"] #wordDisplay {
       direction: rtl;
       gap: 4px;
-      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
+      font-family: "Game Arabic", "Noto Naskh Arabic", "Geeza Pro", Tahoma, serif;
       font-size: var(--hud-letter-size, 40px);
       line-height: 1.6;
       letter-spacing: 0;
@@ -1165,7 +1163,7 @@
       outline: 2px solid var(--camera-color, #fff);
       outline-offset: 3px;
     }
-    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: var(--special-font); -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
+    #menuShell { position: absolute; inset: 0; z-index: 300; display: grid; place-items: center; overflow: auto; background: #000; color: var(--letter-beige); font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; -webkit-text-fill-color: var(--letter-beige); -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; cursor: default; }
     #menuShell[hidden], .menu-page[hidden] { display: none !important; }
     html.menu-open, html.menu-open body, #menuShell { touch-action: pan-y; }
     #homeBackdrop { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -1181,14 +1179,14 @@
     #homeStartButton {
       position: relative;
       top: calc(0px - var(--menu-start-button-raise, 24px));
-      font-size: calc(calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale)) * var(--special-size-scale));
+      font-size: calc(clamp(33px, calc(var(--view-unit) * 4.8), 48px) * var(--menu-text-scale));
     }
     /* Keep the menu at its original vertical position after removing the heading. */
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.96 + var(--home-menu-gap, 26px)); padding-bottom: 30px; }
-    .menu-page h2 { margin: 0 0 28px; font-size: calc(calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)) * var(--special-size-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
+    .menu-page h2 { margin: 0 0 28px; font-size: calc(clamp(32px, calc(var(--view-unit) * 5.5), 54px) * var(--menu-text-scale)); font-weight: 400; line-height: 1.1; overflow-wrap: anywhere; }
     .home-actions, .language-choices { display: flex; flex-direction: column; align-items: center; gap: 9px; }
     .menu-button, .home-back, .paper-button { appearance: none; -webkit-appearance: none; border: 0; background: transparent; color: inherit; -webkit-text-fill-color: currentColor; font: inherit; font-weight: 400; cursor: pointer; animation: readyJitter .4s steps(1, end) infinite; touch-action: manipulation; }
-    .menu-button { min-height: 44px; max-width: 100%; padding: 7px 12px; font-size: calc(calc(clamp(24px, calc(var(--view-unit) * 3.7), 36px) * var(--menu-text-scale)) * var(--special-size-scale)); line-height: 1.12; }
+    .menu-button { min-height: 44px; max-width: 100%; padding: 7px 12px; font-size: calc(clamp(24px, calc(var(--view-unit) * 3.7), 36px) * var(--menu-text-scale)); line-height: 1.12; }
     .menu-button > .menu-label { display: inline-block; }
     .menu-button > .menu-label, .menu-back > svg { transition: transform 180ms ease; }
     .menu-button[data-selected] > .menu-label, .menu-back[data-selected] > svg { transform: scale(1.08); }
@@ -1208,10 +1206,10 @@
     .home-actions [data-selected] > .menu-label { font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
     .menu-back, .home-back { position: absolute; left: max(14px, env(safe-area-inset-left)); top: max(14px, env(safe-area-inset-top)); width: 50px; height: 50px; padding: 10px; color: var(--letter-beige); z-index: 2; animation-duration: .487s; animation-delay: -.055s; }
     .menu-back svg, .home-back svg { display: block; width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-    .menu-body { margin: 0; font-size: calc(clamp(20px, calc(var(--view-unit) * 3.2), 28px) * var(--special-size-scale)); line-height: 1.38; text-align: start; }
+    .menu-body { margin: 0; font-size: clamp(20px, calc(var(--view-unit) * 3.2), 28px); line-height: 1.38; text-align: start; }
     #homeCareer { position: absolute; left: 6%; right: 6%; bottom: max(20px, env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; pointer-events: none; }
     #homeCareer > div { min-width: 0; }
-    #homeCareer dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: calc(16px * var(--special-size-scale)); line-height: 1.3; }
+    #homeCareer dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: 16px; line-height: 1.3; }
     #homeCareer dd { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, monospace; overflow-wrap: anywhere; }
     #homePage { padding-bottom: 112px; }
     @media (max-height: 720px) { #homeCareer { position: static; margin-top: 26px; } #homePage { padding-bottom: 30px; } }
@@ -1221,30 +1219,30 @@
     :root[data-game-language="ar"] #idleHint { font-family: "Game Arabic", Tahoma, serif; direction: rtl; }
     #locationUnlock { position: absolute; left: 5%; bottom: max(32px, env(safe-area-inset-bottom)); width: 90%; margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 18px/1.3 var(--camera-font, monospace); text-align: center; animation: surveillanceBlink 900ms steps(1, end) infinite; }
     #locationUnlock[hidden] { display: none; }
-    #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: calc(18px * var(--special-size-scale)); }
+    #homeNotice { min-height: 1.4em; margin: 14px 0 0; font-size: 18px; }
     #homeNotice > span { animation: clearNoticeFade 1800ms ease both; }
     @keyframes clearNoticeFade {
       0%, 25% { opacity: 1; }
       100% { opacity: 0; }
     }
-    #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #menuShell[data-language="ar"] .menu-page:not(#homePage), #menuShell[data-language="ar"] .home-actions, .language-choices [lang="ar"] { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #menuShell[data-language="ar"] .menu-page:not(#homePage) { direction: rtl; }
     #menuShell[data-language="ar"] .menu-body { line-height: 1.65; }
-    #menuShell [lang="en"] { font-family: var(--special-font); }
+    #menuShell [lang="en"] { font-family: "Dudu Calligraphy", "Segoe Print", "Bradley Hand", cursive; }
     .home-back:focus-visible, .paper-button:focus-visible { outline: 1px solid currentColor; outline-offset: 5px; }
     #menuShell button { -webkit-tap-highlight-color: transparent; outline: none; }
     #menuShell button:focus-visible { color: #ffd986; }
-    #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
+    #menuShell[data-language="ar"] #homeNotice { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #clueIntro.hint-mode .home-back, #clueIntro.exit-mode .home-back { display: none; }
     #portraitViewport.next-riddle .clue-file-controls, #clueIntro.dismiss .clue-file-controls { display: none; }
     #clueIntro.exit-mode { visibility: visible; transition: opacity var(--hint-fade-ms, 140ms) ease; }
     #clueIntro.exit-mode #clueTitle, #clueIntro.exit-mode #clueList, #clueIntro.exit-mode #puzzleText, #clueIntro.exit-mode #readyButton, #clueIntro.exit-mode .clue-file-controls { display: none; }
     #exitConfirmContent { height: 100%; display: flex; flex-direction: column; justify-content: center; justify-content: safe center; gap: 12px; overflow: auto; text-align: center; pointer-events: auto; color: #000; -webkit-text-fill-color: #000; }
     #exitConfirmContent[hidden] { display: none; }
-    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: calc(calc(clamp(24px, calc(var(--view-unit) * 4), 38px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); line-height: 1.15; }
-    #exitConfirmContent p { margin: 0; font-size: calc(calc(clamp(18px, calc(var(--view-unit) * 2.7), 26px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); line-height: 1.3; }
+    #exitConfirmContent h2 { margin: 0; font: inherit; font-size: calc(clamp(24px, calc(var(--view-unit) * 4), 38px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.15; }
+    #exitConfirmContent p { margin: 0; font-size: calc(clamp(18px, calc(var(--view-unit) * 2.7), 26px) * var(--paper-text-scale) * var(--exit-fit, 1)); line-height: 1.3; }
     .paper-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
-    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: calc(calc(clamp(22px, calc(var(--view-unit) * 3.3), 32px) * var(--paper-text-scale) * var(--exit-fit, 1)) * var(--special-size-scale)); }
+    .paper-button { min-height: 44px; min-width: 68px; padding: 8px; font-size: calc(clamp(22px, calc(var(--view-unit) * 3.3), 32px) * var(--paper-text-scale) * var(--exit-fit, 1)); }
     :root[data-game-language="ar"] #exitConfirmContent { font-family: "Game Arabic Paper", "Game Arabic", serif; direction: rtl; }
     #portraitViewport.exit-confirm-active #cameraOverlay { filter: blur(2px); pointer-events: none; }
     @media (max-height: 580px) { #homePage { --home-menu-gap: 16px; } .home-actions { gap: 4px; } .menu-page { padding-top: 65px; padding-bottom: 22px; } #homeNotice { margin-top: 8px; } }
@@ -1291,7 +1289,7 @@
     }
     #objectTarget[hidden] { display: none; }
     :root[data-game-language="ar"] #objectTarget {
-      font-family: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
+      font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif;
       direction: rtl;
     }
     .endless-butterfly, .endless-butterfly-capture {
@@ -1322,7 +1320,7 @@
     }
     #status.butterfly-area,
     #butterflyProgress {
-      font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale) * var(--special-size-scale))/1 var(--loading-font);
+      font: 400 calc(var(--ui-font-size, 18px) * var(--ui-text-scale))/1 var(--loading-font);
     }
     #butterflyProgress:not([hidden]) {
       display: block;
@@ -1353,48 +1351,48 @@
     @keyframes butterflyDangerPulse { 50% { opacity: .36; } }
     #portraitViewport.level-paused .butterfly-danger-light { animation-play-state: paused; }
     @media (prefers-reduced-motion: reduce) { .butterfly-danger-light { animation: none; } }
-    :root { --career-label-font: var(--special-font); --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
-    :root[data-game-language="ar"] { --career-label-font: var(--special-font); }
+    :root { --career-label-font: "Dudu Calligraphy", "Segoe Print", cursive; --career-value-font: "OCR A Std", "OCR A Extended", "Lucida Console", Monaco, "Game Arabic", monospace; }
+    :root[data-game-language="ar"] { --career-label-font: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #storyImage { display: block; width: calc(100% - 28px); height: auto; max-height: calc(var(--game-height) - 170px); object-fit: contain; margin: 0 auto; }
     #storyImage[hidden] { display: none; }
     #storyCopy, #howCopy { text-align: center; text-wrap: pretty; }
     .career-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; text-align: center; }
     .career-stats > div { min-width: 0; }
-    .career-stats dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(16px * var(--special-size-scale))/1.3 var(--career-label-font); }
+    .career-stats dt { color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 16px/1.3 var(--career-label-font); }
     .career-stats dd, #menuShell .career-stats dd[lang] { margin: 6px 0 0; color: #fff; -webkit-text-fill-color: #fff; font: 17px/1.25 var(--career-value-font); overflow-wrap: anywhere; }
     #homeCareer dt { font-family: var(--career-label-font); }
     #homeCareer dd { font-family: var(--career-value-font); }
     #homePage { padding-top: calc(30px + clamp(44px, calc(var(--view-unit) * 8.3), 84px) * 1.75 + var(--home-menu-gap, 26px)); }
     .home-actions > :nth-child(6) { --jitter-phase: -5; }
-    #settingsPage #settingsTitle { margin-bottom: 26px; font-size: calc(clamp(36px, calc(var(--view-unit) * 5.8), 48px) * var(--special-size-scale)); }
-    #settingsPage .setting-heading { margin: 24px 0 8px; font-size: calc(clamp(22px, calc(var(--view-unit) * 3.6), 26px) * var(--special-size-scale)); line-height: 1.2; }
+    #settingsPage #settingsTitle { margin-bottom: 26px; font-size: clamp(36px, calc(var(--view-unit) * 5.8), 48px); }
+    #settingsPage .setting-heading { margin: 24px 0 8px; font-size: clamp(22px, calc(var(--view-unit) * 3.6), 26px); line-height: 1.2; }
     #settingsPage #languageTitle { margin-top: 0; }
-    #settingsPage .language-choices .menu-button, #settingsPage #horrorChoices .menu-button { font-size: calc(clamp(24px, calc(var(--view-unit) * 4.2), 30px) * var(--special-size-scale)); }
-    .setting-heading { margin: 24px 0 8px; font-size: calc(22px * var(--special-size-scale)); font-weight: 400; }
+    #settingsPage .language-choices .menu-button, #settingsPage #horrorChoices .menu-button { font-size: clamp(24px, calc(var(--view-unit) * 4.2), 30px); }
+    .setting-heading { margin: 24px 0 8px; font-size: 22px; font-weight: 400; }
     #horrorChoices { display: flex; justify-content: center; gap: 22px; }
     #horrorChoices [aria-pressed="true"] > .menu-label { text-decoration: underline; text-underline-offset: .2em; font-weight: 700; }
     #unlockablesPage { width: min(88%, 510px); }
     #unlockableCounts { display: grid; gap: 26px; margin: 30px auto 0; width: min(100%, 320px); }
     #unlockableCounts > div { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid #e8d9b438; }
-    #unlockableCounts dt { font: calc(26px * var(--special-size-scale))/1.3 var(--career-label-font); }
+    #unlockableCounts dt { font: 26px/1.3 var(--career-label-font); }
     #unlockableCounts dd { margin: 0; color: #fff; -webkit-text-fill-color: #fff; font: 24px/1.2 var(--career-value-font); }
     #progressReport { position: absolute; inset: 0; z-index: 250; display: flex; flex-direction: column; padding: calc(max(14px, env(safe-area-inset-top)) + 62px) 7% max(24px, env(safe-area-inset-bottom)); box-sizing: border-box; color: #fff; background: #000; text-align: center; overflow: auto; font-family: var(--loading-font); }
     #progressReport[hidden] { display: none; }
     #progressReport .home-back { position: absolute; }
     #reportHeader { margin: 0; flex: .5 0 auto; }
-    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(clamp(32px, calc(var(--view-unit) * 5), 46px) * var(--special-size-scale))/1.15 var(--loading-font); }
-    #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: calc(13px * var(--special-size-scale)); letter-spacing: .12em; }
+    #reportTitle { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(32px, calc(var(--view-unit) * 5), 46px)/1.15 var(--loading-font); }
+    #reportJobLabel { margin: 12px 0 0; color: #c3beb2; font-size: 13px; letter-spacing: .12em; }
     #reportCentre { flex: 0 0 auto; display: flex; flex-direction: column; padding: 0; min-height: 0; margin-top: clamp(20px, calc(var(--view-unit) * 3), 32px); }
-    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: calc(18px * var(--special-size-scale))/1.3 var(--loading-font); }
-    #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: calc(clamp(48px, calc(var(--view-unit) * 8.8), 76px) * var(--special-size-scale)); line-height: 1.12; font-variant-numeric: tabular-nums; }
+    #reportEarningsLabel { margin: 0 0 16px; color: #c3beb2; font: 18px/1.3 var(--loading-font); }
+    #reportEarned { display: block; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-size: clamp(48px, calc(var(--view-unit) * 8.8), 76px); line-height: 1.12; font-variant-numeric: tabular-nums; }
     #reportRankBlock { width: min(100%, 300px); margin: 26px auto 0; }
     #reportRankTrack { height: 10px; border: 2px solid #e8d9b450; background: #ffffff09; overflow: hidden; border-radius: 2px; }
     #reportRankFill { height: 100%; width: 100%; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; }
     .rank-step { display: block; height: 100%; background: #555; }
     .rank-step.completed { background: #fff; }
-    #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: calc(12px * var(--special-size-scale)); line-height: 1.4; }
+    #reportNextRank { margin: 12px 0 0; color: #bcb8af; font-size: 12px; line-height: 1.4; }
     #reportUnlocks { display: flex; flex-direction: column; gap: 7px; margin-top: 20px; }
-    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(17px * var(--special-size-scale))/1.3 var(--loading-font); }
+    #reportUnlocks p { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: 17px/1.3 var(--loading-font); }
     #reportUnlocks [hidden] { display: none; }
     #reportNewJob { opacity: 0; transition: opacity 180ms ease; }
     #reportNewJob.revealed { opacity: 1; }
@@ -1402,23 +1400,23 @@
     #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
     @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     #reportAdvance { flex: 1 0 104px; display: grid; place-items: center; min-height: 104px; }
-    #reportContinueButton { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)) * var(--special-size-scale)); }
+    #reportContinueButton { margin: 0; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
     #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
     @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { margin-top: 20px; } #reportRankBlock { margin-top: 18px; } #reportUnlocks { margin-top: 14px; } }
 
   
-    :root[data-game-language="ar"] { --special-font: "Game Arabic Paper", "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; }
     #readyButton { align-self: center; margin-inline: auto; text-align: center; }
-    #missedFeedback { position: absolute; inset: 0; z-index: 155; display: grid; place-items: center; pointer-events: none; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: calc(clamp(36px, calc(var(--view-unit) * 6), 58px) * var(--special-size-scale))/1.2 var(--special-font); text-shadow: 0 2px 8px #000; }
+    #missedFeedback { position: absolute; inset: 0; z-index: 155; display: grid; place-items: center; pointer-events: none; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font: clamp(36px, calc(var(--view-unit) * 6), 58px)/1.2 var(--loading-font); text-shadow: 0 2px 8px #000; }
     #missedFeedback[hidden] { display: none; }
     #newStoryPage { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; min-height: 80%; }
     #newStoryPage[hidden] { display: none; }
     #newGameStoryImage { display: block; width: 100%; max-height: calc(var(--game-height) - 230px); object-fit: contain; }
     #newGameStoryImage[hidden] { display: none; }
     #newGameStoryCopy { text-align: center; }
-    #newGameStoryButton { font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale) * var(--special-size-scale)); }
+    #newGameStoryButton { font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
     #storyImage, #storyCopy[role="button"] { cursor: pointer; }
+    :root[data-game-language="ar"] #readyButton, :root[data-game-language="ar"] #missedFeedback { font-family: "Game Arabic", "Noto Naskh Arabic", Tahoma, serif; direction: rtl; }
 </style>
 </head>
 <body>
@@ -2315,7 +2313,7 @@
     "clueFormat": "{current}/{total}",
     "roomFormat": "ROOM {number}",
     "clueTitle": "CLUES",
-    "ready": "LET’S GO",
+    "ready": "READY",
     "found": "FOUND",
     "roomComplete": "JOB COMPLETE",
     "nextLevel": "TAP TO CONTINUE",
@@ -2337,7 +2335,7 @@
     "catchFliesInstructionAr": "التقط الفراشات",
     "findItemsInstruction": "find the items",
     "findItemsInstructionAr": "اعثر على الأشياء",
-    "readyAr": "هيا بنا",
+    "readyAr": "جاهز",
     "missed": "Missed",
     "missedAr": "أخطأت"
   },
@@ -5604,15 +5602,6 @@
       return musicSourcesFromNames(names, directory);
     }
 
-    function updateSpecialTypography() {
-      const height = viewport.getBoundingClientRect().height;
-      const paperSize = language => {
-        const font = CONFIG.puzzles[language];
-        return clamp(height * font.fontHeightFraction, font.minFontPx, font.maxFontPx);
-      };
-      const scale = isArabic() ? Math.max(1.01, paperSize("ar") / paperSize("en")) : 1;
-      document.documentElement.style.setProperty("--special-size-scale", String(scale));
-    }
 
     function parseRankTitles(text) {
       if (typeof text !== "string" || text.length > 65536 || /<(?:!doctype|html|body)\b/i.test(text)) throw new Error("Invalid ranks.txt.");
@@ -9952,7 +9941,6 @@
       viewportLayoutFrame = 0;
       stopButterflyFlight();
       syncVisibleViewport();
-      updateSpecialTypography();
       finishShutterGesture();
       finishLetterTransfer({ reveal: false });
       stopShutterEffect();
@@ -11141,7 +11129,6 @@
     }
 
     function configureGamePresentation() {
-      updateSpecialTypography();
       batteryLow.textContent = isArabic() ? "البطارية ضعيفة" : "BATTERY LOW";
       const style = document.documentElement.style;
       viewport.classList.toggle("shutter-blackout-enabled", CONFIG.shutter.holdBlackoutEnabled);
