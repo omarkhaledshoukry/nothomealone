@@ -1582,7 +1582,7 @@
       <div id="newGamePage" class="menu-page" hidden>
         <button class="menu-button menu-back" type="button" aria-label="Back"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5l-7 7 7 7M7 12h13"/></svg></button>
         <h2 id="newGameTitle">Are you sure?</h2>
-        <p id="newGameText" class="menu-body">Erase all saved progress and earnings?</p>
+        <p id="newGameText" class="menu-body">Erase English progress and earnings only?</p>
         <div class="home-actions">
           <button id="newGameYesButton" class="menu-button" type="button"><span class="menu-label">YES</span></button>
           <button id="newGameNoButton" class="menu-button" type="button"><span class="menu-label">NO</span></button>
@@ -2487,7 +2487,7 @@
       "cash": "CASH",
       "rank": "RANK",
       "newGameTitle": "Are you sure?",
-      "newGameText": "Erase all saved progress and earnings?",
+      "newGameText": "Erase English progress and earnings only?",
       "yes": "YES",
       "no": "NO",
       "locationUnlocked": "NEW LOCATION UNLOCKED",
@@ -2538,7 +2538,7 @@
       "cash": "الرصيد",
       "rank": "الرتبة",
       "newGameTitle": "هل أنت متأكد؟",
-      "newGameText": "هل تريد مسح كل التقدم والرصيد المحفوظ؟",
+      "newGameText": "هل تريد مسح التقدم والرصيد المحفوظين بالعربية فقط؟",
       "yes": "نعم",
       "no": "لا",
       "locationUnlocked": "تم فتح موقع جديد",
@@ -9919,9 +9919,29 @@
       return validateProgress(JSON.parse(text.replace(/^\uFEFF/, "")));
     }
 
+    function progressKeyFor(language = CONFIG.language.code) {
+      return PROGRESS_STORAGE_BASE_KEY + (language === "ar" ? ":ar" : "");
+    }
+
+    function progressResetKeyFor(language = CONFIG.language.code) {
+      return `${PROGRESS_RESET_KEY}:${language}`;
+    }
+
+    function externalProgressWasReset(language = CONFIG.language.code) {
+      for (const store of ["localStorage", "sessionStorage"]) {
+        try {
+          // Older builds explicitly reset both languages. Keep honoring that
+          // marker, while every new reset is scoped to the selected language.
+          if (window[store].getItem(progressResetKeyFor(language)) === "1" ||
+              window[store].getItem(PROGRESS_RESET_KEY) === "1") return true;
+        } catch {}
+      }
+      return false;
+    }
+
     function savedBrowserProgress(language = CONFIG.language.code) {
       let newest = null;
-      const key = PROGRESS_STORAGE_BASE_KEY + (language === "ar" ? ":ar" : "");
+      const key = progressKeyFor(language);
       for (const store of ["localStorage", "sessionStorage"]) {
         try {
           const raw = window[store].getItem(key);
@@ -9956,10 +9976,7 @@
           }
         } catch { /* Empty and invalid saves do not enable Continue. */ }
       };
-      let ignoreExternal = false;
-      for (const store of ["localStorage", "sessionStorage"]) {
-        try { if (window[store].getItem(PROGRESS_RESET_KEY) === "1") ignoreExternal = true; } catch {}
-      }
+      const ignoreExternal = externalProgressWasReset(language);
       if (!ignoreExternal) {
         if (localFolderImport) {
           if (typeof localFolderImport.saveText === "string") consider(localFolderImport.saveText);
@@ -9974,7 +9991,7 @@
           } catch { /* The optional save.txt is absent on a first run. */ }
         }
         if ("showSaveFilePicker" in window) {
-          const handle = await saveHandleStore("get");
+          const handle = await saveHandleStore("get", undefined, progressKeyFor(language));
           try {
             if (handle?.kind === "file" && await handle.queryPermission({ mode: "readwrite" }) === "granted") consider(await (await handle.getFile()).text());
           } catch { /* Permission checks never prompt from a menu refresh. */ }
@@ -10029,7 +10046,7 @@
 
     // IndexedDB can remember an explicitly chosen writable save file. Never
     // request permission during startup or during horror/gameplay events.
-    function saveHandleStore(mode, value) {
+    function saveHandleStore(mode, value, key = PROGRESS_STORAGE_KEY) {
       return new Promise(resolve => {
         let settled = false;
         const finish = result => { if (!settled) { settled = true; clearTimeout(timer); resolve(result); } };
@@ -10045,10 +10062,7 @@
             try {
               tx = db.transaction("files", mode === "put" || mode === "delete" ? "readwrite" : "readonly");
               const store = tx.objectStore("files");
-              if (mode === "delete") {
-                store.delete(PROGRESS_STORAGE_BASE_KEY);
-                request = store.delete(PROGRESS_STORAGE_BASE_KEY + ":ar");
-              } else request = mode === "put" ? store.put(value, PROGRESS_STORAGE_KEY) : store.get(PROGRESS_STORAGE_KEY);
+              request = mode === "delete" ? store.delete(key) : mode === "put" ? store.put(value, key) : store.get(key);
             } catch { db.close(); finish(null); return; }
             let result = null;
             request.onsuccess = () => { result = mode === "put" || mode === "delete" ? true : request.result || null; };
@@ -10061,10 +10075,7 @@
 
     async function initializeProgress() {
       let selected = savedBrowserProgress();
-      let ignoreExternalSave = false;
-      for (const store of ["localStorage", "sessionStorage"]) {
-        try { if (window[store].getItem(PROGRESS_RESET_KEY) === "1") ignoreExternalSave = true; } catch {}
-      }
+      const ignoreExternalSave = externalProgressWasReset();
       const consider = text => {
         try {
           const candidate = parseProgress(text);
@@ -10086,7 +10097,7 @@
         finally { clearTimeout(timer); }
       }
       if (!ignoreExternalSave && "showSaveFilePicker" in window) {
-        const handle = await saveHandleStore("get");
+        const handle = await saveHandleStore("get", undefined, progressKeyFor());
         try {
           if (handle?.kind === "file" && await handle.queryPermission({ mode: "readwrite" }) === "granted") {
             progressSaveHandle = handle;
@@ -10099,7 +10110,10 @@
       // assets. Normalize that copy as well, so no level contents are kept.
       if (localFolderImport?.saveText) {
         let compact = null;
-        try { if (!ignoreExternalSave) compact = JSON.stringify(parseProgress(localFolderImport.saveText)); } catch {}
+        try {
+          const cached = parseProgress(localFolderImport.saveText);
+          if (!externalProgressWasReset(cached.language)) compact = JSON.stringify(cached);
+        } catch {}
         if (localFolderImport.saveText !== compact) {
           localFolderImport.saveText = compact;
           rememberLocalFiles(localFolderImport);
@@ -10319,29 +10333,33 @@
     }
 
     function resetBrowserProgress() {
-      // Only this game's progress is cleared; folder/config caches are retained.
+      // New Game resets only the selected language's career and saved run.
+      const language = CONFIG.language.code, key = progressKeyFor(language);
+      PROGRESS_STORAGE_KEY = key;
       for (const store of ["localStorage", "sessionStorage"]) {
         try {
-          window[store].removeItem(PROGRESS_STORAGE_BASE_KEY);
-          window[store].removeItem(PROGRESS_STORAGE_BASE_KEY + ":ar");
-          window[store].setItem(PROGRESS_RESET_KEY, "1");
+          window[store].removeItem(key);
+          window[store].setItem(progressResetKeyFor(language), "1");
         } catch (error) { console.info("Could not clear browser progress.", error.message); }
       }
       progressSaveHandle = null;
       progressWriteGeneration++;
-      void saveHandleStore("delete");
+      void saveHandleStore("delete", undefined, key);
       progressMessage = "";
       progressState = emptyProgress();
       lastSceneNumber = lastEndlessSceneSet = null;
       lastEndlessRoomLine = null;
       endlessRiddleHistory = { pool: "", seen: new Set(), lastAnswer: null, lastPrompt: null };
-      if (localFolderImport) {
-        localFolderImport.saveText = null;
-        rememberLocalFiles(localFolderImport);
+      if (localFolderImport?.saveText) {
+        try {
+          if (parseProgress(localFolderImport.saveText).language === language) {
+            localFolderImport.saveText = null;
+            rememberLocalFiles(localFolderImport);
+          }
+        } catch { /* An unrelated cache is not part of this language's reset. */ }
       }
       saveProgress();
     }
-
     function transitionToLevel({ fresh = false, continueButterflies = false, mediaPrimed = null } = {}) {
       if (levelTransitionPending || isPageInactive()) return levelTransitionPending;
       const refreshMedia = fresh || Boolean(levelLoadFailure);
@@ -10823,7 +10841,7 @@
         ++continueProbeRun;
         continueProbeBusy = false;
         resetLevelState();
-        PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
+        PROGRESS_STORAGE_KEY = progressKeyFor();
         resetBrowserProgress();
         clearPreparedLevelCache();
         menuContinueAvailable = false;
@@ -11010,7 +11028,7 @@
       void loadRankTitles();
       prepareCameraAudio();
       // Keep independent progression counts for English and Arabic.
-      PROGRESS_STORAGE_KEY = PROGRESS_STORAGE_BASE_KEY + (isArabic() ? ":ar" : "");
+      PROGRESS_STORAGE_KEY = progressKeyFor();
       progressSaveHandle = null;
       progressWriteGeneration++;
       await initializeProgress();
