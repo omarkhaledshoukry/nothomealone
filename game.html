@@ -1394,7 +1394,7 @@
     #reportUnlocks #locationUnlock { position: static; width: auto; margin: 0; animation: none; font: inherit; }
     #reportNewRank, #reportUnlocks #locationUnlock:not([hidden]) { animation: reportNotice 260ms ease-out both; }
     @keyframes reportNotice { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: 25px; }
+    #reportContinueButton { margin: 0 auto 26px; color: var(--letter-beige); -webkit-text-fill-color: currentColor; font-family: var(--loading-font); font-size: calc(clamp(26px, calc(var(--view-unit) * 4.2), 40px) * var(--ui-text-scale)); }
     #reportCareer { padding-top: 18px; border-top: 1px solid #e8d9b438; }
     .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
     @media (max-height: 640px) { #reportHeader { margin-top: 0; } #reportCentre { min-height: 220px; padding: 16px 0; } #reportRankBlock { margin-top: 20px; } #reportUnlocks { margin-top: 14px; min-height: 62px; } #reportContinueButton { margin-bottom: 18px; } }
@@ -2740,6 +2740,7 @@
     let cameraAudio = null, cameraAudioSource = "", cameraAudioRun = 0, cameraAudioPriming = null;
     const idleHint = document.getElementById("idleHint");
     let idleHintKind = "", idleLastActionAt = 0, idleMoved = false, idleShutterUsed = false, idleHandShownAt = 0;
+    let idleMoveHintShown = false;
     const reportScreen = document.getElementById("progressReport"), valuePunches = new WeakMap();
     let reportVisible = false, reportCounting = false, reportFrame = 0, reportRun = 0, reportNextPending = false;
     let jobReportData = null, reportRankPunched = false, reportLastPaid = -1, reportLastPunch = 0;
@@ -5139,6 +5140,7 @@
     function resetIdleHints() {
       hideIdleHint();
       idleMoved = idleShutterUsed = false;
+      idleMoveHintShown = false;
       idleLastActionAt = performance.now();
       idleHandShownAt = handVisible ? idleLastActionAt : 0;
     }
@@ -5158,10 +5160,13 @@
       let kind = "";
       if (handVisible && !handDismissing && now - idleHandShownAt >= CONFIG.idleHints.handDelayMs) kind = "hand";
       else if (!handVisible && now - idleLastActionAt >= CONFIG.idleHints.delayMs) {
-        kind = !surveillanceActive && !idleMoved && !idleShutterUsed ? "move" : "shutter";
+        const canShowMoveHint = progressionLevel() <= 2 && !surveillanceActive && !idleMoved && !idleShutterUsed &&
+          (!idleMoveHintShown || idleHintKind === "move");
+        kind = canShowMoveHint ? "move" : "shutter";
       }
       if (!kind) { hideIdleHint(); return; }
       idleHintKind = kind;
+      if (kind === "move") idleMoveHintShown = true;
       const copy = menuText();
       const message = copy[kind === "hand" ? "idleHand" : kind === "move" ? "idleMove" : "idleShutter"];
       if (idleHint.textContent !== message) idleHint.textContent = message;
