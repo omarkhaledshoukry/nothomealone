@@ -2762,6 +2762,8 @@
     let rankTitles = ["Trainee"], ranksFilePromise = null;
     let jobPayoutSeconds = null, locationUnlockRun = 0, locationJustUnlocked = false;
     let cameraAudio = null, cameraAudioSource = "", cameraAudioRun = 0, cameraAudioPriming = null;
+    let cameraContext = null, cameraGain = null, cameraVoice = null, cameraBuffer = null;
+    let cameraBufferPromise = null, cameraBufferKey = "", cameraBufferRun = 0, cameraContextNeedsRefresh = false;
     const idleHint = document.getElementById("idleHint");
     let idleHintKind = "", idleLastActionAt = 0, idleMoved = false, idleShutterUsed = false, idleHandShownAt = 0;
     let idleMoveHintShown = false, idleShutterHintShown = false;
@@ -5405,7 +5407,8 @@
     function refreshOptionalAssets() {
       ++optionalAssetsRun; cameraSoundProbe = null; cameraSoundFile = ""; cameraSoundFailed.clear();
       musicDiscoveryPromise = null; musicTracks = null; musicFailed.clear();
-      void resolveCameraSound(); prepareCompletionAudio(); prepareStoryImage(true);
+      ++cameraBufferRun; cameraBufferKey = ""; cameraBufferPromise = cameraBuffer = null;
+      void resolveCameraSound().then(() => prepareCameraBuffer()); prepareCompletionAudio(); prepareStoryImage(true);
       if (menuMusicWanted) requestMenuMusic();
     }
 
@@ -5463,10 +5466,13 @@
       ++cameraAudioRun;
       cameraAudioPriming = null;
       cameraAudio?.pause();
+      const voice = cameraVoice; cameraVoice = null;
+      if (voice) { try { voice.stop(); voice.disconnect(); } catch {} }
     }
 
     function unlockCameraSound() {
       if (isPageInactive()) return;
+      resumeCameraAudioFromGesture();
       const audio = prepareCameraAudio(), run = ++cameraAudioRun;
       try {
         audio.muted = true;
@@ -5479,15 +5485,120 @@
       } catch { cameraAudioPriming = null; }
     }
 
-    function playCameraSound() {
-      const audio = prepareCameraAudio();
-      stopCameraSound(); // Invalidates any pending silent unlock before this shot.
+    function getCameraAudioContext() {
+      if (cameraContext && cameraContext.state !== "closed") return cameraContext;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      try {
+        cameraContext = new AudioContextClass({ latencyHint: "interactive" });
+        cameraGain = cameraContext.createGain();
+        cameraGain.connect(cameraContext.destination);
+        // AudioBuffers survive context replacement. An unfinished decode may not.
+        if (!cameraBuffer) { ++cameraBufferRun; cameraBufferPromise = null; cameraBufferKey = ""; }
+        return cameraContext;
+      } catch { cameraContext = cameraGain = null; return null; }
+    }
+
+    function prepareCameraBuffer() {
+      const context = getCameraAudioContext();
+      if (!context) return Promise.resolve(null);
+      const key = JSON.stringify([CONFIG.assets.cameraSound, optionalAssetsRun]);
+      if (cameraBufferKey === key && cameraBufferPromise) return cameraBufferPromise;
+      const run = ++cameraBufferRun;
+      cameraBufferKey = key; cameraBuffer = null;
+      const paths = [...new Set([cameraSoundFile, ...cameraSoundCandidates()].filter(Boolean))];
+      cameraBufferPromise = (async () => {
+        for (const path of paths) {
+          if (run !== cameraBufferRun) return null;
+          try {
+            const bytes = await fetchOptionalAsset(new URL(path, document.baseURI), { cache: "force-cache" }, response => {
+              if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) throw new Error("No camera sound.");
+              return response.arrayBuffer();
+            });
+            if (run !== cameraBufferRun) return null;
+            const decoded = await new Promise((resolve, reject) => {
+              const result = context.decodeAudioData(bytes, resolve, reject);
+              result?.then(resolve, reject);
+            });
+            if (run !== cameraBufferRun) return null;
+            cameraBuffer = decoded;
+            return decoded;
+          } catch { /* Try the other format; native playback remains available. */ }
+        }
+        return null;
+      })();
+      return cameraBufferPromise;
+    }
+
+    function resumeCameraAudioFromGesture(event) {
+      if (event && event.isTrusted === false || isPageInactive()) return;
+      if (cameraContextNeedsRefresh) {
+        cameraContextNeedsRefresh = false;
+        const previous = cameraContext;
+        cameraContext = cameraGain = null;
+        if (previous && previous.state !== "closed") {
+          try { Promise.resolve(previous.close()).catch(() => {}); } catch {}
+        }
+      }
+      const context = getCameraAudioContext();
+      if (!context) return;
+      // Retry on every gesture, including Safari's "interrupted" state. Never
+      // reuse a resume promise left pending when the phone went to sleep.
+      if (context.state !== "running") {
+        try {
+          Promise.resolve(context.resume()).then(() => {
+            if (context === cameraContext && isPageInactive() && context.state === "running") suspendCameraAudioContext();
+          }).catch(() => {});
+        } catch {}
+      }
+      void prepareCameraBuffer();
+    }
+
+    function suspendCameraAudioContext() {
+      cameraContextNeedsRefresh = true;
+      stopCameraSound();
+      if (!cameraBuffer) { ++cameraBufferRun; cameraBufferPromise = null; cameraBufferKey = ""; }
+      if (cameraContext?.state === "running") {
+        try { Promise.resolve(cameraContext.suspend()).catch(() => {}); } catch {}
+      }
+    }
+
+    function playNativeCameraSound(audio) {
       try {
         audio.currentTime = 0;
         audio.volume = CONFIG.camera.shutterVolume;
         audio.muted = CONFIG.camera.shutterVolume === 0;
         audio.play()?.catch(() => {});
       } catch { /* An optional SFX never prevents a photograph. */ }
+    }
+
+    function playCameraSound() {
+      const audio = prepareCameraAudio();
+      stopCameraSound(); // Also invalidates a pending native silent primer.
+      resumeCameraAudioFromGesture();
+      const context = cameraContext;
+      if (cameraBuffer && context?.state === "running" && cameraGain) {
+        let voice;
+        try {
+          voice = context.createBufferSource();
+          voice.buffer = cameraBuffer;
+          voice.connect(cameraGain);
+          cameraGain.gain.setValueAtTime(CONFIG.camera.shutterVolume, context.currentTime);
+          cameraVoice = voice;
+          voice.onended = () => {
+            if (cameraVoice === voice) cameraVoice = null;
+            voice.disconnect();
+          };
+          voice.start(0);
+          return;
+        } catch {
+          if (cameraVoice === voice) cameraVoice = null;
+          try { voice?.stop(); voice?.disconnect(); } catch {}
+        }
+      }
+      // If iOS is still resuming, play natively inside THIS accepted shutter
+      // gesture. Do not queue a late buffer playback or require another tap.
+      playNativeCameraSound(audio);
     }
 
     function hideIdleHint() {
@@ -9801,6 +9912,7 @@
 
     function resumeLevelActivity({ gesture = false } = {}) {
       if (isPageInactive() || reportVisible || menuPage !== null || exitConfirmationActive || levelResumePending) return levelResumePending;
+      if (gesture) unlockCameraSound();
       const scareRoom = activeScareRoom();
       const active = gameplayStarted && !gameOver && !roomCompleted;
       if (!active && !scareRoom) {
@@ -9894,6 +10006,7 @@
       for (const wait of mediaWaits) suspended ? wait.pause() : wait.resume();
       if (suspended) {
         pauseOptionalAudio();
+        suspendCameraAudioContext();
         menuSwipe = null;
         if (menuPage === null && !gameplayStarted && !gameOver) loadingPlaybackInterrupted = true;
         pauseLevelActivity({ cancelPreparation: true });
@@ -11333,6 +11446,9 @@
       }
     }
 
+    for (const type of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) {
+      window.addEventListener(type, resumeCameraAudioFromGesture, { capture: true, passive: true });
+    }
     window.addEventListener("pointerdown", resumeOptionalAudioFromGesture, true);
     window.addEventListener("keydown", resumeOptionalAudioFromGesture, true);
     homePoster.addEventListener("load", syncHomePoster);
