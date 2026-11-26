@@ -5204,23 +5204,39 @@
       } catch { return []; }
     }
 
+    async function readNumberedMusic(directory) {
+      const names = [], batchSize = 4, maxTracks = 100;
+      // Consecutive filenames need neither a folder listing nor an index file.
+      for (let first = 1; first <= maxTracks; first += batchSize) {
+        const batch = Array.from({ length: Math.min(batchSize, maxTracks - first + 1) }, (_, i) => `${first + i}.mp3`);
+        const available = await Promise.all(batch.map(name => optionalAudioExists(new URL(name, directory).href)));
+        for (let index = 0; index < batch.length; index++) {
+          if (!available[index]) return names;
+          names.push(batch[index]);
+        }
+      }
+      return names;
+    }
+
     function discoverMenuMusic() {
       if (musicDiscoveryPromise) return musicDiscoveryPromise;
       const run = optionalAssetsRun, directory = musicDirectoryURL();
       musicDiscoveryPromise = (async () => {
         let names;
-        if (localFolderImport) {
+        if (Array.isArray(localFolderImport?.optionalAssetFiles)) {
           const prefix = selectedFolderPath(CONFIG.assets.musicDirectory).replace(/\/?$/, "/");
           names = (localFolderImport.optionalAssetFiles || []).filter(path => path.startsWith(prefix)).map(path => path.slice(prefix.length));
-        } else if (directory.protocol === "file:") names = [];
-        else {
-          const [indexed, listed] = await Promise.all([
-            fetchOptionalAsset(new URL(CONFIG.assets.musicIndexFile, directory), {}, async response => {
-              if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
-              const data = await response.json(); return Array.isArray(data) ? data : Array.isArray(data?.files) ? data.files : [];
-            }).catch(() => []), readMusicDirectory(directory)
-          ]);
-          names = [...indexed, ...listed];
+        } else {
+          names = await readNumberedMusic(directory);
+          if (!names.length && directory.protocol !== "file:") {
+            const [indexed, listed] = await Promise.all([
+              fetchOptionalAsset(new URL(CONFIG.assets.musicIndexFile, directory), {}, async response => {
+                if (!response.ok || /text\/html/i.test(response.headers.get("content-type") || "")) return [];
+                const data = await response.json(); return Array.isArray(data) ? data : Array.isArray(data?.files) ? data.files : [];
+              }).catch(() => []), readMusicDirectory(directory)
+            ]);
+            names = [...indexed, ...listed];
+          }
         }
         const tracks = musicSourcesFromNames(names, directory);
         if (run === optionalAssetsRun) musicTracks = tracks;
